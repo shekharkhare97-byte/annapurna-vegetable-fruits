@@ -8,19 +8,28 @@ class OwnerRepository(private val dao: OwnerDao) {
  val inventory: Flow<List<OwnerInventoryEntity>> = dao.observeInventory()
  val movements: Flow<List<StockMovementEntity>> = dao.observeMovements()
  val settings: Flow<ShopSettingsEntity?> = dao.observeShopSettings()
- suspend fun ensureProducts(products: List<Pair<String, Int>>) {
-  products.forEach { (id, price) -> dao.addInventoryIfMissing(OwnerInventoryEntity(produceId=id, sellingPricePaisePerKg=price*100)) }
+ suspend fun ensureProducts(products: List<Triple<String, Int, Boolean>>) {
+  products.forEach { (id, price, countBased) ->
+   dao.addInventoryIfMissing(OwnerInventoryEntity(produceId=id, sellingPricePaisePerKg=if(countBased) 0 else price*100, sellingPricePaisePerUnit=if(countBased) price*100 else 0))
+  }
  }
- suspend fun updateDailyPrice(id: String, rupeesPerKg: Int) {
+ suspend fun updateDailyPrice(id: String, rupees: Int, countBased: Boolean) {
   val current=dao.getInventory(id) ?: OwnerInventoryEntity(id)
-  dao.saveInventory(current.copy(sellingPricePaisePerKg=rupeesPerKg.coerceAtLeast(0)*100, updatedAtMillis=System.currentTimeMillis()))
+  val price=rupees.coerceAtLeast(0)*100
+  dao.saveInventory(if(countBased) current.copy(sellingPricePaisePerUnit=price,updatedAtMillis=System.currentTimeMillis()) else current.copy(sellingPricePaisePerKg=price,updatedAtMillis=System.currentTimeMillis()))
  }
- suspend fun recordStock(id: String, grams: Int, type: String) {
-  if (grams<=0) return
+ suspend fun recordStock(id: String, quantity: Int, type: String, countBased: Boolean) {
+  if(quantity<=0) return
   val current=dao.getInventory(id) ?: OwnerInventoryEntity(id)
-  val stock=if(type=="PURCHASE") current.stockGrams+grams else (current.stockGrams-grams).coerceAtLeast(0)
-  dao.saveInventory(current.copy(stockGrams=stock, updatedAtMillis=System.currentTimeMillis()))
-  dao.addMovement(StockMovementEntity(produceId=id,movementType=type,quantityGrams=grams))
+  if(countBased) {
+   val stock=if(type=="PURCHASE") current.stockUnits+quantity else (current.stockUnits-quantity).coerceAtLeast(0)
+   dao.saveInventory(current.copy(stockUnits=stock,updatedAtMillis=System.currentTimeMillis()))
+   dao.addMovement(StockMovementEntity(produceId=id,movementType=type,quantityGrams=quantity,note="UNIT"))
+  } else {
+   val stock=if(type=="PURCHASE") current.stockGrams+quantity else (current.stockGrams-quantity).coerceAtLeast(0)
+   dao.saveInventory(current.copy(stockGrams=stock,updatedAtMillis=System.currentTimeMillis()))
+   dao.addMovement(StockMovementEntity(produceId=id,movementType=type,quantityGrams=quantity))
+  }
  }
  suspend fun saveSettings(name: String, phone: String) { dao.saveShopSettings(ShopSettingsEntity(ownerName=name.trim(),phoneNumber=phone.trim())) }
 }
