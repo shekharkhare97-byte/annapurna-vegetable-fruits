@@ -1,4 +1,8 @@
 package com.example.ui.screens
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
@@ -18,6 +22,17 @@ import com.example.ui.viewmodel.OwnerViewModel
 fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
  val inventory by viewModel.inventory.collectAsStateWithLifecycle()
  val settings by viewModel.settings.collectAsStateWithLifecycle()
+ val licenses by viewModel.licenses.collectAsStateWithLifecycle()
+ val context = LocalContext.current
+ var activeLicenseType by remember { mutableStateOf("SHOP_ACT") }
+ val licenseNumbers = remember { androidx.compose.runtime.mutableStateMapOf<String,String>() }
+ LaunchedEffect(licenses) { licenses.forEach { licenseNumbers[it.licenseType] = it.licenseNumber } }
+ val documentPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+  if (uri != null) {
+   try { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) { }
+   viewModel.saveLicense(activeLicenseType, licenseNumbers[activeLicenseType].orEmpty(), uri.toString())
+  }
+ }
  var selected by remember { mutableStateOf<OwnerInventoryEntity?>(null) }
  var priceText by remember { mutableStateOf("") }
  var quantityText by remember { mutableStateOf("1") }
@@ -43,6 +58,24 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
   }
   Spacer(Modifier.height(10.dp))
   OutlinedButton(onClick={showSettings=true}) { Text("दुकान सेटिंग्स") }
+  Text("माझे दुकान परवाने", style=MaterialTheme.typography.titleLarge)
+  Text("कागदपत्र अपलोड केल्यावरच ग्राहकांना परवाना क्रमांक दिसेल.")
+  listOf("SHOP_ACT" to "Shop Act Licence", "FSSAI" to "Food Licence (FSSAI)", "UDYAM" to "Udyam Aadhaar").forEach { (type, title) ->
+   val saved = licenses.firstOrNull { it.licenseType == type }
+   Card(Modifier.fillMaxWidth()) {
+    Column(Modifier.padding(12.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
+     Text(title, style=MaterialTheme.typography.titleMedium)
+     OutlinedTextField(value=licenseNumbers[type].orEmpty(), onValueChange={licenseNumbers[type]=it}, label={Text("परवाना क्रमांक")}, modifier=Modifier.fillMaxWidth(), singleLine=true)
+     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+      Button(onClick={activeLicenseType=type; documentPicker.launch(arrayOf("application/pdf","image/*"))}) { Text(if(saved==null) "कागदपत्र अपलोड" else "कागदपत्र बदला") }
+      if(saved!=null) {
+       Text("अपलोड झाले", color=MaterialTheme.colorScheme.primary, modifier=Modifier.padding(top=12.dp))
+       TextButton(onClick={viewModel.deleteLicense(type); licenseNumbers.remove(type)}) { Text("हटवा") }
+      }
+     }
+    }
+   }
+  }
   LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp)) {
    items(inventory,key={it.produceId}) { row ->
     val product=ProduceCatalog.findById(row.produceId)
