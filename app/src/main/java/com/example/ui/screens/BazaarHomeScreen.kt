@@ -118,6 +118,13 @@ fun BazaarHomeScreen(
                 .testTag("produce_grid")
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
+                WelcomeOrderChooser(
+                    onVegetables = { onSelectCategory(ProduceCategory.VEGETABLE) },
+                    onFruits = { onSelectCategory(ProduceCategory.FRUIT) }
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 HeroMarketBanner()
             }
 
@@ -185,6 +192,33 @@ fun BazaarHomeScreen(
                     onAskRecipeInChat(chosen)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun WelcomeOrderChooser(
+    onVegetables: () -> Unit,
+    onFruits: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Text("Welcome अन्नपूर्णा व्हेजिटेबल अँड फ्रूट्स", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text("आज काय ऑर्डर करणार? भाजी की फळे?", style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Card(onClick = onVegetables, modifier = Modifier.weight(1f).height(112.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🥬", style = MaterialTheme.typography.headlineMedium)
+                    Text("भाजीपाला", fontWeight = FontWeight.Bold)
+                    Text("भाज्या पाहा", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Card(onClick = onFruits, modifier = Modifier.weight(1f).height(112.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🍎", style = MaterialTheme.typography.headlineMedium)
+                    Text("फळे", fontWeight = FontWeight.Bold)
+                    Text("फळे पाहा", style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
     }
 }
