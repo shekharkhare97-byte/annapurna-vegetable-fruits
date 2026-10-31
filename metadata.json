@@ -1,0 +1,6 @@
+{
+  "name": "Annapurna Vegetable and Fruits",
+  "description": "ताजा भाजीपाला आणि फळे मागवण्यासाठी सुंदर मराठी ॲप — शॉपिंग कार्ट, ऑर्डर, AI सहाय्यक आणि फोटो स्टुडिओसह.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

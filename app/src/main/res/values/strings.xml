@@ -1,0 +1,95 @@
+<resources>
+    <string name="app_name">Annapurna Vegetable and Fruits</string>
+
+    <!-- Brand & Header -->
+    <string name="store_title_marathi">अन्नपूर्णा भाजीपाला आणि फळे</string>
+    <string name="store_subtitle_marathi">ताजा शेतमाल • वाजवी दर • थेट घरपोच सेवा</string>
+    <string name="hero_badge_fresh">१००% ताजा शेतमाल</string>
+    <string name="hero_headline">शेतकऱ्यांच्या मळ्यातून थेट तुमच्या स्वयंपाकघरात!</string>
+    <string name="hero_subtext">दररोज सकाळी निवडक ताज्या भाज्या आणि रसाळ फळे घरपोच मागवा.</string>
+
+    <!-- Navigation Tabs -->
+    <string name="nav_bazaar">ताजा बाजार</string>
+    <string name="nav_cart">माझी पिशवी</string>
+    <string name="nav_assistant">अन्नपूर्णा AI</string>
+    <string name="nav_studio">फोटो स्टुडिओ</string>
+
+    <!-- Categories & Search -->
+    <string name="search_placeholder">भाजी किंवा फळ शोधा (उदा. टोमॅटो, आंबा)...</string>
+    <string name="search_clear_desc">शोध साफ करा</string>
+    <string name="cat_all">सर्व</string>
+    <string name="cat_vegetables">ताज्या भाज्या</string>
+    <string name="cat_fruits">रसाळ फळे</string>
+    <string name="empty_search_title">कोणताही माल सापडला नाही</string>
+    <string name="empty_search_subtitle">कृपया दुसरे नाव टाकून पुन्हा शोधा किंवा सर्व श्रेणी निवडा.</string>
+
+    <!-- Product Card & Cart Actions -->
+    <string name="btn_add_to_cart">पिशवीत टाका</string>
+    <string name="cd_decrease_qty">प्रमाण कमी करा</string>
+    <string name="cd_increase_qty">प्रमाण वाढवा</string>
+    <string name="cd_remove_item">वस्तू काढा</string>
+    <string name="floating_cart_cta">ऑर्डर करा</string>
+    <string name="cart_items_summary_format">पिशवीत %1$s वस्तू • ₹%2$s</string>
+
+    <!-- Cart & Order Screen -->
+    <string name="cart_header_title">माझी खरेदी पिशवी</string>
+    <string name="cart_clear_all">पिशवी रिकामी करा</string>
+    <string name="cart_empty_title">तुमची खरेदी पिशवी सध्या रिकामी आहे</string>
+    <string name="cart_empty_subtitle">ताज्या भाज्या आणि फळे निवडण्यासाठी \'ताजा बाजार\' टॅबवर जा.</string>
+    <string name="btn_browse_bazaar">ताजा बाजार पहा</string>
+    <string name="bill_summary_title">बिलाचा तपशील</string>
+    <string name="bill_items_total">मालाची एकूण रक्कम</string>
+    <string name="bill_delivery_label">घरपोच डिलिव्हरी शुल्क</string>
+    <string name="bill_delivery_free">मोफत (₹०)</string>
+    <string name="bill_grand_total">एकूण देय रक्कम</string>
+
+    <!-- Customer Form -->
+    <string name="customer_section_title">ग्राहकाची माहिती</string>
+    <string name="customer_section_subtitle">घरपोच सेवेसाठी खालील माहिती भरा</string>
+    <string name="label_customer_name">ग्राहकाचे नाव *</string>
+    <string name="placeholder_customer_name">उदा. राजेश कुलकर्णी</string>
+    <string name="label_mobile_number">मोबाईल नंबर (१० अंकी) *</string>
+    <string name="placeholder_mobile_number">उदा. ९८७६५४३२१०</string>
+    <string name="label_delivery_address">पत्ता / जवळची खूण (ऐच्छिक)</string>
+    <string name="placeholder_delivery_address">उदा. शिवाजी नगर, पुणे</string>
+    <string name="btn_place_order">ऑर्डर नोंदवा</string>
+
+    <!-- Validation Messages -->
+    <string name="error_empty_cart">ऑर्डर देण्यापूर्वी कृपया पिशवीत किमान एक भाजी किंवा फळ टाका.</string>
+    <string name="error_invalid_name">कृपया ग्राहकाचे पूर्ण नाव प्रविष्ट करा.</string>
+    <string name="error_invalid_mobile">कृपया वैध १० अंकी मोबाईल नंबर प्रविष्ट करा.</string>
+
+    <!-- Order Success & History -->
+    <string name="order_success_title">तुमची ऑर्डर यशस्वीरित्या नोंदवली गेली!</string>
+    <string name="order_success_subtitle">अन्नपूर्णा भाजीपाला आणि फळे निवडल्याबद्दल मनःपूर्वक धन्यवाद.</string>
+    <string name="order_id_format">ऑर्डर क्र.: #%1$s</string>
+    <string name="btn_share_receipt">पावती शेअर करा</string>
+    <string name="btn_done">ठीक आहे</string>
+    <string name="recent_orders_title">मागील नोंदवलेल्या ऑर्डर्स</string>
+    <string name="btn_reorder">पुन्हा पिशवीत भरा</string>
+    <string name="order_status_confirmed">ऑर्डर स्वीकारली</string>
+
+    <!-- Gemini Marathi Chatbot -->
+    <string name="chat_title">अन्नपूर्णा AI सहाय्यक</string>
+    <string name="chat_subtitle">पाककृती, ताजेपणा टिप्स आणि आहार सल्लागार</string>
+    <string name="chat_clear_desc">संभाषण पुन्हा सुरू करा</string>
+    <string name="model_fast_label">झटपट (Flash-Lite)</string>
+    <string name="model_general_label">सर्वसाधारण (Flash 3.8)</string>
+    <string name="model_complex_label">सखोल तज्ञ (Argon 4)</string>
+    <string name="chat_input_placeholder">मराठीत प्रश्न विचारा (उदा. भरली वांगी कशी बनवायची?)...</string>
+    <string name="cd_send_message">संदेश पाठवा</string>
+    <string name="chat_typing_indicator">अन्नपूर्णा सहाय्यक उत्तर लिहीत आहे...</string>
+
+    <!-- Gemini 3 Pro Image Studio -->
+    <string name="studio_title">अन्नपूर्णा AI फोटो स्टुडिओ</string>
+    <string name="studio_subtitle">Gemini 3 Pro Image द्वारे १K, २K आणि ४K उच्च दर्जाचे फोटो तयार करा</string>
+    <string name="studio_size_label">फोटोचा आकार निवडा (Image Size)</string>
+    <string name="studio_ratio_label">फ्रेम प्रमाण (Aspect Ratio)</string>
+    <string name="studio_prompt_label">फोटोचे वर्णन लिहा</string>
+    <string name="studio_prompt_placeholder">उदा. केळीच्या पानावर सजवलेली महाराष्ट्रीयन शाकाहारी थाळी आणि ताजी फळे...</string>
+    <string name="btn_generate_image">उच्च दर्जाचा फोटो तयार करा</string>
+    <string name="studio_generating_msg">उच्च दर्जाचा %1$s फोटो तयार होत आहे (३०-६० सेकंद लागू शकतात)...</string>
+    <string name="btn_share_image">फोटो शेअर करा</string>
+    <string name="studio_preset_label">झटपट कल्पना निवडा:</string>
+    <string name="error_backend_not_configured">सुरक्षित बॅकएंड सर्व्हर URL सेट केलेली नाही. कृपया /backend मधील सर्व्हर डिप्लॉय करून BackendConfig.kt मध्ये HTTPS URL जोडा.</string>
+</resources>

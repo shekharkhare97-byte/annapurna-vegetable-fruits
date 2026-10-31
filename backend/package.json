@@ -1,0 +1,12 @@
+{
+  "name": "annapurna-secure-ai-backend",
+  "version": "1.0.0",
+  "description": "Zero-dependency Node 20+ secure backend proxy keeping Gemini API credentials strictly off Android APKs",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
