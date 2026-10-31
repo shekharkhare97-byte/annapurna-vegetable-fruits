@@ -1,5 +1,7 @@
 package com.example.ui.screens
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,6 +28,19 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
  Column(modifier.fillMaxSize().padding(16.dp)) {
   Text("दुकान व्यवस्थापन",style=MaterialTheme.typography.headlineSmall)
   Text("स्टॉक, बाजार खरेदी आणि आजचे दर")
+  Card(Modifier.fillMaxWidth()) {
+   Row(Modifier.padding(14.dp), horizontalArrangement=Arrangement.spacedBy(12.dp), verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
+    Surface(shape=androidx.compose.foundation.shape.CircleShape, color=MaterialTheme.colorScheme.primaryContainer, modifier=Modifier.size(52.dp)) {
+     Box(contentAlignment=androidx.compose.ui.Alignment.Center) { Text("👤", style=MaterialTheme.typography.headlineSmall) }
+    }
+    Column(Modifier.weight(1f)) {
+     Text("मालकाची प्रोफाइल", style=MaterialTheme.typography.titleMedium)
+     Text(ownerName.ifBlank { "मालकाचे नाव सेट करा" }, style=MaterialTheme.typography.bodyLarge)
+     Text(phone.ifBlank { "मोबाईल नंबर जोडा" }, style=MaterialTheme.typography.bodySmall, color=MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    TextButton(onClick={showSettings=true}) { Text("बदला") }
+   }
+  }
   Spacer(Modifier.height(10.dp))
   OutlinedButton(onClick={showSettings=true}) { Text("दुकान सेटिंग्स") }
   LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp)) {
