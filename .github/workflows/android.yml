@@ -12,6 +12,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check backend JavaScript syntax
+        run: node --check backend/server.js
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
