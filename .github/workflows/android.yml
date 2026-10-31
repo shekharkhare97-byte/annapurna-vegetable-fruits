@@ -27,7 +27,7 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: Install Android SDK
-        run: sdkmanager "platforms;android-36-ext1" "build-tools;36.0.0" "platform-tools"
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Create debug signing key
         run: |
