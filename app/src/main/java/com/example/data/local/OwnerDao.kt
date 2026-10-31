@@ -14,4 +14,7 @@ interface OwnerDao {
  @Query("SELECT * FROM stock_movements ORDER BY createdAtMillis DESC LIMIT 100") fun observeMovements(): Flow<List<StockMovementEntity>>
  @Query("SELECT * FROM shop_settings WHERE id = 1 LIMIT 1") fun observeShopSettings(): Flow<ShopSettingsEntity?>
  @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun saveShopSettings(settings: ShopSettingsEntity)
+ @Query("SELECT * FROM shop_licenses ORDER BY licenseType") fun observeLicenses(): Flow<List<ShopLicenseEntity>>
+ @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun saveLicense(license: ShopLicenseEntity)
+ @Query("DELETE FROM shop_licenses WHERE licenseType = :type") suspend fun deleteLicense(type: String)
 }
