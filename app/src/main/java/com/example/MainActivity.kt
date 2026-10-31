@@ -140,6 +140,7 @@ fun AnnapurnaRootApp() {
     var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
     var showShareMenu by remember { mutableStateOf(false) }
 
+    val publicLicenses by ownerViewModel.licenses.collectAsStateWithLifecycle()
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
     val selectedCategory by storeViewModel.selectedCategory.collectAsStateWithLifecycle()
     val searchQuery by storeViewModel.searchQuery.collectAsStateWithLifecycle()
@@ -333,6 +334,7 @@ fun AnnapurnaRootApp() {
                         AnnapurnaTab.BAZAAR -> {
                             BazaarHomeScreen(
                                 produceItems = produceItems,
+                                publicLicenses = publicLicenses,
                                 selectedCategory = selectedCategory,
                                 searchQuery = searchQuery,
                                 cartItems = cartItems,
