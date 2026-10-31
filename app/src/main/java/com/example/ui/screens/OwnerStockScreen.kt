@@ -18,7 +18,7 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
  val settings by viewModel.settings.collectAsStateWithLifecycle()
  var selected by remember { mutableStateOf<OwnerInventoryEntity?>(null) }
  var priceText by remember { mutableStateOf("") }
- var gramsText by remember { mutableStateOf("1000") }
+ var quantityText by remember { mutableStateOf("1") }
  var ownerName by remember { mutableStateOf("") }
  var phone by remember { mutableStateOf("") }
  var showSettings by remember { mutableStateOf(false) }
@@ -31,23 +31,29 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
   LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp)) {
    items(inventory,key={it.produceId}) { row ->
     val product=ProduceCatalog.findById(row.produceId)
+    val countBased=viewModel.isCountBased(row.produceId)
+    val unit=if(countBased) "जुडी / नग" else "किलो"
+    val stock=if(countBased) "${row.stockUnits} $unit" else "${row.stockGrams} ग्रॅम"
+    val price=if(countBased) row.sellingPricePaisePerUnit/100 else row.sellingPricePaisePerKg/100
     Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp)) {
      Text(product?.marathiName ?: row.produceId,style=MaterialTheme.typography.titleMedium)
-     Text("सध्याचा स्टॉक: ${row.stockGrams} ग्रॅम")
-     Text("आजचा दर: ₹${row.sellingPricePaisePerKg/100} / किलो")
-     Button(onClick={selected=row; priceText=(row.sellingPricePaisePerKg/100).toString(); gramsText="1000"}) { Text("दर / स्टॉक बदला") }
+     Text("सध्याचा स्टॉक: $stock")
+     Text("आजचा दर: ₹$price / $unit")
+     Button(onClick={selected=row; priceText=price.toString(); quantityText=if(countBased) "1" else "1000"}) { Text("दर / स्टॉक बदला") }
     } }
    }
   }
  }
  selected?.let { item ->
+  val countBased=viewModel.isCountBased(item.produceId)
+  val unit=if(countBased) "जुडी / नग" else "ग्रॅम"
   AlertDialog(onDismissRequest={selected=null},title={Text(ProduceCatalog.findById(item.produceId)?.marathiName ?: "माल")},text={
    Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-    OutlinedTextField(priceText,{priceText=it.filter(Char::isDigit)},label={Text("आजचा दर (₹ प्रति किलो)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
-    OutlinedTextField(gramsText,{gramsText=it.filter(Char::isDigit)},label={Text("प्रमाण (ग्रॅम)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
+    OutlinedTextField(priceText,{priceText=it.filter(Char::isDigit)},label={Text(if(countBased) "आजचा दर (₹ प्रति जुडी)" else "आजचा दर (₹ प्रति किलो)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
+    OutlinedTextField(quantityText,{quantityText=it.filter(Char::isDigit)},label={Text("प्रमाण ($unit)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-     Button(onClick={viewModel.recordPurchase(item.produceId,gramsText.toIntOrNull()?:0);selected=null}) { Text("खरेदी जोडा") }
-     OutlinedButton(onClick={viewModel.recordWastage(item.produceId,gramsText.toIntOrNull()?:0);selected=null}) { Text("नासाडी") }
+     Button(onClick={viewModel.recordPurchase(item.produceId,quantityText.toIntOrNull()?:0);selected=null}) { Text("खरेदी जोडा") }
+     OutlinedButton(onClick={viewModel.recordWastage(item.produceId,quantityText.toIntOrNull()?:0);selected=null}) { Text("नासाडी") }
     }
    }
   },confirmButton={TextButton(onClick={viewModel.updatePrice(item.produceId,priceText.toIntOrNull()?:0);selected=null}) { Text("दर जतन करा") }},dismissButton={TextButton(onClick={selected=null}) { Text("रद्द") }})
