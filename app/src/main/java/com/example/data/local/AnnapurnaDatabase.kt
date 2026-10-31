@@ -5,7 +5,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-@Database(entities=[CartItemEntity::class,CustomerProfileEntity::class,OrderEntity::class,OwnerInventoryEntity::class,StockMovementEntity::class,ShopSettingsEntity::class],version=2,exportSchema=false)
+@Database(entities=[CartItemEntity::class,CustomerProfileEntity::class,OrderEntity::class,OwnerInventoryEntity::class,StockMovementEntity::class,ShopSettingsEntity::class],version=3,exportSchema=false)
 abstract class AnnapurnaDatabase:RoomDatabase() {
  abstract fun storeDao():StoreDao
  abstract fun ownerDao():OwnerDao
@@ -18,10 +18,16 @@ abstract class AnnapurnaDatabase:RoomDatabase() {
     db.execSQL("CREATE TABLE IF NOT EXISTS shop_settings (id INTEGER NOT NULL PRIMARY KEY, ownerName TEXT NOT NULL, phoneNumber TEXT NOT NULL)")
    }
   }
+  private val MIGRATION_2_3=object:Migration(2,3) {
+   override fun migrate(db:SupportSQLiteDatabase) {
+    db.execSQL("ALTER TABLE owner_inventory ADD COLUMN stockUnits INTEGER NOT NULL DEFAULT 0")
+    db.execSQL("ALTER TABLE owner_inventory ADD COLUMN sellingPricePaisePerUnit INTEGER NOT NULL DEFAULT 0")
+   }
+  }
   fun getInstance(context:Context):AnnapurnaDatabase {
    return INSTANCE ?: synchronized(this) {
     INSTANCE ?: Room.databaseBuilder(context.applicationContext,AnnapurnaDatabase::class.java,"annapurna_veg_fruits.db")
-     .addMigrations(MIGRATION_1_2).build().also { INSTANCE=it }
+     .addMigrations(MIGRATION_1_2,MIGRATION_2_3).build().also { INSTANCE=it }
    }
   }
  }
