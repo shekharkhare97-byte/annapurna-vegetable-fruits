@@ -21,10 +21,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Badge
@@ -63,9 +65,11 @@ import com.example.ui.screens.BazaarHomeScreen
 import com.example.ui.screens.CartAndOrderScreen
 import com.example.ui.screens.ImageStudioScreen
 import com.example.ui.screens.MarathiChatScreen
+import com.example.ui.screens.OwnerStockScreen
 import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
 import com.example.ui.viewmodel.StoreViewModel
+import com.example.ui.viewmodel.OwnerViewModel
 import com.example.util.MarathiFormatters
 
 enum class AnnapurnaTab(
@@ -97,6 +101,12 @@ enum class AnnapurnaTab(
         selectedIcon = Icons.Filled.PhotoCamera,
         unselectedIcon = Icons.Outlined.PhotoCamera,
         tag = "nav_tab_studio"
+    ),
+    OWNER(
+        labelRes = R.string.nav_owner,
+        selectedIcon = Icons.Filled.Settings,
+        unselectedIcon = Icons.Outlined.Settings,
+        tag = "nav_tab_owner"
     )
 }
 
@@ -120,6 +130,7 @@ fun AnnapurnaRootApp() {
         factory = StoreViewModel.provideFactory(context)
     )
     val aiViewModel: AiFeaturesViewModel = viewModel()
+    val ownerViewModel: OwnerViewModel = viewModel(factory = OwnerViewModel.provideFactory(context))
 
     var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
 
@@ -338,6 +349,10 @@ fun AnnapurnaRootApp() {
                                 onBackToBazaar = { currentTab = AnnapurnaTab.BAZAAR },
                                 modifier = contentModifier
                             )
+                        }
+
+                        AnnapurnaTab.OWNER -> {
+                            OwnerStockScreen(viewModel = ownerViewModel, modifier = contentModifier)
                         }
 
                         AnnapurnaTab.STUDIO -> {
