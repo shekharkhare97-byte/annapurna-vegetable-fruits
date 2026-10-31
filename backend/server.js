@@ -123,8 +123,8 @@ async function saveShopProduct(productId, body) {
     sellingPricePaisePerKg: fsValue(Math.max(0, Math.floor(Number(body.sellingPricePaisePerKg) || 0))),
     updatedAtMillis: fsValue(Date.now()),
   };
-  return firestoreRequest(`shopProducts?documentId=${encodeURIComponent(productId)}`, {
-    method: "POST", body: JSON.stringify({ fields }),
+  return firestoreRequest(`shopProducts/${encodeURIComponent(productId)}`, {
+    method: "PATCH", body: JSON.stringify({ fields }),
   });
 }
 
