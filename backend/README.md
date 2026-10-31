@@ -32,7 +32,7 @@ gcloud run deploy annapurna-backend \
   --set-secrets="ANNAPURNA_OWNER_TOKEN=annapurna-owner-token:latest,GEMINI_SERVER_API_KEY=annapurna-gemini-key:latest"
 ```
 
-The Cloud Run service account must have Firestore access. Do not add `--allow-unauthenticated` unless you intentionally want the customer-facing order and product endpoints public; owner routes still require the separate owner token. The mobile app must use the deployed HTTPS URL.
+The Cloud Run service account must have Firestore access. The example enables unauthenticated access because the customer app needs to submit orders and read products; owner-only endpoints still require the separate owner token. Keep that token private and do not put it in the customer APK. The mobile app must use the deployed HTTPS URL.
 
 ## AI proxy
 
