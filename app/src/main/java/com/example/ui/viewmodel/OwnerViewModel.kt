@@ -24,7 +24,7 @@ class OwnerViewModel(private val repository: OwnerRepository, private val licens
  init { viewModelScope.launch { repository.ensureProducts(ProduceCatalog.items.map { Triple(it.id,it.priceRupees,it.unitMarathi.contains("जुडी") || it.unitMarathi.contains("नग")) }) } }
  fun isCountBased(id:String):Boolean = ProduceCatalog.findById(id)?.let { it.unitMarathi.contains("जुडी") || it.unitMarathi.contains("नग") } ?: false
  fun updatePrice(id:String,price:Int)=viewModelScope.launch { repository.updateDailyPrice(id,price,isCountBased(id)) }
- fun recordPurchase(id:String,quantity:Int)=viewModelScope.launch { repository.recordStock(id,quantity,"PURCHASE",isCountBased(id)) }
+ fun recordPurchase(id:String,quantity:Int,purchasePriceRupees:Int=0)=viewModelScope.launch { repository.recordStock(id,quantity,"PURCHASE",isCountBased(id),purchasePriceRupees) }
  fun recordWastage(id:String,quantity:Int)=viewModelScope.launch { repository.recordStock(id,quantity,"WASTAGE",isCountBased(id)) }
  fun saveSettings(name:String,phone:String)=viewModelScope.launch { repository.saveSettings(name,phone) }
  fun saveLicense(type:String,number:String,uri:String)=viewModelScope.launch { if(number.isNotBlank() && uri.isNotBlank()) licenseDao.saveLicense(ShopLicenseEntity(type,number.trim(),uri)) }
