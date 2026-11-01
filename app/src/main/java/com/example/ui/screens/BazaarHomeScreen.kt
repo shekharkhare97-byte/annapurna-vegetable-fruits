@@ -77,6 +77,7 @@ import com.example.data.local.ShopLicenseEntity
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceCategory
 import com.example.data.model.ProduceItem
+import com.example.data.model.formatCartQuantity
 import com.example.data.repository.CartLineItem
 import com.example.util.MarathiFormatters
 
@@ -101,7 +102,7 @@ fun BazaarHomeScreen(
     val qtyMap = remember(cartItems) {
         cartItems.associate { it.produce.id to it.quantity }
     }
-    val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
+    val totalCartQty = remember(cartItems) { cartItems.size }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -533,7 +534,7 @@ private fun ProduceGridCard(
                             }
 
                             Text(
-                                text = MarathiFormatters.toMarathiNumber(quantityInCart),
+                                text = item.formatCartQuantity(quantityInCart),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold
