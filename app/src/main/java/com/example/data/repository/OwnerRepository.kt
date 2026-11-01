@@ -18,7 +18,7 @@ class OwnerRepository(private val dao: OwnerDao) {
   val price=rupees.coerceAtLeast(0)*100
   dao.saveInventory(if(countBased) current.copy(sellingPricePaisePerUnit=price,updatedAtMillis=System.currentTimeMillis()) else current.copy(sellingPricePaisePerKg=price,updatedAtMillis=System.currentTimeMillis()))
  }
- suspend fun recordStock(id: String, quantity: Int, type: String, countBased: Boolean) {
+ suspend fun recordStock(id: String, quantity: Int, type: String, countBased: Boolean, purchasePriceRupees: Int = 0) {
   if(quantity<=0) return
   val current=dao.getInventory(id) ?: OwnerInventoryEntity(id)
   if(countBased) {
@@ -27,7 +27,8 @@ class OwnerRepository(private val dao: OwnerDao) {
    dao.addMovement(StockMovementEntity(produceId=id,movementType=type,quantityGrams=quantity,note="UNIT"))
   } else {
    val stock=if(type=="PURCHASE") current.stockGrams+quantity else (current.stockGrams-quantity).coerceAtLeast(0)
-   dao.saveInventory(current.copy(stockGrams=stock,updatedAtMillis=System.currentTimeMillis()))
+   val updated = current.copy(stockGrams=stock, purchasePricePaisePerKg=if(type=="PURCHASE" && purchasePriceRupees>0) purchasePriceRupees*100 else current.purchasePricePaisePerKg, updatedAtMillis=System.currentTimeMillis())
+   dao.saveInventory(updated)
    dao.addMovement(StockMovementEntity(produceId=id,movementType=type,quantityGrams=quantity))
   }
  }
