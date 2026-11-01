@@ -1,6 +1,7 @@
 package com.example
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,10 +22,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Badge
@@ -32,6 +36,9 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -63,9 +70,11 @@ import com.example.ui.screens.BazaarHomeScreen
 import com.example.ui.screens.CartAndOrderScreen
 import com.example.ui.screens.ImageStudioScreen
 import com.example.ui.screens.MarathiChatScreen
+import com.example.ui.screens.OwnerStockScreen
 import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
 import com.example.ui.viewmodel.StoreViewModel
+import com.example.ui.viewmodel.OwnerViewModel
 import com.example.util.MarathiFormatters
 
 enum class AnnapurnaTab(
@@ -97,6 +106,12 @@ enum class AnnapurnaTab(
         selectedIcon = Icons.Filled.PhotoCamera,
         unselectedIcon = Icons.Outlined.PhotoCamera,
         tag = "nav_tab_studio"
+    ),
+    OWNER(
+        labelRes = R.string.nav_owner,
+        selectedIcon = Icons.Filled.Settings,
+        unselectedIcon = Icons.Outlined.Settings,
+        tag = "nav_tab_owner"
     )
 }
 
@@ -120,9 +135,12 @@ fun AnnapurnaRootApp() {
         factory = StoreViewModel.provideFactory(context)
     )
     val aiViewModel: AiFeaturesViewModel = viewModel()
+    val ownerViewModel: OwnerViewModel = viewModel(factory = OwnerViewModel.provideFactory(context))
 
     var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
+    var showShareMenu by remember { mutableStateOf(false) }
 
+    val publicLicenses by ownerViewModel.licenses.collectAsStateWithLifecycle()
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
     val selectedCategory by storeViewModel.selectedCategory.collectAsStateWithLifecycle()
     val searchQuery by storeViewModel.searchQuery.collectAsStateWithLifecycle()
@@ -182,6 +200,43 @@ fun AnnapurnaRootApp() {
                         }
                     },
                     actions = {
+                        IconButton(onClick = { showShareMenu = true }) {
+                            Icon(Icons.Default.Share, contentDescription = "शेअर करा")
+                        }
+                        DropdownMenu(expanded = showShareMenu, onDismissRequest = { showShareMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text("भाजीपाला व फळांची यादी शेअर करा") },
+                                onClick = {
+                                    showShareMenu = false
+                                    val listText = buildString {
+                                        appendLine("अन्नपूर्णा व्हेजिटेबल अँड फ्रूट्स")
+                                        appendLine("आजची भाजीपाला व फळांची यादी:")
+                                        com.example.data.model.ProduceCatalog.items.forEach { item ->
+                                            appendLine("${item.marathiName} — ₹${item.priceRupees} / ${item.unitMarathi}")
+                                        }
+                                        appendLine("ताज्या मालासाठी संपर्क करा.")
+                                    }
+                                    val send = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, listText)
+                                    }
+                                    context.startActivity(Intent.createChooser(send, "यादी शेअर करा"))
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("दुकानाची जाहिरात / ॲप लिंक शेअर करा") },
+                                onClick = {
+                                    showShareMenu = false
+                                    val promo = "अन्नपूर्णा व्हेजिटेबल अँड फ्रूट्स 🥬🍎\\nताज्या भाज्या आणि फळांसाठी आजच संपर्क करा!\\nॲप व प्रकल्पाची लिंक: https://github.com/shekharkhare97-byte/annapurna-vegetable-fruits"
+                                    val send = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, promo)
+                                    }
+                                    context.startActivity(Intent.createChooser(send, "जाहिरात शेअर करा"))
+                                }
+                            )
+                        }
+
                         if (currentTab != AnnapurnaTab.CART) {
                             FilledTonalButton(
                                 onClick = { currentTab = AnnapurnaTab.CART },
@@ -279,6 +334,7 @@ fun AnnapurnaRootApp() {
                         AnnapurnaTab.BAZAAR -> {
                             BazaarHomeScreen(
                                 produceItems = produceItems,
+                                publicLicenses = publicLicenses,
                                 selectedCategory = selectedCategory,
                                 searchQuery = searchQuery,
                                 cartItems = cartItems,
@@ -338,6 +394,10 @@ fun AnnapurnaRootApp() {
                                 onBackToBazaar = { currentTab = AnnapurnaTab.BAZAAR },
                                 modifier = contentModifier
                             )
+                        }
+
+                        AnnapurnaTab.OWNER -> {
+                            OwnerStockScreen(viewModel = ownerViewModel, modifier = contentModifier)
                         }
 
                         AnnapurnaTab.STUDIO -> {
