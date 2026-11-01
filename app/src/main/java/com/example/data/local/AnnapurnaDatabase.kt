@@ -5,7 +5,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-@Database(entities=[CartItemEntity::class,CustomerProfileEntity::class,OrderEntity::class,OwnerInventoryEntity::class,StockMovementEntity::class,ShopSettingsEntity::class,ShopLicenseEntity::class],version=4,exportSchema=false)
+@Database(entities=[CartItemEntity::class,CustomerProfileEntity::class,OrderEntity::class,OwnerInventoryEntity::class,StockMovementEntity::class,ShopSettingsEntity::class,ShopLicenseEntity::class],version=5,exportSchema=false)
 abstract class AnnapurnaDatabase:RoomDatabase() {
  abstract fun storeDao():StoreDao
  abstract fun ownerDao():OwnerDao
@@ -29,10 +29,16 @@ abstract class AnnapurnaDatabase:RoomDatabase() {
     db.execSQL("CREATE TABLE IF NOT EXISTS shop_licenses (licenseType TEXT NOT NULL PRIMARY KEY, licenseNumber TEXT NOT NULL, documentUri TEXT NOT NULL, updatedAtMillis INTEGER NOT NULL)")
    }
   }
+  private val MIGRATION_4_5=object:Migration(4,5) {
+   override fun migrate(db:SupportSQLiteDatabase) {
+    // Previous app versions stored kilogram-priced cart items as whole-kilo counts.
+    db.execSQL("UPDATE cart_items SET quantity = quantity * 1000 WHERE produceId NOT IN ('veg_spinach','veg_cauliflower','fruit_mango','fruit_banana')")
+   }
+  }
   fun getInstance(context:Context):AnnapurnaDatabase {
    return INSTANCE ?: synchronized(this) {
     INSTANCE ?: Room.databaseBuilder(context.applicationContext,AnnapurnaDatabase::class.java,"annapurna_veg_fruits.db")
-     .addMigrations(MIGRATION_1_2,MIGRATION_2_3,MIGRATION_3_4).build().also { INSTANCE=it }
+     .addMigrations(MIGRATION_1_2,MIGRATION_2_3,MIGRATION_3_4,MIGRATION_4_5).build().also { INSTANCE=it }
    }
   }
  }
