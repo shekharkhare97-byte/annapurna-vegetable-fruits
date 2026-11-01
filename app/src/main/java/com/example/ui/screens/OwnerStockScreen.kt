@@ -35,6 +35,7 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
  }
  var selected by remember { mutableStateOf<OwnerInventoryEntity?>(null) }
  var priceText by remember { mutableStateOf("") }
+ var purchasePriceText by remember { mutableStateOf("") }
  var quantityText by remember { mutableStateOf("1") }
  var ownerName by remember { mutableStateOf("") }
  var phone by remember { mutableStateOf("") }
@@ -86,8 +87,9 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
     Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp)) {
      Text(product?.marathiName ?: row.produceId,style=MaterialTheme.typography.titleMedium)
      Text("सध्याचा स्टॉक: $stock")
+     if (!countBased && row.purchasePricePaisePerKg > 0) Text("शेवटचा खरेदी दर: ₹${row.purchasePricePaisePerKg / 100} / किलो")
      Text("आजचा दर: ₹$price / $unit")
-     Button(onClick={selected=row; priceText=price.toString(); quantityText=if(countBased) "1" else "1000"}) { Text("दर / स्टॉक बदला") }
+     Button(onClick={selected=row; priceText=price.toString(); purchasePriceText=(row.purchasePricePaisePerKg/100).takeIf { it > 0 }?.toString().orEmpty(); quantityText=if(countBased) "1" else "1000"}) { Text("दर / स्टॉक बदला") }
     } }
    }
   }
@@ -98,9 +100,10 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
   AlertDialog(onDismissRequest={selected=null},title={Text(ProduceCatalog.findById(item.produceId)?.marathiName ?: "माल")},text={
    Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
     OutlinedTextField(priceText,{priceText=it.filter(Char::isDigit)},label={Text(if(countBased) "आजचा दर (₹ प्रति जुडी)" else "आजचा दर (₹ प्रति किलो)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
+    if (!countBased) OutlinedTextField(purchasePriceText,{purchasePriceText=it.filter(Char::isDigit)},label={Text("खरेदी दर (₹ प्रति किलो)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
     OutlinedTextField(quantityText,{quantityText=it.filter(Char::isDigit)},label={Text("प्रमाण ($unit)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-     Button(onClick={viewModel.recordPurchase(item.produceId,quantityText.toIntOrNull()?:0);selected=null}) { Text("खरेदी जोडा") }
+     Button(onClick={viewModel.recordPurchase(item.produceId,quantityText.toIntOrNull()?:0,purchasePriceText.toIntOrNull()?:0);selected=null}) { Text("खरेदी जोडा") }
      OutlinedButton(onClick={viewModel.recordWastage(item.produceId,quantityText.toIntOrNull()?:0);selected=null}) { Text("नासाडी") }
     }
    }
