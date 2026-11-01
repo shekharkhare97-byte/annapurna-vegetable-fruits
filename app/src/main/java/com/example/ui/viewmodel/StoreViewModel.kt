@@ -11,6 +11,7 @@ import com.example.data.local.OrderEntity
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceCategory
 import com.example.data.model.ProduceItem
+import com.example.data.model.formatCartQuantity
 import com.example.data.repository.CartLineItem
 import com.example.data.repository.StoreRepository
 import com.example.util.MarathiFormatters
@@ -221,7 +222,7 @@ class StoreViewModel(
         val items = cartItems.value
         if (items.isEmpty()) return "सध्या ग्राहकाची खरेदी पिशवी रिकामी आहे."
         val lines = items.joinToString("; ") {
-            "${it.produce.marathiName} × ${it.quantity} (₹${it.lineTotalRupees})"
+            "${it.produce.marathiName} × ${it.produce.formatCartQuantity(it.quantity)} (₹${it.lineTotalRupees})"
         }
         val total = items.sumOf { it.lineTotalRupees }
         return "$lines | एकूण रक्कम: ₹$total"
