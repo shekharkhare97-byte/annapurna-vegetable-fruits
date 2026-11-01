@@ -156,7 +156,7 @@ fun AnnapurnaRootApp() {
     val studioPrompt by aiViewModel.studioPrompt.collectAsStateWithLifecycle()
     val studioState by aiViewModel.studioState.collectAsStateWithLifecycle()
 
-    val totalCartItems = remember(cartItems) { cartItems.sumOf { it.quantity } }
+    val totalCartItems = remember(cartItems) { cartItems.size }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isWideScreen = maxWidth >= 600.dp
