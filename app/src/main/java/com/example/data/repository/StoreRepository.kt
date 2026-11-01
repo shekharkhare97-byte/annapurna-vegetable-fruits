@@ -6,6 +6,8 @@ import com.example.data.local.OrderEntity
 import com.example.data.local.StoreDao
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceItem
+import com.example.data.model.isWeightBased
+import com.example.data.model.formatCartQuantity
 import com.example.util.MarathiFormatters
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,7 +16,9 @@ data class CartLineItem(
     val produce: ProduceItem,
     val quantity: Int
 ) {
-    val lineTotalRupees: Int get() = produce.priceRupees * quantity
+    val lineTotalRupees: Int get() =
+        if (produce.isWeightBased()) (produce.priceRupees * quantity + 500) / 1000
+        else produce.priceRupees * quantity
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -36,7 +40,9 @@ class StoreRepository(private val storeDao: StoreDao) {
 
     suspend fun incrementItem(produceId: String) {
         val current = storeDao.getCartItem(produceId)
-        val nextQty = (current?.quantity ?: 0) + 1
+        val produce = ProduceCatalog.findById(produceId)
+        val step = if (produce?.isWeightBased() == true) 250 else 1
+        val nextQty = (current?.quantity ?: 0) + step
         storeDao.upsertCartItem(
             CartItemEntity(
                 produceId = produceId,
@@ -48,7 +54,9 @@ class StoreRepository(private val storeDao: StoreDao) {
 
     suspend fun decrementItem(produceId: String) {
         val current = storeDao.getCartItem(produceId) ?: return
-        val nextQty = current.quantity - 1
+        val produce = ProduceCatalog.findById(produceId)
+        val step = if (produce?.isWeightBased() == true) 250 else 1
+        val nextQty = current.quantity - step
         if (nextQty <= 0) {
             storeDao.deleteCartItem(produceId)
         } else {
@@ -82,12 +90,10 @@ class StoreRepository(private val storeDao: StoreDao) {
         items: List<CartLineItem>
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
-            "• ${line.produce.marathiName} (${line.produce.unitMarathi}) × ${
-                MarathiFormatters.toMarathiNumber(line.quantity)
-            } = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
+            "• ${line.produce.marathiName} (${line.produce.formatCartQuantity(line.quantity)}) = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
         }
         val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}" }
-        val totalQty = items.sumOf { it.quantity }
+        val totalQty = items.size
         val grandTotal = items.sumOf { it.lineTotalRupees }
         val now = System.currentTimeMillis()
 
@@ -114,8 +120,10 @@ class StoreRepository(private val storeDao: StoreDao) {
             val parts = pair.split(":")
             if (parts.size == 2) {
                 val id = parts[0]
-                val qty = parts[1].toIntOrNull() ?: 0
-                if (ProduceCatalog.findById(id) != null && qty > 0) {
+                val storedQty = parts[1].toIntOrNull() ?: 0
+                val produce = ProduceCatalog.findById(id)
+                val qty = if (produce?.isWeightBased() == true && storedQty in 1..99) storedQty * 1000 else storedQty
+                if (produce != null && qty > 0) {
                     val existing = storeDao.getCartItem(id)
                     storeDao.upsertCartItem(
                         CartItemEntity(
