@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.local.OrderEntity
 import com.example.data.repository.CartLineItem
+import com.example.data.model.formatCartQuantity
 import com.example.ui.viewmodel.CustomerFormState
 import com.example.util.MarathiFormatters
 
@@ -300,7 +301,7 @@ private fun CartLineCard(
                     )
                 }
                 Text(
-                    text = MarathiFormatters.toMarathiNumber(line.quantity),
+                    text = line.produce.formatCartQuantity(line.quantity),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

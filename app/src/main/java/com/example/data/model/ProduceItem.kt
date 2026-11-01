@@ -161,3 +161,22 @@ object ProduceCatalog {
 
     fun findById(id: String): ProduceItem? = byId[id]
 }
+
+
+/** Weight-priced items are billed by grams; bunches and pieces remain count-based. */
+fun ProduceItem.isWeightBased(): Boolean =
+    !unitMarathi.contains("जुडी") &&
+        !unitMarathi.contains("नग") &&
+        !unitMarathi.contains("डझन")
+
+/** Cart quantity is stored in grams for weight-priced items and in pieces for count-priced items. */
+fun ProduceItem.formatCartQuantity(quantity: Int): String {
+    if (!isWeightBased()) return "$quantity $unitMarathi"
+    val kilos = quantity / 1000
+    val grams = quantity % 1000
+    return when {
+        kilos > 0 && grams > 0 -> "$kilos किलो $grams ग्रॅम"
+        kilos > 0 -> "$kilos किलो"
+        else -> "$grams ग्रॅम"
+    }
+}
