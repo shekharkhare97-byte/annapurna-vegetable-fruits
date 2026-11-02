@@ -52,7 +52,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         )
     }
 
-    suspend fun decrementItem(produceId: String) {
+    suspend fun setItemQuantity(produceId: String, quantity: Int) {\n        val produce = ProduceCatalog.findById(produceId) ?: return\n        if (quantity <= 0) {\n            storeDao.deleteCartItem(produceId)\n            return\n        }\n        val current = storeDao.getCartItem(produceId)\n        storeDao.upsertCartItem(\n            CartItemEntity(\n                produceId = produceId,\n                quantity = if (produce.isWeightBased()) quantity else quantity,\n                addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis()\n            )\n        )\n    }\n\n    suspend fun decrementItem(produceId: String) {
         val current = storeDao.getCartItem(produceId) ?: return
         val produce = ProduceCatalog.findById(produceId)
         val step = if (produce?.isWeightBased() == true) 250 else 1
