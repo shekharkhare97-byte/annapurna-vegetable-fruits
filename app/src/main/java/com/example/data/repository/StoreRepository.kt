@@ -52,7 +52,23 @@ class StoreRepository(private val storeDao: StoreDao) {
         )
     }
 
-    suspend fun setItemQuantity(produceId: String, quantity: Int) {\n        val produce = ProduceCatalog.findById(produceId) ?: return\n        if (quantity <= 0) {\n            storeDao.deleteCartItem(produceId)\n            return\n        }\n        val current = storeDao.getCartItem(produceId)\n        storeDao.upsertCartItem(\n            CartItemEntity(\n                produceId = produceId,\n                quantity = if (produce.isWeightBased()) quantity else quantity,\n                addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis()\n            )\n        )\n    }\n\n    suspend fun decrementItem(produceId: String) {
+    suspend fun setItemQuantity(produceId: String, quantity: Int) {
+        val produce = ProduceCatalog.findById(produceId) ?: return
+        if (quantity <= 0) {
+            storeDao.deleteCartItem(produceId)
+            return
+        }
+        val current = storeDao.getCartItem(produceId)
+        storeDao.upsertCartItem(
+            CartItemEntity(
+                produceId = produceId,
+                quantity = if (produce.isWeightBased()) quantity else quantity,
+                addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun decrementItem(produceId: String) {
         val current = storeDao.getCartItem(produceId) ?: return
         val produce = ProduceCatalog.findById(produceId)
         val step = if (produce?.isWeightBased() == true) 250 else 1
@@ -89,7 +105,8 @@ class StoreRepository(private val storeDao: StoreDao) {
         deliveryAddress: String,
         items: List<CartLineItem>
     ): OrderEntity {
-        val summaryLines = items.joinToString(separator = "\n") { line ->
+        val summaryLines = items.joinToString(separator = "
+") { line ->
             "• ${line.produce.marathiName} (${line.produce.formatCartQuantity(line.quantity)}) = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
         }
         val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}" }
