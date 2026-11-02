@@ -122,7 +122,14 @@ class StoreViewModel(
         }
     }
 
-    fun setCartQuantity(produceId: String, quantity: Int) {\n        viewModelScope.launch {\n            repository.setItemQuantity(produceId, quantity)\n            _formState.update { it.copy(cartErrorMarathi = null) }\n        }\n    }\n\n    fun decreaseQuantity(produceId: String) {
+    fun setCartQuantity(produceId: String, quantity: Int) {
+        viewModelScope.launch {
+            repository.setItemQuantity(produceId, quantity)
+            _formState.update { it.copy(cartErrorMarathi = null) }
+        }
+    }
+
+    fun decreaseQuantity(produceId: String) {
         viewModelScope.launch {
             repository.decrementItem(produceId)
         }
