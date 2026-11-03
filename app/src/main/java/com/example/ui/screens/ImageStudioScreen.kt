@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -83,6 +85,16 @@ fun ImageStudioScreen(
 
     val context = LocalContext.current
     val isGenerating = studioState is StudioUiState.Generating
+    val galleryPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = context.contentResolver.getType(uri) ?: "image/*"
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(android.content.Intent.createChooser(shareIntent, "फोटो शेअर करा"))
+        }
+    }
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -224,6 +236,16 @@ fun ImageStudioScreen(
                                 modifier = Modifier.testTag("studio_preset_$idx")
                             )
                         }
+                    }
+
+                    OutlinedButton(
+                        onClick = { galleryPicker.launch("image/*") },
+                        enabled = !isGenerating,
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Icon(Icons.Default.Image, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("गॅलरीमधून फोटो निवडा / शेअर करा")
                     }
 
                     Button(
