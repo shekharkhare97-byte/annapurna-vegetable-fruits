@@ -78,6 +78,7 @@ import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceCategory
 import com.example.data.model.ProduceItem
 import com.example.data.model.formatCartQuantity
+import com.example.data.model.isWeightBased
 import com.example.data.repository.CartLineItem
 import com.example.util.MarathiFormatters
 
@@ -93,6 +94,7 @@ fun BazaarHomeScreen(
     onSelectCategory: (ProduceCategory) -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onAddToCart: (String) -> Unit,
+    onSetCartQuantity: (String, Int) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onOpenDetail: (ProduceItem?) -> Unit,
     onGoToCart: () -> Unit,
@@ -207,6 +209,7 @@ fun BazaarHomeScreen(
                 item = selectedDetailItem,
                 quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
                 onAdd = { onAddToCart(selectedDetailItem.id) },
+                onSetQuantity = { grams -> onSetCartQuantity(selectedDetailItem.id, grams) },
                 onDecrease = { onDecreaseQty(selectedDetailItem.id) },
                 onAskAiRecipe = {
                     val chosen = selectedDetailItem
@@ -670,6 +673,7 @@ private fun ProduceDetailSheetContent(
     item: ProduceItem,
     quantityInCart: Int,
     onAdd: () -> Unit,
+    onSetQuantity: (Int) -> Unit,
     onDecrease: () -> Unit,
     onAskAiRecipe: () -> Unit
 ) {
@@ -717,6 +721,23 @@ private fun ProduceDetailSheetContent(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        if (item.isWeightBased()) {
+            Spacer(modifier = Modifier.height(14.dp))
+            Text("वजन निवडा", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                listOf(125, 250, 500).forEach { grams ->
+                    FilterChip(selected = quantityInCart == grams, onClick = { onSetQuantity(grams) }, label = { Text("${grams}g") })
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                listOf(750, 1000, 2000, 5000).forEach { grams ->
+                    FilterChip(selected = quantityInCart == grams, onClick = { onSetQuantity(grams) }, label = { Text(if (grams >= 1000) "${grams / 1000}kg" else "${grams}g") })
+                }
+            }
+            Text("निवडलेल्या वजनाची किंमत आपोआप मोजली जाईल.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        }
         Spacer(modifier = Modifier.height(18.dp))
 
         Row(
