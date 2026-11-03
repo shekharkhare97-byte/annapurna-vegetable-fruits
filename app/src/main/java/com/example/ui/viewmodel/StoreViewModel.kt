@@ -10,6 +10,8 @@ import com.example.data.local.AnnapurnaDatabase
 import com.example.data.local.OrderEntity
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceCategory
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.example.data.model.ProduceItem
 import com.example.data.repository.CartLineItem
 import com.example.data.repository.StoreRepository
@@ -38,6 +40,7 @@ class StoreViewModel(
 ) : ViewModel() {
 
     private val _selectedCategory = MutableStateFlow(ProduceCategory.ALL)
+    private var productsListener: ListenerRegistration? = null
     val selectedCategory: StateFlow<ProduceCategory> = _selectedCategory.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
@@ -46,12 +49,15 @@ class StoreViewModel(
     private val _selectedProduceDetail = MutableStateFlow<ProduceItem?>(null)
     val selectedProduceDetail: StateFlow<ProduceItem?> = _selectedProduceDetail.asStateFlow()
 
+    private val _adminProducts = MutableStateFlow<List<ProduceItem>>(emptyList())
+
     val filteredProduce: StateFlow<List<ProduceItem>> = combine(
         _selectedCategory,
-        _searchQuery
-    ) { category, rawQuery ->
+        _searchQuery,
+        _adminProducts
+    ) { category, rawQuery, products ->
         val query = rawQuery.trim().lowercase()
-        ProduceCatalog.items.filter { item ->
+        products.filter { item ->
             val matchesCategory = category == ProduceCategory.ALL || item.category == category
             val matchesQuery = query.isEmpty() ||
                 item.marathiName.lowercase().contains(query) ||
@@ -62,7 +68,7 @@ class StoreViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ProduceCatalog.items
+        initialValue = emptyList()
     )
 
     val cartItems: StateFlow<List<CartLineItem>> = repository.cartLineItems.stateIn(
@@ -86,6 +92,38 @@ class StoreViewModel(
     private var profileHydrated = false
 
     init {
+        productsListener = FirebaseFirestore.getInstance().collection("products")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val products = snapshot.documents.mapNotNull { doc ->
+                    val imageUrl = doc.getString("imageUrl")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                    if (doc.getBoolean("isVisible") != true) return@mapNotNull null
+                    val stock = doc.getDouble("stock") ?: (doc.getLong("stock")?.toDouble() ?: 0.0)
+                    if (stock <= 0.0) return@mapNotNull null
+                    val rate = doc.getDouble("pricePerKg")
+                        ?: doc.getLong("pricePerKg")?.toDouble()
+                        ?: doc.getDouble("price")
+                        ?: doc.getLong("price")?.toDouble()
+                        ?: return@mapNotNull null
+                    val name = doc.getString("name")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                    val category = if (doc.getString("category") == "fruit") ProduceCategory.FRUIT else ProduceCategory.VEGETABLE
+                    ProduceItem(
+                        id = doc.id,
+                        marathiName = name,
+                        englishKeywords = name.lowercase(),
+                        category = category,
+                        priceRupees = rate.toInt(),
+                        unitMarathi = "१ किलो",
+                        badgeMarathi = "ताजा माल",
+                        descriptionMarathi = name,
+                        imageRes = if (category == ProduceCategory.FRUIT) R.drawable.img_prod_mango else R.drawable.img_prod_tomato,
+                        imageUrl = imageUrl
+                    )
+                }
+                ProduceCatalog.replaceFromAdmin(products)
+                _adminProducts.value = products
+            }
+
         viewModelScope.launch {
             repository.customerProfile.collect { saved ->
                 if (!profileHydrated && saved != null) {
@@ -102,7 +140,7 @@ class StoreViewModel(
         }
     }
 
-    fun selectCategory(category: ProduceCategory) {
+    override fun onCleared() {\n        productsListener?.remove()\n        super.onCleared()\n    }\n\n    fun selectCategory(category: ProduceCategory) {
         _selectedCategory.value = category
     }
 
