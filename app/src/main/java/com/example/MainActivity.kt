@@ -306,7 +306,7 @@ fun AnnapurnaRootApp() {
                                 formState = formState,
                                 recentOrders = recentOrders,
                                 confirmedOrder = confirmedOrder,
-                                onIncreaseQty = storeViewModel::addToCart,
+                                onIncreaseQty = { id -> storeViewModel.addToCart(id) },
                                 onDecreaseQty = storeViewModel::decreaseQuantity,
                                 onRemoveItem = storeViewModel::removeFromCart,
                                 onClearCart = storeViewModel::clearCart,
