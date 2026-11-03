@@ -6,15 +6,17 @@ import com.example.data.local.OrderEntity
 import com.example.data.local.StoreDao
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceItem
+import com.example.data.model.WeightPricing
 import com.example.util.MarathiFormatters
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 data class CartLineItem(
     val produce: ProduceItem,
-    val quantity: Int
+    val quantity: Int,
+    val weightGrams: Int
 ) {
-    val lineTotalRupees: Int get() = produce.priceRupees * quantity
+    val lineTotalRupees: Int get() = (WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity / 100L).toInt()
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -23,7 +25,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         entities.mapNotNull { entity ->
             val produce = ProduceCatalog.findById(entity.produceId)
             if (produce != null && entity.quantity > 0) {
-                CartLineItem(produce = produce, quantity = entity.quantity)
+                CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = entity.weightGrams)
             } else {
                 null
             }
@@ -34,13 +36,14 @@ class StoreRepository(private val storeDao: StoreDao) {
 
     val recentOrders: Flow<List<OrderEntity>> = storeDao.observeAllOrders()
 
-    suspend fun incrementItem(produceId: String) {
+    suspend fun incrementItem(produceId: String, weightGrams: Int = 1000) {
         val current = storeDao.getCartItem(produceId)
         val nextQty = (current?.quantity ?: 0) + 1
         storeDao.upsertCartItem(
             CartItemEntity(
                 produceId = produceId,
                 quantity = nextQty,
+                weightGrams = if (current == null) weightGrams else current.weightGrams,
                 addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis()
             )
         )
@@ -82,11 +85,11 @@ class StoreRepository(private val storeDao: StoreDao) {
         items: List<CartLineItem>
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
-            "• ${line.produce.marathiName} (${line.produce.unitMarathi}) × ${
+            "• ${line.produce.marathiName} (${WeightPricing.formatWeightMarathi(line.weightGrams)}) × ${
                 MarathiFormatters.toMarathiNumber(line.quantity)
             } = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
         }
-        val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}" }
+        val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}:${it.weightGrams}" }
         val totalQty = items.sumOf { it.quantity }
         val grandTotal = items.sumOf { it.lineTotalRupees }
         val now = System.currentTimeMillis()
