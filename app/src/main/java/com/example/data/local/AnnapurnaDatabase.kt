@@ -1,37 +1,45 @@
 package com.example.data.local
-
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-
-@Database(
-    entities = [
-        CartItemEntity::class,
-        CustomerProfileEntity::class,
-        OrderEntity::class
-    ],
-    version = 1,
-    exportSchema = false
-)
-abstract class AnnapurnaDatabase : RoomDatabase() {
-    abstract fun storeDao(): StoreDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: AnnapurnaDatabase? = null
-
-        fun getInstance(context: Context): AnnapurnaDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: Room.databaseBuilder(
-                    context.applicationContext,
-                    AnnapurnaDatabase::class.java,
-                    "annapurna_veg_fruits.db"
-                )
-                    .fallbackToDestructiveMigration(dropAllTables = true)
-                    .build()
-                    .also { INSTANCE = it }
-            }
-        }
-    }
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+@Database(entities=[CartItemEntity::class,CustomerProfileEntity::class,OrderEntity::class,OwnerInventoryEntity::class,StockMovementEntity::class,ShopSettingsEntity::class,ShopLicenseEntity::class],version=5,exportSchema=false)
+abstract class AnnapurnaDatabase:RoomDatabase() {
+ abstract fun storeDao():StoreDao
+ abstract fun ownerDao():OwnerDao
+ companion object {
+  @Volatile private var INSTANCE:AnnapurnaDatabase?=null
+  private val MIGRATION_1_2=object:Migration(1,2) {
+   override fun migrate(db:SupportSQLiteDatabase) {
+    db.execSQL("CREATE TABLE IF NOT EXISTS owner_inventory (produceId TEXT NOT NULL PRIMARY KEY, stockGrams INTEGER NOT NULL, purchasePricePaisePerKg INTEGER NOT NULL, sellingPricePaisePerKg INTEGER NOT NULL, updatedAtMillis INTEGER NOT NULL)")
+    db.execSQL("CREATE TABLE IF NOT EXISTS stock_movements (movementId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, produceId TEXT NOT NULL, movementType TEXT NOT NULL, quantityGrams INTEGER NOT NULL, note TEXT NOT NULL, createdAtMillis INTEGER NOT NULL)")
+    db.execSQL("CREATE TABLE IF NOT EXISTS shop_settings (id INTEGER NOT NULL PRIMARY KEY, ownerName TEXT NOT NULL, phoneNumber TEXT NOT NULL)")
+   }
+  }
+  private val MIGRATION_2_3=object:Migration(2,3) {
+   override fun migrate(db:SupportSQLiteDatabase) {
+    db.execSQL("ALTER TABLE owner_inventory ADD COLUMN stockUnits INTEGER NOT NULL DEFAULT 0")
+    db.execSQL("ALTER TABLE owner_inventory ADD COLUMN sellingPricePaisePerUnit INTEGER NOT NULL DEFAULT 0")
+   }
+  }
+  private val MIGRATION_3_4=object:Migration(3,4) {
+   override fun migrate(db:SupportSQLiteDatabase) {
+    db.execSQL("CREATE TABLE IF NOT EXISTS shop_licenses (licenseType TEXT NOT NULL PRIMARY KEY, licenseNumber TEXT NOT NULL, documentUri TEXT NOT NULL, updatedAtMillis INTEGER NOT NULL)")
+   }
+  }
+  private val MIGRATION_4_5=object:Migration(4,5) {
+   override fun migrate(db:SupportSQLiteDatabase) {
+    // Previous app versions stored kilogram-priced cart items as whole-kilo counts.
+    db.execSQL("UPDATE cart_items SET quantity = quantity * 1000 WHERE produceId NOT IN ('veg_spinach','veg_cauliflower','fruit_mango','fruit_banana')")
+   }
+  }
+  fun getInstance(context:Context):AnnapurnaDatabase {
+   return INSTANCE ?: synchronized(this) {
+    INSTANCE ?: Room.databaseBuilder(context.applicationContext,AnnapurnaDatabase::class.java,"annapurna_veg_fruits.db")
+     .addMigrations(MIGRATION_1_2,MIGRATION_2_3,MIGRATION_3_4,MIGRATION_4_5).build().also { INSTANCE=it }
+   }
+  }
+ }
 }

@@ -73,9 +73,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.R
+import com.example.data.local.ShopLicenseEntity
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceCategory
 import com.example.data.model.ProduceItem
+import com.example.data.model.formatCartQuantity
+import com.example.data.model.isWeightBased
 import com.example.data.repository.CartLineItem
 import com.example.util.MarathiFormatters
 
@@ -83,6 +86,7 @@ import com.example.util.MarathiFormatters
 @Composable
 fun BazaarHomeScreen(
     produceItems: List<ProduceItem>,
+    publicLicenses: List<ShopLicenseEntity>,
     selectedCategory: ProduceCategory,
     searchQuery: String,
     cartItems: List<CartLineItem>,
@@ -90,6 +94,7 @@ fun BazaarHomeScreen(
     onSelectCategory: (ProduceCategory) -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onAddToCart: (String) -> Unit,
+    onSetCartQuantity: (String, Int) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onOpenDetail: (ProduceItem?) -> Unit,
     onGoToCart: () -> Unit,
@@ -99,7 +104,7 @@ fun BazaarHomeScreen(
     val qtyMap = remember(cartItems) {
         cartItems.associate { it.produce.id to it.quantity }
     }
-    val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
+    val totalCartQty = remember(cartItems) { cartItems.size }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -118,7 +123,33 @@ fun BazaarHomeScreen(
                 .testTag("produce_grid")
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
+                WelcomeOrderChooser(
+                    onVegetables = { onSelectCategory(ProduceCategory.VEGETABLE) },
+                    onFruits = { onSelectCategory(ProduceCategory.FRUIT) }
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 HeroMarketBanner()
+            }
+            if (publicLicenses.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text("नोंदणीकृत दुकान", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            publicLicenses.forEach { license ->
+                                val label = when (license.licenseType) {
+                                    "SHOP_ACT" -> "Shop Act Licence No."
+                                    "FSSAI" -> "FSSAI Food Licence No."
+                                    "UDYAM" -> "Udyam Registration No."
+                                    else -> "नोंदणी क्रमांक"
+                                }
+                                Text("$label: ${license.licenseNumber}", style = MaterialTheme.typography.bodyMedium)
+                            }
+                            Text("परवाना कागदपत्रे दुकानाकडून अपलोड केलेली आहेत.", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -178,6 +209,7 @@ fun BazaarHomeScreen(
                 item = selectedDetailItem,
                 quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
                 onAdd = { onAddToCart(selectedDetailItem.id) },
+                onSetQuantity = { grams -> onSetCartQuantity(selectedDetailItem.id, grams) },
                 onDecrease = { onDecreaseQty(selectedDetailItem.id) },
                 onAskAiRecipe = {
                     val chosen = selectedDetailItem
@@ -185,6 +217,33 @@ fun BazaarHomeScreen(
                     onAskRecipeInChat(chosen)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun WelcomeOrderChooser(
+    onVegetables: () -> Unit,
+    onFruits: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Text("Welcome अन्नपूर्णा व्हेजिटेबल अँड फ्रूट्स", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text("आज काय ऑर्डर करणार? भाजी की फळे?", style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Card(onClick = onVegetables, modifier = Modifier.weight(1f).height(112.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🥬", style = MaterialTheme.typography.headlineMedium)
+                    Text("भाजीपाला", fontWeight = FontWeight.Bold)
+                    Text("भाज्या पाहा", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Card(onClick = onFruits, modifier = Modifier.weight(1f).height(112.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🍎", style = MaterialTheme.typography.headlineMedium)
+                    Text("फळे", fontWeight = FontWeight.Bold)
+                    Text("फळे पाहा", style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
     }
 }
@@ -478,7 +537,7 @@ private fun ProduceGridCard(
                             }
 
                             Text(
-                                text = MarathiFormatters.toMarathiNumber(quantityInCart),
+                                text = item.formatCartQuantity(quantityInCart),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold
@@ -614,6 +673,7 @@ private fun ProduceDetailSheetContent(
     item: ProduceItem,
     quantityInCart: Int,
     onAdd: () -> Unit,
+    onSetQuantity: (Int) -> Unit,
     onDecrease: () -> Unit,
     onAskAiRecipe: () -> Unit
 ) {
@@ -661,6 +721,23 @@ private fun ProduceDetailSheetContent(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        if (item.isWeightBased()) {
+            Spacer(modifier = Modifier.height(14.dp))
+            Text("वजन निवडा", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                listOf(125, 250, 500).forEach { grams ->
+                    FilterChip(selected = quantityInCart == grams, onClick = { onSetQuantity(grams) }, label = { Text("${grams}g") })
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                listOf(750, 1000, 2000, 5000).forEach { grams ->
+                    FilterChip(selected = quantityInCart == grams, onClick = { onSetQuantity(grams) }, label = { Text(if (grams >= 1000) "${grams / 1000}kg" else "${grams}g") })
+                }
+            }
+            Text("निवडलेल्या वजनाची किंमत आपोआप मोजली जाईल.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        }
         Spacer(modifier = Modifier.height(18.dp))
 
         Row(
