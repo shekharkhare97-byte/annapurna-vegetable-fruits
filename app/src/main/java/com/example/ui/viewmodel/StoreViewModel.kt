@@ -94,6 +94,7 @@ class StoreViewModel(
 
     init {
         productsListener = FirebaseFirestore.getInstance().collection("products")
+            .whereEqualTo("isVisible", true)
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
                 val products = snapshot.documents.mapNotNull { doc ->
