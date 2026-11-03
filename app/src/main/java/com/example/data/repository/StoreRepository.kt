@@ -16,7 +16,7 @@ data class CartLineItem(
     val quantity: Int,
     val weightGrams: Int
 ) {
-    val lineTotalRupees: Int get() = (WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity / 100L).toInt()
+    val lineTotalRupees: Int get() = ((WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity + 50L) / 100L).toInt()
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -43,10 +43,15 @@ class StoreRepository(private val storeDao: StoreDao) {
             CartItemEntity(
                 produceId = produceId,
                 quantity = nextQty,
-                weightGrams = if (current == null) weightGrams else current.weightGrams,
+                weightGrams = weightGrams,
                 addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis()
             )
         )
+    }
+
+    suspend fun incrementQuantity(produceId: String) {
+        val current = storeDao.getCartItem(produceId) ?: return
+        storeDao.upsertCartItem(current.copy(quantity = current.quantity + 1))
     }
 
     suspend fun decrementItem(produceId: String) {
