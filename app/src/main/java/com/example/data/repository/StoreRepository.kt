@@ -105,8 +105,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         deliveryAddress: String,
         items: List<CartLineItem>
     ): OrderEntity {
-        val summaryLines = items.joinToString(separator = "
-") { line ->
+        val summaryLines = items.joinToString(separator = "\n") { line ->
             "• ${line.produce.marathiName} (${line.produce.formatCartQuantity(line.quantity)}) = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
         }
         val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}" }
