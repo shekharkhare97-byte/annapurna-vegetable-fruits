@@ -114,9 +114,9 @@ class StoreViewModel(
         _selectedProduceDetail.value = item
     }
 
-    fun addToCart(produceId: String) {
+    fun addToCart(produceId: String, weightGrams: Int = 1000) {
         viewModelScope.launch {
-            repository.incrementItem(produceId)
+            repository.incrementItem(produceId, weightGrams)
             _formState.update { it.copy(cartErrorMarathi = null) }
         }
     }
