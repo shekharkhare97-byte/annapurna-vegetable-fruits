@@ -60,6 +60,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -89,7 +92,7 @@ fun BazaarHomeScreen(
     selectedDetailItem: ProduceItem?,
     onSelectCategory: (ProduceCategory) -> Unit,
     onSearchQueryChange: (String) -> Unit,
-    onAddToCart: (String) -> Unit,
+    onAddToCart: (String, Int) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onOpenDetail: (ProduceItem?) -> Unit,
     onGoToCart: () -> Unit,
@@ -101,6 +104,7 @@ fun BazaarHomeScreen(
     }
     val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
+    var weightDialogItem by remember { mutableStateOf<ProduceItem?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -146,7 +150,7 @@ fun BazaarHomeScreen(
                         item = item,
                         quantityInCart = qtyMap[item.id] ?: 0,
                         onCardClick = { onOpenDetail(item) },
-                        onAdd = { onAddToCart(item.id) },
+                        onAdd = { weightDialogItem = item },
                         onDecrease = { onDecreaseQty(item.id) }
                     )
                 }
@@ -169,6 +173,17 @@ fun BazaarHomeScreen(
         }
     }
 
+    if (weightDialogItem != null) {
+        WeightSelectionDialog(
+            item = weightDialogItem!!,
+            onDismiss = { weightDialogItem = null },
+            onConfirm = { grams ->
+                onAddToCart(weightDialogItem!!.id, grams)
+                weightDialogItem = null
+            }
+        )
+    }
+
     if (selectedDetailItem != null) {
         ModalBottomSheet(
             onDismissRequest = { onOpenDetail(null) },
@@ -177,7 +192,7 @@ fun BazaarHomeScreen(
             ProduceDetailSheetContent(
                 item = selectedDetailItem,
                 quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
-                onAdd = { onAddToCart(selectedDetailItem.id) },
+                onAdd = { weightDialogItem = selectedDetailItem },
                 onDecrease = { onDecreaseQty(selectedDetailItem.id) },
                 onAskAiRecipe = {
                     val chosen = selectedDetailItem
