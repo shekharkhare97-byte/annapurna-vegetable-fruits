@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.content.Context
+import com.example.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -140,7 +141,12 @@ class StoreViewModel(
         }
     }
 
-    override fun onCleared() {\n        productsListener?.remove()\n        super.onCleared()\n    }\n\n    fun selectCategory(category: ProduceCategory) {
+    override fun onCleared() {
+        productsListener?.remove()
+        super.onCleared()
+    }
+
+    fun selectCategory(category: ProduceCategory) {
         _selectedCategory.value = category
     }
 
