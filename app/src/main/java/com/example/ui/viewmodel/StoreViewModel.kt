@@ -121,6 +121,10 @@ class StoreViewModel(
         }
     }
 
+    fun increaseQuantity(produceId: String) {
+        viewModelScope.launch { repository.incrementQuantity(produceId) }
+    }
+
     fun decreaseQuantity(produceId: String) {
         viewModelScope.launch {
             repository.decrementItem(produceId)
