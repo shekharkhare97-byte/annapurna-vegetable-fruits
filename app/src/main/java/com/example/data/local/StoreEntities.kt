@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class CartItemEntity(
     @PrimaryKey val produceId: String,
     val quantity: Int,
+    val weightGrams: Int = 1000,
     val addedAtMillis: Long = System.currentTimeMillis()
 )
 
@@ -25,7 +26,7 @@ data class OrderEntity(
     val mobileNumber: String,
     val deliveryAddress: String,
     val itemsSummaryMarathi: String,
-    val serializedItems: String, // format: produceId:qty,produceId:qty
+    val serializedItems: String, // format: produceId:qty:weightGrams
     val totalItemsCount: Int,
     val totalAmountRupees: Int,
     val createdAtMillis: Long = System.currentTimeMillis()

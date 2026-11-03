@@ -60,6 +60,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,6 +71,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -89,7 +93,7 @@ fun BazaarHomeScreen(
     selectedDetailItem: ProduceItem?,
     onSelectCategory: (ProduceCategory) -> Unit,
     onSearchQueryChange: (String) -> Unit,
-    onAddToCart: (String) -> Unit,
+    onAddToCart: (String, Int) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onOpenDetail: (ProduceItem?) -> Unit,
     onGoToCart: () -> Unit,
@@ -101,6 +105,7 @@ fun BazaarHomeScreen(
     }
     val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
+    var weightDialogItem by remember { mutableStateOf<ProduceItem?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -146,7 +151,7 @@ fun BazaarHomeScreen(
                         item = item,
                         quantityInCart = qtyMap[item.id] ?: 0,
                         onCardClick = { onOpenDetail(item) },
-                        onAdd = { onAddToCart(item.id) },
+                        onAdd = { weightDialogItem = item },
                         onDecrease = { onDecreaseQty(item.id) }
                     )
                 }
@@ -169,6 +174,17 @@ fun BazaarHomeScreen(
         }
     }
 
+    if (weightDialogItem != null) {
+        WeightSelectionDialog(
+            item = weightDialogItem!!,
+            onDismiss = { weightDialogItem = null },
+            onConfirm = { grams ->
+                onAddToCart(weightDialogItem!!.id, grams)
+                weightDialogItem = null
+            }
+        )
+    }
+
     if (selectedDetailItem != null) {
         ModalBottomSheet(
             onDismissRequest = { onOpenDetail(null) },
@@ -177,7 +193,7 @@ fun BazaarHomeScreen(
             ProduceDetailSheetContent(
                 item = selectedDetailItem,
                 quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
-                onAdd = { onAddToCart(selectedDetailItem.id) },
+                onAdd = { weightDialogItem = selectedDetailItem },
                 onDecrease = { onDecreaseQty(selectedDetailItem.id) },
                 onAskAiRecipe = {
                     val chosen = selectedDetailItem
@@ -378,12 +394,21 @@ private fun ProduceGridCard(
                     .aspectRatio(1.08f)
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                Image(
-                    painter = painterResource(id = item.imageRes),
-                    contentDescription = item.marathiName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (item.imageUrl.isNullOrBlank()) {
+                    Image(
+                        painter = painterResource(id = item.imageRes),
+                        contentDescription = item.marathiName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    AsyncImage(
+                        model = item.imageUrl,
+                        contentDescription = item.marathiName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.94f),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -623,15 +648,21 @@ private fun ProduceDetailSheetContent(
             .padding(horizontal = 20.dp)
             .padding(bottom = 28.dp)
     ) {
-        Image(
-            painter = painterResource(id = item.imageRes),
-            contentDescription = item.marathiName,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-                .clip(MaterialTheme.shapes.large)
-        )
+        if (item.imageUrl.isNullOrBlank()) {
+            Image(
+                painter = painterResource(id = item.imageRes),
+                contentDescription = item.marathiName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
+            )
+        } else {
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.marathiName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,

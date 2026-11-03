@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.local.OrderEntity
 import com.example.data.repository.CartLineItem
+import com.example.data.model.WeightPricing
 import com.example.ui.viewmodel.CustomerFormState
 import com.example.util.MarathiFormatters
 
@@ -276,7 +277,7 @@ private fun CartLineCard(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / ${line.produce.unitMarathi}",
+                    text = "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

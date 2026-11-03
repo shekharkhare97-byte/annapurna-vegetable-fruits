@@ -6,15 +6,19 @@ import com.example.data.local.OrderEntity
 import com.example.data.local.StoreDao
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceItem
+import com.example.data.model.WeightPricing
 import com.example.util.MarathiFormatters
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 data class CartLineItem(
     val produce: ProduceItem,
-    val quantity: Int
+    val quantity: Int,
+    val weightGrams: Int
 ) {
-    val lineTotalRupees: Int get() = produce.priceRupees * quantity
+    val lineTotalRupees: Int get() = ((WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity + 50L) / 100L).toInt()
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -23,7 +27,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         entities.mapNotNull { entity ->
             val produce = ProduceCatalog.findById(entity.produceId)
             if (produce != null && entity.quantity > 0) {
-                CartLineItem(produce = produce, quantity = entity.quantity)
+                CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = entity.weightGrams)
             } else {
                 null
             }
@@ -34,16 +38,22 @@ class StoreRepository(private val storeDao: StoreDao) {
 
     val recentOrders: Flow<List<OrderEntity>> = storeDao.observeAllOrders()
 
-    suspend fun incrementItem(produceId: String) {
+    suspend fun incrementItem(produceId: String, weightGrams: Int = 1000) {
         val current = storeDao.getCartItem(produceId)
         val nextQty = (current?.quantity ?: 0) + 1
         storeDao.upsertCartItem(
             CartItemEntity(
                 produceId = produceId,
                 quantity = nextQty,
+                weightGrams = weightGrams,
                 addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis()
             )
         )
+    }
+
+    suspend fun incrementQuantity(produceId: String) {
+        val current = storeDao.getCartItem(produceId) ?: return
+        storeDao.upsertCartItem(current.copy(quantity = current.quantity + 1))
     }
 
     suspend fun decrementItem(produceId: String) {
@@ -82,11 +92,11 @@ class StoreRepository(private val storeDao: StoreDao) {
         items: List<CartLineItem>
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
-            "• ${line.produce.marathiName} (${line.produce.unitMarathi}) × ${
+            "• ${line.produce.marathiName} (${WeightPricing.formatWeightMarathi(line.weightGrams)}) × ${
                 MarathiFormatters.toMarathiNumber(line.quantity)
             } = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
         }
-        val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}" }
+        val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}:${it.weightGrams}" }
         val totalQty = items.sumOf { it.quantity }
         val grandTotal = items.sumOf { it.lineTotalRupees }
         val now = System.currentTimeMillis()
@@ -102,6 +112,35 @@ class StoreRepository(private val storeDao: StoreDao) {
             createdAtMillis = now
         )
         val generatedId = storeDao.insertOrder(draftOrder)
+
+        // Firestore queues this write while offline and syncs it when connectivity returns.
+        val remoteOrder = FirebaseFirestore.getInstance().collection("orders").document()
+        val remoteItems = items.map { line ->
+            mapOf(
+                "productId" to line.produce.id,
+                "name" to line.produce.marathiName,
+                "weightGrams" to line.weightGrams,
+                "quantity" to line.quantity,
+                "pricePerKgRupees" to line.produce.priceRupees,
+                "lineTotalRupees" to line.lineTotalRupees
+            )
+        }
+        remoteOrder.set(
+            mapOf(
+                "orderId" to remoteOrder.id,
+                "customerName" to customerName.trim(),
+                "mobileNumber" to mobileNumber.trim(),
+                "deliveryAddress" to deliveryAddress.trim(),
+                "items" to remoteItems,
+                "itemsSummaryMarathi" to summaryLines,
+                "totalItemsCount" to totalQty,
+                "totalAmountRupees" to grandTotal,
+                "status" to "new",
+                "createdAt" to FieldValue.serverTimestamp(),
+                "createdAtMillis" to now
+            )
+        )
+
         saveCustomerProfile(customerName.trim(), mobileNumber.trim(), deliveryAddress.trim())
         storeDao.clearCart()
         return draftOrder.copy(orderId = generatedId)
@@ -112,15 +151,17 @@ class StoreRepository(private val storeDao: StoreDao) {
         val pairs = order.serializedItems.split(",")
         for (pair in pairs) {
             val parts = pair.split(":")
-            if (parts.size == 2) {
+            if (parts.size >= 2) {
                 val id = parts[0]
                 val qty = parts[1].toIntOrNull() ?: 0
+                val grams = parts.getOrNull(2)?.toIntOrNull() ?: 1000
                 if (ProduceCatalog.findById(id) != null && qty > 0) {
                     val existing = storeDao.getCartItem(id)
                     storeDao.upsertCartItem(
                         CartItemEntity(
                             produceId = id,
                             quantity = (existing?.quantity ?: 0) + qty,
+                            weightGrams = existing?.weightGrams ?: grams,
                             addedAtMillis = existing?.addedAtMillis ?: System.currentTimeMillis()
                         )
                     )
