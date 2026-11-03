@@ -115,15 +115,17 @@ class StoreRepository(private val storeDao: StoreDao) {
         val pairs = order.serializedItems.split(",")
         for (pair in pairs) {
             val parts = pair.split(":")
-            if (parts.size == 2) {
+            if (parts.size >= 2) {
                 val id = parts[0]
                 val qty = parts[1].toIntOrNull() ?: 0
+                val grams = parts.getOrNull(2)?.toIntOrNull() ?: 1000
                 if (ProduceCatalog.findById(id) != null && qty > 0) {
                     val existing = storeDao.getCartItem(id)
                     storeDao.upsertCartItem(
                         CartItemEntity(
                             produceId = id,
                             quantity = (existing?.quantity ?: 0) + qty,
+                            weightGrams = existing?.weightGrams ?: grams,
                             addedAtMillis = existing?.addedAtMillis ?: System.currentTimeMillis()
                         )
                     )
