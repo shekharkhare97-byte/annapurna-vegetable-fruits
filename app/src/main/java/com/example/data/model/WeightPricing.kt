@@ -28,6 +28,9 @@ object WeightPricing {
 
     fun formatWeightMarathi(grams: Int): String {
         require(grams > 0) { "Weight must be positive" }
-        return if (grams == 1000) "१ किलो" else "${grams} ग्रॅम"
+        val marathiGrams = grams.toString().map { digit ->
+            if (digit in '0'..'9') "०१२३४५६७८९"[digit - '0'] else digit
+        }.joinToString("")
+        return if (grams == 1000) "१ किलो" else "$marathiGrams ग्रॅम"
     }
 }
