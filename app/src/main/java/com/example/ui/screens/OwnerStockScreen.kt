@@ -111,13 +111,16 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
  selected?.let { item ->
   val countBased=viewModel.isCountBased(item.produceId)
   val unit=if(countBased) "जुडी / नग" else "ग्रॅम"
+  val validQuantity=(quantityText.toIntOrNull() ?: 0)>0
   AlertDialog(onDismissRequest={selected=null},title={Text(ProduceCatalog.findById(item.produceId)?.marathiName ?: "माल")},text={
    Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+    Text("खरेदी किंवा नासाडीचे प्रमाण नोंदवा. वजनाच्या मालासाठी प्रमाण ग्रॅममध्ये भरा.")
     OutlinedTextField(priceText,{priceText=it.filter(Char::isDigit)},label={Text(if(countBased) "आजचा दर (₹ प्रति जुडी)" else "आजचा दर (₹ प्रति किलो)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
-    OutlinedTextField(quantityText,{quantityText=it.filter(Char::isDigit)},label={Text("प्रमाण ($unit)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
+    OutlinedTextField(quantityText,{quantityText=it.filter(Char::isDigit)},label={Text("प्रमाण ($unit)")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),isError=!validQuantity)
+    if(!validQuantity) Text("कृपया शून्यापेक्षा जास्त प्रमाण भरा.",color=MaterialTheme.colorScheme.error)
     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-     Button(onClick={viewModel.recordPurchase(item.produceId,quantityText.toIntOrNull()?:0);selected=null}) { Text("खरेदी जोडा") }
-     OutlinedButton(onClick={viewModel.recordWastage(item.produceId,quantityText.toIntOrNull()?:0);selected=null}) { Text("नासाडी") }
+     Button(enabled=validQuantity,onClick={viewModel.recordPurchase(item.produceId,quantityText.toIntOrNull()!!);selected=null}) { Text("खरेदी जोडा") }
+     OutlinedButton(enabled=validQuantity,onClick={viewModel.recordWastage(item.produceId,quantityText.toIntOrNull()!!);selected=null}) { Text("नासाडी") }
     }
    }
   },confirmButton={TextButton(onClick={viewModel.updatePrice(item.produceId,priceText.toIntOrNull()?:0);selected=null}) { Text("दर जतन करा") }},dismissButton={TextButton(onClick={selected=null}) { Text("रद्द") }})
