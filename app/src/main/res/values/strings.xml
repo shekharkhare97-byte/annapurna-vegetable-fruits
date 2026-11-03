@@ -13,6 +13,7 @@
     <string name="nav_cart">माझी पिशवी</string>
     <string name="nav_assistant">अन्नपूर्णा AI</string>
     <string name="nav_studio">फोटो स्टुडिओ</string>
+    <string name="nav_owner">दुकान</string>
 
     <!-- Categories & Search -->
     <string name="search_placeholder">भाजी किंवा फळ शोधा (उदा. टोमॅटो, आंबा)...</string>
