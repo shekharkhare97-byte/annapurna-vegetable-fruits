@@ -8,6 +8,8 @@ import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceItem
 import com.example.data.model.WeightPricing
 import com.example.util.MarathiFormatters
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -110,6 +112,35 @@ class StoreRepository(private val storeDao: StoreDao) {
             createdAtMillis = now
         )
         val generatedId = storeDao.insertOrder(draftOrder)
+
+        // Firestore queues this write while offline and syncs it when connectivity returns.
+        val remoteOrder = FirebaseFirestore.getInstance().collection("orders").document()
+        val remoteItems = items.map { line ->
+            mapOf(
+                "productId" to line.produce.id,
+                "name" to line.produce.marathiName,
+                "weightGrams" to line.weightGrams,
+                "quantity" to line.quantity,
+                "pricePerKgRupees" to line.produce.priceRupees,
+                "lineTotalRupees" to line.lineTotalRupees
+            )
+        }
+        remoteOrder.set(
+            mapOf(
+                "orderId" to remoteOrder.id,
+                "customerName" to customerName.trim(),
+                "mobileNumber" to mobileNumber.trim(),
+                "deliveryAddress" to deliveryAddress.trim(),
+                "items" to remoteItems,
+                "itemsSummaryMarathi" to summaryLines,
+                "totalItemsCount" to totalQty,
+                "totalAmountRupees" to grandTotal,
+                "status" to "new",
+                "createdAt" to FieldValue.serverTimestamp(),
+                "createdAtMillis" to now
+            )
+        )
+
         saveCustomerProfile(customerName.trim(), mobileNumber.trim(), deliveryAddress.trim())
         storeDao.clearCart()
         return draftOrder.copy(orderId = generatedId)
