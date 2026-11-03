@@ -20,7 +20,7 @@ object WeightPricing {
     fun priceInPaiseForGrams(pricePerKgRupees: Int, grams: Int): Long {
         require(pricePerKgRupees >= 0) { "Price cannot be negative" }
         require(grams > 0) { "Weight must be positive" }
-        return pricePerKgRupees.toLong() * 100L * grams / 1000L
+        return (pricePerKgRupees.toLong() * 100L * grams + 500L) / 1000L
     }
 
     fun priceForGrams(pricePerKgRupees: Int, grams: Int): Double =
