@@ -58,6 +58,22 @@ fun OwnerStockScreen(viewModel:OwnerViewModel,modifier:Modifier=Modifier) {
   }
   Spacer(Modifier.height(10.dp))
   OutlinedButton(onClick={showSettings=true}) { Text("दुकान सेटिंग्स") }
+  OutlinedButton(onClick={
+   val csv = buildString {
+    append("Product,Stock,Unit,Price\\n")
+    inventory.forEach { row ->
+     val product=ProduceCatalog.findById(row.produceId)
+     val count=viewModel.isCountBased(row.produceId)
+     append("\"${product?.marathiName ?: row.produceId}\",")
+     append(if(count) row.stockUnits else row.stockGrams)
+     append(",\"${if(count) "नग/जुडी" else "ग्रॅम"}\",")
+     append(if(count) row.sellingPricePaisePerUnit/100 else row.sellingPricePaisePerKg/100)
+     append("\\n")
+    }
+   }
+   val share=Intent(Intent.ACTION_SEND).apply { type="text/csv"; putExtra(Intent.EXTRA_TEXT,csv); putExtra(Intent.EXTRA_SUBJECT,"अन्नपूर्णा स्टॉक रिपोर्ट") }
+   context.startActivity(Intent.createChooser(share,"स्टॉक रिपोर्ट शेअर करा"))
+  }, modifier=Modifier.fillMaxWidth()) { Text("स्टॉक रिपोर्ट / Export शेअर करा") }
   Text("माझे दुकान परवाने", style=MaterialTheme.typography.titleLarge)
   Text("कागदपत्र अपलोड केल्यावरच ग्राहकांना परवाना क्रमांक दिसेल.")
   listOf("SHOP_ACT" to "Shop Act Licence", "FSSAI" to "Food Licence (FSSAI)", "UDYAM" to "Udyam Aadhaar").forEach { (type, title) ->
