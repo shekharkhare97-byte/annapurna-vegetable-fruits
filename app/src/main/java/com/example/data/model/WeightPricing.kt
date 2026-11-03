@@ -1,8 +1,8 @@
 package com.example.data.model
 
 /**
- * Customer weight choices for products priced per kilogram.
- * Custom quantities are entered in grams; prices retain paise precision.
+ * Shared weight choices for produce sold by kilogram.
+ * Custom quantities are entered in grams.
  */
 object WeightPricing {
     data class Option(val label: String, val grams: Int?)
@@ -17,10 +17,17 @@ object WeightPricing {
 
     fun isValidCustomWeight(grams: Int): Boolean = grams in 1..100_000
 
-    /** Returns the exact rupee amount; UI can format it to two decimal places. */
-    fun priceForGrams(pricePerKgRupees: Int, grams: Int): Double {
+    fun priceInPaiseForGrams(pricePerKgRupees: Int, grams: Int): Long {
         require(pricePerKgRupees >= 0) { "Price cannot be negative" }
-        require(isValidCustomWeight(grams)) { "Weight must be between 1 and 100000 grams" }
-        return pricePerKgRupees.toDouble() * grams / 1000.0
+        require(grams > 0) { "Weight must be positive" }
+        return pricePerKgRupees.toLong() * 100L * grams / 1000L
+    }
+
+    fun priceForGrams(pricePerKgRupees: Int, grams: Int): Double =
+        priceInPaiseForGrams(pricePerKgRupees, grams) / 100.0
+
+    fun formatWeightMarathi(grams: Int): String {
+        require(grams > 0) { "Weight must be positive" }
+        return if (grams == 1000) "१ किलो" else "${grams} ग्रॅम"
     }
 }
