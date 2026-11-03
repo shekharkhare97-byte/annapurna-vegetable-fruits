@@ -71,6 +71,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -393,12 +394,21 @@ private fun ProduceGridCard(
                     .aspectRatio(1.08f)
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                Image(
-                    painter = painterResource(id = item.imageRes),
-                    contentDescription = item.marathiName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (item.imageUrl.isNullOrBlank()) {
+                    Image(
+                        painter = painterResource(id = item.imageRes),
+                        contentDescription = item.marathiName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    AsyncImage(
+                        model = item.imageUrl,
+                        contentDescription = item.marathiName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.94f),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -638,15 +648,21 @@ private fun ProduceDetailSheetContent(
             .padding(horizontal = 20.dp)
             .padding(bottom = 28.dp)
     ) {
-        Image(
-            painter = painterResource(id = item.imageRes),
-            contentDescription = item.marathiName,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-                .clip(MaterialTheme.shapes.large)
-        )
+        if (item.imageUrl.isNullOrBlank()) {
+            Image(
+                painter = painterResource(id = item.imageRes),
+                contentDescription = item.marathiName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
+            )
+        } else {
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.marathiName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
