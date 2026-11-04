@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "153570599397",
+    "project_id": "annapurna-vegetables-and-78cef",
+    "storage_bucket": "annapurna-vegetables-and-78cef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:153570599397:android:622743c3d169439c5d0f0c",
+        "android_client_info": {
+          "package_name": "com.aistudio.annapurnaveg.kxpqrz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbn6vgttUNB4AeleqIlpbD49YD-dlUpfc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
