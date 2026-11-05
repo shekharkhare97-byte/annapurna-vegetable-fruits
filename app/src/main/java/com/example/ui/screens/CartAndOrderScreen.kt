@@ -79,6 +79,7 @@ fun CartAndOrderScreen(
     onAddressChange: (String) -> Unit,
     onSubmitOrder: () -> Unit,
     onDismissReceipt: () -> Unit,
+    onContinueShopping: () -> Unit,
     onReorder: (OrderEntity) -> Unit,
     onBackToBazaar: () -> Unit,
     modifier: Modifier = Modifier
@@ -185,7 +186,8 @@ fun CartAndOrderScreen(
                     receiptText = formatOrderShareReceipt(confirmedOrder)
                 )
             },
-            onDismiss = onDismissReceipt
+            onDismiss = onDismissReceipt,
+            onContinueShopping = onContinueShopping
         )
     }
 }
@@ -656,7 +658,8 @@ private fun PastOrderCard(
 private fun OrderConfirmedDialog(
     order: OrderEntity,
     onShareReceipt: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onContinueShopping: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -718,11 +721,19 @@ private fun OrderConfirmedDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.testTag("order_receipt_done_button")
-            ) {
-                Text(stringResource(R.string.btn_done))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(
+                    onClick = onContinueShopping,
+                    modifier = Modifier.testTag("continue_shopping_after_order_button")
+                ) {
+                    Text("आणखी खरेदी करा")
+                }
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag("order_receipt_done_button")
+                ) {
+                    Text(stringResource(R.string.btn_done))
+                }
             }
         }
     )
