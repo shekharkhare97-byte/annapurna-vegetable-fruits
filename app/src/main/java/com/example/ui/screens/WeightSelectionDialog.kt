@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -50,8 +52,8 @@ fun WeightSelectionDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("दर: ₹${item.priceRupees} / किलो")
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    WeightPricing.standardOptions.forEach { option ->
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(WeightPricing.standardOptions) { option ->
                         FilterChip(
                             selected = selectedWeight == (option.grams ?: 0),
                             onClick = { selectedWeight = option.grams ?: 0 },
