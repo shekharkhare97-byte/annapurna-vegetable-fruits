@@ -315,6 +315,10 @@ fun AnnapurnaRootApp() {
                                 onAddressChange = storeViewModel::updateDeliveryAddress,
                                 onSubmitOrder = storeViewModel::submitOrder,
                                 onDismissReceipt = storeViewModel::dismissOrderReceipt,
+                                onContinueShopping = {
+                                    storeViewModel.dismissOrderReceipt()
+                                    currentTab = AnnapurnaTab.BAZAAR
+                                },
                                 onReorder = { pastOrder ->
                                     storeViewModel.reorderPastOrder(pastOrder)
                                 },
