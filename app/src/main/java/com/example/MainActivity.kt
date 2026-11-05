@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val savedLanguage = getSharedPreferences("annapurna_settings", MODE_PRIVATE).getString("language", "mr") ?: "mr"
-        applyAppLanguage(savedLanguage)
+        applyAppLanguage(this, savedLanguage)
         enableEdgeToEdge()
         setContent {
             AnnapurnaTheme {
@@ -193,7 +193,7 @@ fun AnnapurnaRootApp() {
                             val nextLanguage = if (currentLanguage == "mr") "en" else "mr"
                             context.getSharedPreferences("annapurna_settings", android.content.Context.MODE_PRIVATE).edit().putString("language", nextLanguage).apply()
                             currentLanguage = nextLanguage
-                            applyAppLanguage(nextLanguage)
+                            applyAppLanguage(context, nextLanguage)
                             (context as? Activity)?.recreate()
                         }) {
                             Text(if (currentLanguage == "mr") "English" else "मराठी")
@@ -413,10 +413,10 @@ private fun TabIconWithCartBadge(
 }
 
 @Suppress("DEPRECATION")
-private fun applyAppLanguage(language: String) {
+private fun applyAppLanguage(context: android.content.Context, language: String) {
     val locale = Locale(language)
     Locale.setDefault(locale)
     val configuration = Configuration()
     configuration.setLocale(locale)
-    // Applied to the activity's resources when the activity is created.
+    context.resources.updateConfiguration(configuration, context.resources.displayMetrics)
 }
