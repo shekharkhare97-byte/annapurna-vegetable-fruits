@@ -1,6 +1,9 @@
 package com.example
 
 import android.os.Bundle
+import android.content.res.Configuration
+import android.app.Activity
+import java.util.Locale
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -40,6 +43,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -103,6 +107,8 @@ enum class AnnapurnaTab(
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val savedLanguage = getSharedPreferences("annapurna_settings", MODE_PRIVATE).getString("language", "mr") ?: "mr"
+        applyAppLanguage(savedLanguage)
         enableEdgeToEdge()
         setContent {
             AnnapurnaTheme {
@@ -122,6 +128,7 @@ fun AnnapurnaRootApp() {
     val aiViewModel: AiFeaturesViewModel = viewModel()
 
     var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
+    var currentLanguage by rememberSaveable { mutableStateOf(context.getSharedPreferences("annapurna_settings", android.content.Context.MODE_PRIVATE).getString("language", "mr") ?: "mr") }
 
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
     val selectedCategory by storeViewModel.selectedCategory.collectAsStateWithLifecycle()
@@ -182,6 +189,15 @@ fun AnnapurnaRootApp() {
                         }
                     },
                     actions = {
+                        TextButton(onClick = {
+                            val nextLanguage = if (currentLanguage == "mr") "en" else "mr"
+                            context.getSharedPreferences("annapurna_settings", android.content.Context.MODE_PRIVATE).edit().putString("language", nextLanguage).apply()
+                            currentLanguage = nextLanguage
+                            applyAppLanguage(nextLanguage)
+                            (context as? Activity)?.recreate()
+                        }) {
+                            Text(if (currentLanguage == "mr") "English" else "मराठी")
+                        }
                         if (currentTab != AnnapurnaTab.CART) {
                             FilledTonalButton(
                                 onClick = { currentTab = AnnapurnaTab.CART },
@@ -394,4 +410,13 @@ private fun TabIconWithCartBadge(
             contentDescription = stringResource(tab.labelRes)
         )
     }
+}
+
+@Suppress("DEPRECATION")
+private fun applyAppLanguage(language: String) {
+    val locale = Locale(language)
+    Locale.setDefault(locale)
+    val configuration = Configuration()
+    configuration.setLocale(locale)
+    // Applied to the activity's resources when the activity is created.
 }
