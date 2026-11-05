@@ -25,7 +25,7 @@
     <string name="cart_header_title">My Shopping Cart</string>
     <string name="cart_clear_all">Clear Cart</string>
     <string name="cart_empty_title">Your cart is currently empty</string>
-    <string name="cart_empty_subtitle">Go to the 'Fresh Market' tab to choose fresh vegetables and fruits.</string>
+    <string name="cart_empty_subtitle">Go to the \'Fresh Market\' tab to choose fresh vegetables and fruits.</string>
     <string name="btn_browse_bazaar">Browse Fresh Market</string>
     <string name="bill_summary_title">Bill Summary</string>
     <string name="bill_items_total">Items Subtotal</string>
@@ -42,7 +42,7 @@
     <string name="placeholder_delivery_address">e.g. Shivaji Nagar, Pune</string>
     <string name="btn_place_order">Place Order</string>
     <string name="error_empty_cart">Please add at least one vegetable or fruit to your cart before placing an order.</string>
-    <string name="error_invalid_name">Please enter the customer's full name.</string>
+    <string name="error_invalid_name">Please enter the customer\'s full name.</string>
     <string name="error_invalid_mobile">Please enter a valid 10-digit mobile number.</string>
     <string name="order_success_title">Your order has been placed successfully!</string>
     <string name="order_success_subtitle">Thank you for choosing Annapurna Vegetables and Fruits.</string>
