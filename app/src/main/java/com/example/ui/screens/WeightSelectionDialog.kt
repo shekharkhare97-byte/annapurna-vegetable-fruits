@@ -2,10 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,10 +24,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.data.model.WeightPricing
 import com.example.data.model.ProduceItem
+import java.math.RoundingMode
 
 /**
- * Customer weight picker. Returns the selected quantity in grams.
- * Price preview is calculated from the product's per-kilogram rate.
+ * Customer weight picker. Custom quantity is entered in kilograms and
+ * converted to grams internally for existing cart/order calculations.
  */
 @Composable
 fun WeightSelectionDialog(
@@ -40,10 +38,13 @@ fun WeightSelectionDialog(
 ) {
     var selectedWeight by remember(item.id) { mutableIntStateOf(250) }
     var customWeightText by remember(item.id) { mutableStateOf("") }
-    val customWeight = customWeightText.toIntOrNull()
+    val customWeightGrams = customWeightText.toBigDecimalOrNull()
+        ?.movePointRight(3)
+        ?.setScale(0, RoundingMode.HALF_UP)
+        ?.toInt()
     val isCustom = selectedWeight == 0
-    val valid = if (isCustom) customWeight?.let(WeightPricing::isValidCustomWeight) == true else true
-    val grams = if (isCustom) customWeight ?: 0 else selectedWeight
+    val grams = if (isCustom) customWeightGrams ?: 0 else selectedWeight
+    val valid = if (isCustom) customWeightGrams?.let(WeightPricing::isValidCustomWeight) == true else true
     val amount = if (valid && grams > 0) WeightPricing.priceForGrams(item.priceRupees, grams) else 0.0
 
     AlertDialog(
@@ -64,13 +65,18 @@ fun WeightSelectionDialog(
                 if (isCustom) {
                     OutlinedTextField(
                         value = customWeightText,
-                        onValueChange = { value -> customWeightText = value.filter(Char::isDigit).take(6) },
-                        label = { Text("वजन ग्रॅममध्ये लिहा") },
-                        placeholder = { Text("उदा. ३५०") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        onValueChange = { value ->
+                            val normalized = value.replace(',', '.').filter { it.isDigit() || it == '.' }
+                            val whole = normalized.substringBefore('.').take(3)
+                            val fraction = normalized.substringAfter('.', "").replace(".", "").take(3)
+                            customWeightText = if ('.' in normalized) "$whole.$fraction" else whole
+                        },
+                        label = { Text("वजन किलोमध्ये लिहा") },
+                        placeholder = { Text("उदा. ०.३५० किंवा १.५") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         isError = customWeightText.isNotEmpty() && !valid,
-                        supportingText = { Text(if (valid) "१ ते १,००,००० ग्रॅम" else "योग्य वजन लिहा") },
+                        supportingText = { Text(if (valid) "०.००१ ते १०० किलो" else "योग्य वजन लिहा") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
