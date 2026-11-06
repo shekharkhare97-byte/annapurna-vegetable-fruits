@@ -207,9 +207,11 @@ class StoreViewModel(
         }
     }
 
-    fun submitOrder(latitude: Double? = null, longitude: Double? = null) {
+    fun submitOrder(latitude: Double? = null, longitude: Double? = null, paymentMethod: String = "COD", transactionId: String = "") {
         val currentCart = cartItems.value
         val currentForm = _formState.value
+
+        val paymentErr = if (paymentMethod == "UPI" && transactionId.isBlank()) "UPI पेमेंट केल्यानंतर Transaction ID / UTR टाका." else null
 
         val cartErr = if (currentCart.isEmpty()) {
             "ऑर्डर देण्यापूर्वी कृपया पिशवीत किमान एक भाजी किंवा फळ टाका."
@@ -223,12 +225,13 @@ class StoreViewModel(
             "कृपया वैध १० अंकी मोबाईल नंबर प्रविष्ट करा (उदा. 9876543210)."
         } else null
 
-        if (cartErr != null || nameErr != null || mobileErr != null) {
+        if (cartErr != null || nameErr != null || mobileErr != null || paymentErr != null) {
             _formState.update {
                 it.copy(
                     cartErrorMarathi = cartErr,
                     nameErrorMarathi = nameErr,
-                    mobileErrorMarathi = mobileErr
+                    mobileErrorMarathi = mobileErr,
+                    cartErrorMarathi = cartErr ?: paymentErr
                 )
             }
             return
@@ -243,7 +246,9 @@ class StoreViewModel(
                 deliveryAddress = currentForm.deliveryAddress,
                 items = currentCart,
                 latitude = latitude,
-                longitude = longitude
+                longitude = longitude,
+                paymentMethod = paymentMethod,
+                transactionId = transactionId.trim()
             )
             _formState.update {
                 it.copy(
