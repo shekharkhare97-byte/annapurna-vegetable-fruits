@@ -146,14 +146,7 @@ fun CartAndOrderScreen(
             .addOnSuccessListener { loc -> if (loc != null) calculateDeliveryFromLocation(loc) else deliveryMessage = "लोकेशन मिळाले नाही. GPS सुरू करून पुन्हा प्रयत्न करा." }
             .addOnFailureListener { deliveryMessage = "लोकेशन मिळवता आले नाही. पुन्हा प्रयत्न करा." }
     }
-    fun requestDeliveryLocation() {
-        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val enabled = runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
-        if (!enabled) { showGpsOffDialog = true; return }
-        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -162,32 +155,13 @@ fun CartAndOrderScreen(
         if (granted) fetchGpsForDelivery() else deliveryMessage = "डिलिव्हरी चार्ज मोजण्यासाठी GPS परवानगी आवश्यक आहे."
     }
 
-    fun requestGpsOrSubmit() {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val gpsEnabled = runCatching {
-            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        }.getOrDefault(false)
-        if (!gpsEnabled) {
-            showGpsOffDialog = true
-            return
-        }
-
-        val fineGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        val coarseGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        if (fineGranted || coarseGranted) {
-            fetchGpsAndSubmit()
-        } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
+    fun requestDeliveryLocation() {
+        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val enabled = runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
+        if (!enabled) { showGpsOffDialog = true; return }
+        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
     val itemsTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
