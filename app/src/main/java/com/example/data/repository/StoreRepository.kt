@@ -91,7 +91,9 @@ class StoreRepository(private val storeDao: StoreDao) {
         deliveryAddress: String,
         items: List<CartLineItem>,
         latitude: Double? = null,
-        longitude: Double? = null
+        longitude: Double? = null,
+        paymentMethod: String = "COD",
+        transactionId: String = ""
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
             "• ${line.produce.marathiName} (${WeightPricing.formatWeightMarathi(line.weightGrams)}) × ${
@@ -137,6 +139,9 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "totalItemsCount" to totalQty,
                 "totalAmountRupees" to grandTotal,
                 "status" to "new",
+                "paymentMethod" to paymentMethod,
+                "transactionId" to transactionId.trim(),
+                "paymentStatus" to if (paymentMethod == "UPI") "pending_verification" else "pending",
                 "createdAt" to FieldValue.serverTimestamp(),
                 "createdAtMillis" to now
             )
