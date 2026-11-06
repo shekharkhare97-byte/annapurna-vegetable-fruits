@@ -106,7 +106,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         val totalQty = items.sumOf { it.quantity }
         val itemsTotal = items.sumOf { it.lineTotalRupees }
         val grandTotal = itemsTotal + deliveryChargeRupees
-        val completeSummary = summaryLines + "\\n• डिलिव्हरी चार्ज = ₹${MarathiFormatters.toMarathiNumber(deliveryChargeRupees)}"
+        val completeSummary = summaryLines + "\n• डिलिव्हरी चार्ज = ₹${MarathiFormatters.toMarathiNumber(deliveryChargeRupees)}"
         val now = System.currentTimeMillis()
 
         val draftOrder = OrderEntity(
