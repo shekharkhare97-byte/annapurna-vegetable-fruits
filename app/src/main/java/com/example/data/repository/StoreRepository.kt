@@ -93,7 +93,9 @@ class StoreRepository(private val storeDao: StoreDao) {
         latitude: Double? = null,
         longitude: Double? = null,
         paymentMethod: String = "COD",
-        transactionId: String = ""
+        transactionId: String = "",
+        deliveryChargeRupees: Int = 0,
+        deliveryDistanceKm: Double? = null
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
             "• ${line.produce.marathiName} (${WeightPricing.formatWeightMarathi(line.weightGrams)}) × ${
@@ -102,14 +104,16 @@ class StoreRepository(private val storeDao: StoreDao) {
         }
         val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}:${it.weightGrams}" }
         val totalQty = items.sumOf { it.quantity }
-        val grandTotal = items.sumOf { it.lineTotalRupees }
+        val itemsTotal = items.sumOf { it.lineTotalRupees }
+        val grandTotal = itemsTotal + deliveryChargeRupees
+        val completeSummary = summaryLines + "\\n• डिलिव्हरी चार्ज = ₹${MarathiFormatters.toMarathiNumber(deliveryChargeRupees)}"
         val now = System.currentTimeMillis()
 
         val draftOrder = OrderEntity(
             customerName = customerName.trim(),
             mobileNumber = mobileNumber.trim(),
             deliveryAddress = deliveryAddress.trim(),
-            itemsSummaryMarathi = summaryLines,
+            itemsSummaryMarathi = completeSummary,
             serializedItems = serialized,
             totalItemsCount = totalQty,
             totalAmountRupees = grandTotal,
@@ -135,8 +139,11 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "mobileNumber" to mobileNumber.trim(),
                 "deliveryAddress" to deliveryAddress.trim(),
                 "items" to remoteItems,
-                "itemsSummaryMarathi" to summaryLines,
+                "itemsSummaryMarathi" to completeSummary,
                 "totalItemsCount" to totalQty,
+                "itemsTotalRupees" to itemsTotal,
+                "deliveryChargeRupees" to deliveryChargeRupees,
+                "deliveryDistanceKm" to (deliveryDistanceKm ?: 0.0),
                 "totalAmountRupees" to grandTotal,
                 "status" to "new",
                 "paymentMethod" to paymentMethod,
