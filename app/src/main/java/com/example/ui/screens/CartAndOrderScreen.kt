@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,6 +57,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,7 +97,7 @@ fun CartAndOrderScreen(
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
-    onSubmitOrder: (Double?, Double?) -> Unit,
+    onSubmitOrder: (Double?, Double?, String, String) -> Unit,
     onDismissReceipt: () -> Unit,
     onContinueShopping: () -> Unit,
     onReorder: (OrderEntity) -> Unit,
@@ -105,9 +108,11 @@ fun CartAndOrderScreen(
 
     val context = LocalContext.current
     var showGpsOffDialog by remember { mutableStateOf(false) }
+    var paymentMethod by rememberSaveable { mutableStateOf("COD") }
+    var transactionId by rememberSaveable { mutableStateOf("") }
     val fusedLocationClient = remember(context) { LocationServices.getFusedLocationProviderClient(context) }
 
-    fun submitWithoutGps() = onSubmitOrder(null, null)
+    fun submitWithoutGps() = onSubmitOrder(null, null, paymentMethod, transactionId.trim())
 
     fun fetchGpsAndSubmit() {
         fusedLocationClient.getCurrentLocation(
@@ -115,7 +120,7 @@ fun CartAndOrderScreen(
             CancellationTokenSource().token
         ).addOnSuccessListener { location ->
             if (location != null) {
-                onSubmitOrder(location.latitude, location.longitude)
+                onSubmitOrder(location.latitude, location.longitude, paymentMethod, transactionId.trim())
             } else {
                 submitWithoutGps()
             }
@@ -222,6 +227,10 @@ fun CartAndOrderScreen(
                 onCustomerNameChange = onCustomerNameChange,
                 onMobileNumberChange = onMobileNumberChange,
                 onAddressChange = onAddressChange,
+                paymentMethod = paymentMethod,
+                onPaymentMethodChange = { paymentMethod = it },
+                transactionId = transactionId,
+                onTransactionIdChange = { transactionId = it },
                 onSubmitOrder = { requestGpsOrSubmit() }
             )
         }
@@ -483,11 +492,19 @@ private fun BillSummaryCard(grandTotal: Int) {
 @Composable
 private fun CustomerOrderFormCard(
     formState: CustomerFormState,
+    paymentMethod: String,
+    onPaymentMethodChange: (String) -> Unit,
+    transactionId: String,
+    onTransactionIdChange: (String) -> Unit,
     grandTotal: Int,
     isCartEmpty: Boolean,
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
+    paymentMethod: String,
+    onPaymentMethodChange: (String) -> Unit,
+    transactionId: String,
+    onTransactionIdChange: (String) -> Unit,
     onSubmitOrder: () -> Unit
 ) {
     Card(
@@ -606,6 +623,37 @@ private fun CustomerOrderFormCard(
                     .fillMaxWidth()
                     .testTag("delivery_address_input")
             )
+
+            Text("पेमेंट पद्धत", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
+                Text("Cash on Delivery")
+                Spacer(modifier = Modifier.width(8.dp))
+                RadioButton(selected = paymentMethod == "UPI", onClick = { onPaymentMethodChange("UPI") })
+                Text("UPI")
+            }
+            if (paymentMethod == "UPI") {
+                val context = LocalContext.current
+                Text("UPI ID: paytm.s3wcxb1@pty", fontWeight = FontWeight.SemiBold)
+                Text("पेमेंट केल्यानंतर Transaction ID / UTR भरा. Admin तपासल्यानंतरच Paid होईल.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedButton(
+                    onClick = {
+                        val uri = Uri.parse("upi://pay?pa=paytm.s3wcxb1@pty&pn=Annapurna%20Vegetables%20and%20Fruits&am=$grandTotal&cu=INR")
+                        runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), "UPI पेमेंट करा")) }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("UPI App उघडा") }
+                OutlinedTextField(
+                    value = transactionId,
+                    onValueChange = onTransactionIdChange,
+                    singleLine = true,
+                    label = { Text("Transaction ID / UTR") },
+                    placeholder = { Text("पेमेंटनंतर UTR टाका") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             val orderButtonLabel = if (!isCartEmpty && grandTotal > 0) {
                 "${stringResource(R.string.btn_place_order)} • ₹${MarathiFormatters.toMarathiNumber(grandTotal)}"
