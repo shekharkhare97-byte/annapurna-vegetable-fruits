@@ -313,7 +313,7 @@ fun AnnapurnaRootApp() {
                                 onCustomerNameChange = storeViewModel::updateCustomerName,
                                 onMobileNumberChange = storeViewModel::updateMobileNumber,
                                 onAddressChange = storeViewModel::updateDeliveryAddress,
-                                onSubmitOrder = { latitude, longitude, paymentMethod, transactionId -> storeViewModel.submitOrder(latitude, longitude, paymentMethod, transactionId) },
+                                onSubmitOrder = { latitude, longitude, deliveryCharge, distanceKm, paymentMethod, transactionId -> storeViewModel.submitOrder(latitude, longitude, deliveryCharge, distanceKm, paymentMethod, transactionId) },
                                 onDismissReceipt = storeViewModel::dismissOrderReceipt,
                                 onContinueShopping = {
                                     storeViewModel.dismissOrderReceipt()
