@@ -228,10 +228,9 @@ class StoreViewModel(
         if (cartErr != null || nameErr != null || mobileErr != null || paymentErr != null) {
             _formState.update {
                 it.copy(
-                    cartErrorMarathi = cartErr,
+                    cartErrorMarathi = cartErr ?: paymentErr,
                     nameErrorMarathi = nameErr,
-                    mobileErrorMarathi = mobileErr,
-                    cartErrorMarathi = cartErr ?: paymentErr
+                    mobileErrorMarathi = mobileErr
                 )
             }
             return
