@@ -89,7 +89,9 @@ class StoreRepository(private val storeDao: StoreDao) {
         customerName: String,
         mobileNumber: String,
         deliveryAddress: String,
-        items: List<CartLineItem>
+        items: List<CartLineItem>,
+        latitude: Double? = null,
+        longitude: Double? = null
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
             "• ${line.produce.marathiName} (${WeightPricing.formatWeightMarathi(line.weightGrams)}) × ${
@@ -125,8 +127,7 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "lineTotalRupees" to line.lineTotalRupees
             )
         }
-        remoteOrder.set(
-            mapOf(
+        val remoteOrderData = mutableMapOf<String, Any>(
                 "orderId" to remoteOrder.id,
                 "customerName" to customerName.trim(),
                 "mobileNumber" to mobileNumber.trim(),
@@ -139,7 +140,12 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "createdAt" to FieldValue.serverTimestamp(),
                 "createdAtMillis" to now
             )
-        )
+        if (latitude != null && longitude != null) {
+            remoteOrderData["latitude"] = latitude
+            remoteOrderData["longitude"] = longitude
+            remoteOrderData["locationSource"] = "customer_gps"
+        }
+        remoteOrder.set(remoteOrderData)
 
         saveCustomerProfile(customerName.trim(), mobileNumber.trim(), deliveryAddress.trim())
         storeDao.clearCart()
