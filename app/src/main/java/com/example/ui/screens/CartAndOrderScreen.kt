@@ -501,10 +501,6 @@ private fun CustomerOrderFormCard(
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
-    paymentMethod: String,
-    onPaymentMethodChange: (String) -> Unit,
-    transactionId: String,
-    onTransactionIdChange: (String) -> Unit,
     onSubmitOrder: () -> Unit
 ) {
     Card(
