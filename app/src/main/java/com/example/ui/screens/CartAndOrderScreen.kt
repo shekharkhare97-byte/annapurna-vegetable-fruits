@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.location.Location
+import android.location.Geocoder
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -97,7 +99,7 @@ fun CartAndOrderScreen(
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
-    onSubmitOrder: (Double?, Double?, String, String) -> Unit,
+    onSubmitOrder: (Double?, Double?, Int, Double?, String, String) -> Unit,
     onDismissReceipt: () -> Unit,
     onContinueShopping: () -> Unit,
     onReorder: (OrderEntity) -> Unit,
@@ -108,33 +110,56 @@ fun CartAndOrderScreen(
 
     val context = LocalContext.current
     var showGpsOffDialog by remember { mutableStateOf(false) }
+    var deliveryCharge by rememberSaveable { mutableStateOf<Int?>(null) }
+    var deliveryDistanceKm by rememberSaveable { mutableStateOf<Double?>(null) }
+    var deliveryLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
+    var deliveryLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
+    var deliveryMessage by rememberSaveable { mutableStateOf("ऑर्डर देण्यापूर्वी डिलिव्हरी चार्ज मोजा.") }
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var paymentMethod by rememberSaveable { mutableStateOf("COD") }
     var transactionId by rememberSaveable { mutableStateOf("") }
     val fusedLocationClient = remember(context) { LocationServices.getFusedLocationProviderClient(context) }
 
-    fun submitWithoutGps() = onSubmitOrder(null, null, paymentMethod, transactionId.trim())
-
-    fun fetchGpsAndSubmit() {
-        fusedLocationClient.getCurrentLocation(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            CancellationTokenSource().token
-        ).addOnSuccessListener { location ->
-            if (location != null) {
-                onSubmitOrder(location.latitude, location.longitude, paymentMethod, transactionId.trim())
-            } else {
-                submitWithoutGps()
+    fun calculateDeliveryFromLocation(location: Location) {
+        deliveryLatitude = location.latitude; deliveryLongitude = location.longitude
+        deliveryCharge = null; deliveryDistanceKm = null; deliveryMessage = "डिलिव्हरी अंतर मोजत आहे..."
+        coroutineScope.launch {
+            val shop = withContext(Dispatchers.IO) { runCatching {
+                if (!Geocoder.isPresent()) null else {
+                    @Suppress("DEPRECATION")
+                    Geocoder(context, Locale("en", "IN")).getFromLocationName("Surya co op HSG society, road boargad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India", 1)?.firstOrNull()
+                }
+            }.getOrNull() }
+            if (shop == null) { deliveryMessage = "दुकानाचे लोकेशन सापडले नाही. इंटरनेट सुरू करून पुन्हा प्रयत्न करा."; return@launch }
+            val meters = FloatArray(1)
+            Location.distanceBetween(shop.latitude, shop.longitude, location.latitude, location.longitude, meters)
+            val km = meters[0] / 1000.0; deliveryDistanceKm = km
+            when {
+                km <= 2.0 -> { deliveryCharge = 10; deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹10", km) }
+                km <= 4.0 -> { deliveryCharge = 20; deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹20", km) }
+                else -> { deliveryCharge = null; deliveryMessage = String.format(Locale.US, "अंतर %.2f km. 4 km पेक्षा जास्त असल्याने डिलिव्हरी उपलब्ध नाही.", km) }
             }
-        }.addOnFailureListener {
-            submitWithoutGps()
         }
     }
-
+    fun fetchGpsForDelivery() {
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+            .addOnSuccessListener { loc -> if (loc != null) calculateDeliveryFromLocation(loc) else deliveryMessage = "लोकेशन मिळाले नाही. GPS सुरू करून पुन्हा प्रयत्न करा." }
+            .addOnFailureListener { deliveryMessage = "लोकेशन मिळवता आले नाही. पुन्हा प्रयत्न करा." }
+    }
+    fun requestDeliveryLocation() {
+        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val enabled = runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
+        if (!enabled) { showGpsOffDialog = true; return }
+        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+    }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (granted) fetchGpsAndSubmit() else submitWithoutGps()
+        if (granted) fetchGpsForDelivery() else deliveryMessage = "डिलिव्हरी चार्ज मोजण्यासाठी GPS परवानगी आवश्यक आहे."
     }
 
     fun requestGpsOrSubmit() {
@@ -165,7 +190,8 @@ fun CartAndOrderScreen(
         }
     }
 
-    val grandTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
+    val itemsTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
+    val grandTotal = itemsTotal + (deliveryCharge ?: 0)
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -214,7 +240,7 @@ fun CartAndOrderScreen(
             }
 
             item {
-                BillSummaryCard(grandTotal = grandTotal)
+                BillSummaryCard(itemsTotal = itemsTotal, deliveryCharge = deliveryCharge, grandTotal = grandTotal)
             }
         }
 
@@ -223,6 +249,9 @@ fun CartAndOrderScreen(
             CustomerOrderFormCard(
                 formState = formState,
                 grandTotal = grandTotal,
+                deliveryCharge = deliveryCharge,
+                deliveryMessage = deliveryMessage,
+                onCalculateDelivery = { requestDeliveryLocation() },
                 isCartEmpty = cartItems.isEmpty(),
                 onCustomerNameChange = onCustomerNameChange,
                 onMobileNumberChange = onMobileNumberChange,
@@ -231,7 +260,7 @@ fun CartAndOrderScreen(
                 onPaymentMethodChange = { paymentMethod = it },
                 transactionId = transactionId,
                 onTransactionIdChange = { transactionId = it },
-                onSubmitOrder = { requestGpsOrSubmit() }
+                onSubmitOrder = { if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, transactionId.trim()) }
             )
         }
 
@@ -263,7 +292,7 @@ fun CartAndOrderScreen(
         AlertDialog(
             onDismissRequest = { showGpsOffDialog = false },
             title = { Text("GPS Location बंद आहे") },
-            text = { Text("तुमचे GPS Location बंद आहे. कृपया Location सुरू करा.") },
+            text = { Text("डिलिव्हरी चार्ज मोजण्यासाठी कृपया GPS / Location सुरू करा.") },
             confirmButton = {
                 TextButton(onClick = {
                     showGpsOffDialog = false
@@ -273,8 +302,8 @@ fun CartAndOrderScreen(
             dismissButton = {
                 TextButton(onClick = {
                     showGpsOffDialog = false
-                    submitWithoutGps()
-                }) { Text("GPS शिवाय ऑर्डर द्या") }
+                    deliveryMessage = "डिलिव्हरी चार्ज मोजण्यासाठी GPS आवश्यक आहे."
+                }) { Text("ठीक आहे") }
             }
         )
     }
@@ -434,7 +463,7 @@ private fun CartLineCard(
 }
 
 @Composable
-private fun BillSummaryCard(grandTotal: Int) {
+private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, grandTotal: Int) {
     Card(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
@@ -454,7 +483,7 @@ private fun BillSummaryCard(grandTotal: Int) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.bill_items_total))
-                Text("₹${MarathiFormatters.toMarathiNumber(grandTotal)}")
+                Text("₹${MarathiFormatters.toMarathiNumber(itemsTotal)}")
             }
             Spacer(modifier = Modifier.height(6.dp))
             Row(
@@ -463,7 +492,7 @@ private fun BillSummaryCard(grandTotal: Int) {
             ) {
                 Text(stringResource(R.string.bill_delivery_label))
                 Text(
-                    text = stringResource(R.string.bill_delivery_free),
+                    text = deliveryCharge?.let { "₹${MarathiFormatters.toMarathiNumber(it)}" } ?: "चार्ज मोजायचा आहे",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -497,6 +526,9 @@ private fun CustomerOrderFormCard(
     transactionId: String,
     onTransactionIdChange: (String) -> Unit,
     grandTotal: Int,
+    deliveryCharge: Int?,
+    deliveryMessage: String,
+    onCalculateDelivery: () -> Unit,
     isCartEmpty: Boolean,
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
@@ -620,6 +652,9 @@ private fun CustomerOrderFormCard(
                     .testTag("delivery_address_input")
             )
 
+            Text("डिलिव्हरी", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            OutlinedButton(onClick = onCalculateDelivery, modifier = Modifier.fillMaxWidth()) { Text("डिलिव्हरी चार्ज मोजा") }
+            Text(deliveryMessage, style = MaterialTheme.typography.bodySmall, color = if (deliveryCharge == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
             Text("पेमेंट पद्धत", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
@@ -634,6 +669,7 @@ private fun CustomerOrderFormCard(
                 Text("पेमेंट केल्यानंतर Transaction ID / UTR भरा. Admin तपासल्यानंतरच Paid होईल.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedButton(
+                    enabled = deliveryCharge != null,
                     onClick = {
                         val uri = Uri.parse("upi://pay?pa=paytm.s3wcxb1@pty&pn=Annapurna%20Vegetables%20and%20Fruits&am=$grandTotal&cu=INR")
                         runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), "UPI पेमेंट करा")) }
@@ -659,7 +695,7 @@ private fun CustomerOrderFormCard(
 
             Button(
                 onClick = onSubmitOrder,
-                enabled = !formState.isSubmitting,
+                enabled = !formState.isSubmitting && deliveryCharge != null,
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
