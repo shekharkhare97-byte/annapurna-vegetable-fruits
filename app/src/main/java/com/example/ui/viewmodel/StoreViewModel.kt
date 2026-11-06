@@ -207,7 +207,7 @@ class StoreViewModel(
         }
     }
 
-    fun submitOrder() {
+    fun submitOrder(latitude: Double? = null, longitude: Double? = null) {
         val currentCart = cartItems.value
         val currentForm = _formState.value
 
@@ -241,7 +241,9 @@ class StoreViewModel(
                 customerName = currentForm.customerName,
                 mobileNumber = normalizedMobile,
                 deliveryAddress = currentForm.deliveryAddress,
-                items = currentCart
+                items = currentCart,
+                latitude = latitude,
+                longitude = longitude
             )
             _formState.update {
                 it.copy(
