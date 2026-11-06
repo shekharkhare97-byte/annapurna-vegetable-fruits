@@ -482,7 +482,7 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, grandTotal: I
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "₹${MarathiFormatters.toMarathiNumber(grandTotal)}",
+                    text = if (deliveryCharge == null) "चार्ज मोजल्यावर" else "₹${MarathiFormatters.toMarathiNumber(grandTotal)}",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
