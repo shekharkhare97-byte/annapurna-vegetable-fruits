@@ -1,6 +1,15 @@
 package com.example.ui.screens
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,12 +52,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -63,7 +76,11 @@ import com.example.data.repository.CartLineItem
 import com.example.data.model.WeightPricing
 import com.example.ui.viewmodel.CustomerFormState
 import com.example.util.MarathiFormatters
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 
+@SuppressLint("MissingPermission")
 @Composable
 fun CartAndOrderScreen(
     cartItems: List<CartLineItem>,
@@ -77,7 +94,7 @@ fun CartAndOrderScreen(
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
-    onSubmitOrder: () -> Unit,
+    onSubmitOrder: (Double?, Double?) -> Unit,
     onDismissReceipt: () -> Unit,
     onContinueShopping: () -> Unit,
     onReorder: (OrderEntity) -> Unit,
@@ -87,6 +104,62 @@ fun CartAndOrderScreen(
     BackHandler(onBack = onBackToBazaar)
 
     val context = LocalContext.current
+    var showGpsOffDialog by remember { mutableStateOf(false) }
+    val fusedLocationClient = remember(context) { LocationServices.getFusedLocationProviderClient(context) }
+
+    fun submitWithoutGps() = onSubmitOrder(null, null)
+
+    fun fetchGpsAndSubmit() {
+        fusedLocationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            CancellationTokenSource().token
+        ).addOnSuccessListener { location ->
+            if (location != null) {
+                onSubmitOrder(location.latitude, location.longitude)
+            } else {
+                submitWithoutGps()
+            }
+        }.addOnFailureListener {
+            submitWithoutGps()
+        }
+    }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) fetchGpsAndSubmit() else submitWithoutGps()
+    }
+
+    fun requestGpsOrSubmit() {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val gpsEnabled = runCatching {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        }.getOrDefault(false)
+        if (!gpsEnabled) {
+            showGpsOffDialog = true
+            return
+        }
+
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (fineGranted || coarseGranted) {
+            fetchGpsAndSubmit()
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
     val grandTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
 
     LazyColumn(
@@ -149,7 +222,7 @@ fun CartAndOrderScreen(
                 onCustomerNameChange = onCustomerNameChange,
                 onMobileNumberChange = onMobileNumberChange,
                 onAddressChange = onAddressChange,
-                onSubmitOrder = onSubmitOrder
+                onSubmitOrder = { requestGpsOrSubmit() }
             )
         }
 
@@ -175,6 +248,26 @@ fun CartAndOrderScreen(
                 )
             }
         }
+    }
+
+    if (showGpsOffDialog) {
+        AlertDialog(
+            onDismissRequest = { showGpsOffDialog = false },
+            title = { Text("GPS Location बंद आहे") },
+            text = { Text("तुमचे GPS Location बंद आहे. कृपया Location सुरू करा.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showGpsOffDialog = false
+                    context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }) { Text("Location सुरू करा") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showGpsOffDialog = false
+                    submitWithoutGps()
+                }) { Text("GPS शिवाय ऑर्डर द्या") }
+            }
+        )
     }
 
     if (confirmedOrder != null) {
