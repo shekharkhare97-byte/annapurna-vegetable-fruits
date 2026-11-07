@@ -664,18 +664,18 @@ private fun CustomerOrderFormCard(
     onSubmitOrder: () -> Unit
 ) {
     Card(
-        shape = MaterialTheme.shapes.large,
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier
             .fillMaxWidth()
             .testTag("customer_order_form_card")
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(18.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.padding(20.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(46.dp)) {
@@ -725,7 +725,7 @@ private fun CustomerOrderFormCard(
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Next
                 ),
-                shape = MaterialTheme.shapes.small,
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("customer_name_input")
@@ -752,7 +752,7 @@ private fun CustomerOrderFormCard(
                     keyboardType = KeyboardType.Phone,
                     imeAction = ImeAction.Next
                 ),
-                shape = MaterialTheme.shapes.small,
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("mobile_number_input")
@@ -774,14 +774,32 @@ private fun CustomerOrderFormCard(
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Done
                 ),
-                shape = MaterialTheme.shapes.small,
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("delivery_address_input")
             )
 
-            Text("डिलिव्हरी", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(deliveryMessage, style = MaterialTheme.typography.bodySmall, color = if (deliveryCharge == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = if (deliveryCharge == null) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Text("डिलिव्हरी माहिती", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        deliveryMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (deliveryCharge == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             Text("पेमेंट पद्धत", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
