@@ -56,6 +56,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -118,7 +119,7 @@ fun CartAndOrderScreen(
     var deliveryDistanceKm by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
-    var deliveryMessage by rememberSaveable { mutableStateOf("ऑर्डर देण्यापूर्वी डिलिव्हरी चार्ज मोजा.") }
+    var deliveryMessage by rememberSaveable { mutableStateOf("डिलिव्हरी चार्ज आपोआप मोजत आहे...") }
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var paymentMethod by rememberSaveable { mutableStateOf("COD") }
     var transactionId by rememberSaveable { mutableStateOf("") }
@@ -138,11 +139,9 @@ fun CartAndOrderScreen(
             val meters = FloatArray(1)
             Location.distanceBetween(shop.latitude, shop.longitude, location.latitude, location.longitude, meters)
             val km = meters[0] / 1000.0; deliveryDistanceKm = km
-            when {
-                km <= 2.0 -> { deliveryCharge = 10; deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹10", km) }
-                km <= 4.0 -> { deliveryCharge = 20; deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹20", km) }
-                else -> { deliveryCharge = null; deliveryMessage = String.format(Locale.US, "अंतर %.2f km. 4 km पेक्षा जास्त असल्याने डिलिव्हरी उपलब्ध नाही.", km) }
-            }
+            val chargeableKm = kotlin.math.ceil(km).toInt().coerceAtLeast(1)
+            deliveryCharge = chargeableKm * 10
+            deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
         }
     }
     fun fetchGpsForDelivery() {
@@ -167,6 +166,8 @@ fun CartAndOrderScreen(
         val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
         if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
+
+    LaunchedEffect(Unit) { requestDeliveryLocation() }
 
     val itemsTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
     val grandTotal = itemsTotal + (deliveryCharge ?: 0)
@@ -229,7 +230,6 @@ fun CartAndOrderScreen(
                 grandTotal = grandTotal,
                 deliveryCharge = deliveryCharge,
                 deliveryMessage = deliveryMessage,
-                onCalculateDelivery = { requestDeliveryLocation() },
                 isCartEmpty = cartItems.isEmpty(),
                 onCustomerNameChange = onCustomerNameChange,
                 onMobileNumberChange = onMobileNumberChange,
@@ -506,7 +506,6 @@ private fun CustomerOrderFormCard(
     grandTotal: Int,
     deliveryCharge: Int?,
     deliveryMessage: String,
-    onCalculateDelivery: () -> Unit,
     isCartEmpty: Boolean,
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
@@ -631,7 +630,6 @@ private fun CustomerOrderFormCard(
             )
 
             Text("डिलिव्हरी", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            OutlinedButton(onClick = onCalculateDelivery, modifier = Modifier.fillMaxWidth()) { Text("डिलिव्हरी चार्ज मोजा") }
             Text(deliveryMessage, style = MaterialTheme.typography.bodySmall, color = if (deliveryCharge == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
             Text("पेमेंट पद्धत", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
