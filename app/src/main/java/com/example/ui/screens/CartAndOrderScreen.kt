@@ -107,7 +107,7 @@ fun CartAndOrderScreen(
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
-    onSubmitOrder: (Double?, Double?, Int, Double?, String, String) -> Unit,
+    onSubmitOrder: (Double?, Double?, Int, Double?, String, String, Int) -> Unit,
     onDismissReceipt: () -> Unit,
     onContinueShopping: () -> Unit,
     onReorder: (OrderEntity) -> Unit,
@@ -125,7 +125,8 @@ fun CartAndOrderScreen(
     var deliveryMessage by rememberSaveable { mutableStateOf("डिलिव्हरी चार्ज आपोआप मोजत आहे...") }
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var paymentMethod by rememberSaveable { mutableStateOf("COD") }
-    var transactionId by rememberSaveable { mutableStateOf("") }
+    var deliveryTipOption by rememberSaveable { mutableStateOf("0") }
+    var customTipText by rememberSaveable { mutableStateOf("") }
     val fusedLocationClient = remember(context) { LocationServices.getFusedLocationProviderClient(context) }
 
     fun calculateDeliveryFromLocation(location: Location) {
@@ -226,7 +227,14 @@ fun CartAndOrderScreen(
     }
 
     val itemsTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
-    val grandTotal = itemsTotal + (deliveryCharge ?: 0)
+    val deliveryTipAmount = when (deliveryTipOption) {
+        "20" -> 20
+        "30" -> 30
+        "50" -> 50
+        "CUSTOM" -> customTipText.toIntOrNull()?.coerceAtLeast(0) ?: 0
+        else -> 0
+    }
+    val grandTotal = itemsTotal + (deliveryCharge ?: 0) + deliveryTipAmount
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -306,7 +314,7 @@ fun CartAndOrderScreen(
             }
 
             item {
-                BillSummaryCard(itemsTotal = itemsTotal, deliveryCharge = deliveryCharge, grandTotal = grandTotal)
+                BillSummaryCard(itemsTotal = itemsTotal, deliveryCharge = deliveryCharge, deliveryTip = deliveryTipAmount, grandTotal = grandTotal)
             }
         }
 
@@ -323,9 +331,12 @@ fun CartAndOrderScreen(
                 onAddressChange = onAddressChange,
                 paymentMethod = paymentMethod,
                 onPaymentMethodChange = { paymentMethod = it },
-                transactionId = transactionId,
-                onTransactionIdChange = { transactionId = it },
-                onSubmitOrder = { if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, transactionId.trim()) }
+                tipOption = deliveryTipOption,
+                onTipOptionChange = { deliveryTipOption = it },
+                customTipText = customTipText,
+                onCustomTipChange = { customTipText = it.filter(Char::isDigit).take(5) },
+                deliveryTipRupees = deliveryTipAmount,
+                onSubmitOrder = { if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount) }
             )
         }
 
@@ -633,7 +644,7 @@ private fun CartLineCard(
 }
 
 @Composable
-private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, grandTotal: Int) {
+private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: Int, grandTotal: Int) {
     Card(
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
@@ -699,6 +710,16 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, grandTotal: I
                     fontWeight = FontWeight.SemiBold
                 )
             }
+            if (deliveryTip > 0) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("डिलिव्हरी पार्टनर टिप", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("₹${MarathiFormatters.toMarathiNumber(deliveryTip)}", fontWeight = FontWeight.SemiBold)
+                }
+            }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Surface(
                 shape = RoundedCornerShape(14.dp),
@@ -732,8 +753,11 @@ private fun CustomerOrderFormCard(
     formState: CustomerFormState,
     paymentMethod: String,
     onPaymentMethodChange: (String) -> Unit,
-    transactionId: String,
-    onTransactionIdChange: (String) -> Unit,
+    tipOption: String,
+    onTipOptionChange: (String) -> Unit,
+    customTipText: String,
+    onCustomTipChange: (String) -> Unit,
+    deliveryTipRupees: Int,
     grandTotal: Int,
     deliveryCharge: Int?,
     deliveryMessage: String,
@@ -880,14 +904,52 @@ private fun CustomerOrderFormCard(
                     )
                 }
             }
+            Text("डिलिव्हरी पार्टनरला टिप द्यायची आहे का?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("तुमची इच्छा असल्यास डिलिव्हरी पार्टनरला धन्यवाद म्हणून टिप द्या.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                listOf("0", "20", "30", "50", "CUSTOM").forEach { option ->
+                    val label = when (option) { "0" -> "नको"; "CUSTOM" -> "Custom"; else -> "₹$option" }
+                    OutlinedButton(
+                        onClick = { onTipOptionChange(option) },
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+                        colors = if (tipOption == option) ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.primary) else ButtonDefaults.outlinedButtonColors()
+                    ) { Text(label, fontWeight = if (tipOption == option) FontWeight.Bold else FontWeight.Normal) }
+                }
+            }
+            if (tipOption == "CUSTOM") {
+                OutlinedTextField(
+                    value = customTipText,
+                    onValueChange = onCustomTipChange,
+                    singleLine = true,
+                    label = { Text("तुमची टिप (₹)") },
+                    placeholder = { Text("उदा. 40") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             Text("पेमेंट पद्धत", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
                 Text("Cash on Delivery")
-                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "UPI", onClick = { onPaymentMethodChange("UPI") })
                 Text("UPI")
             }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = false, onClick = {}, enabled = false)
+                Text("Debit / Credit Card", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("लवकरच", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = false, onClick = {}, enabled = false)
+                Text("Net Banking", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("लवकरच", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            }
+            Text("Debit/Credit Card आणि Net Banking सुरू करण्यासाठी सुरक्षित Payment Gateway जोडणे बाकी आहे.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (paymentMethod == "UPI") {
                 val context = LocalContext.current
                 Text("UPI ID: paytm.s3wcxb1@pty", fontWeight = FontWeight.SemiBold)
@@ -911,7 +973,7 @@ private fun CustomerOrderFormCard(
 
             Button(
                 onClick = onSubmitOrder,
-                enabled = !isCartEmpty && !formState.isSubmitting && deliveryCharge != null,
+                enabled = !isCartEmpty && !formState.isSubmitting && deliveryCharge != null && (tipOption != "CUSTOM" || (customTipText.toIntOrNull() ?: -1) >= 0),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
