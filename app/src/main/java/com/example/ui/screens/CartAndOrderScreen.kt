@@ -374,6 +374,46 @@ fun CartAndOrderScreen(
                                 )
                             }
                         }
+                        val progress = when (trackingStatus) {
+                            "new" -> 0
+                            "accepted" -> 1
+                            "completed" -> 2
+                            else -> -1
+                        }
+                        if (trackingStatus != "cancelled") {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                listOf("ऑर्डर मिळाली", "तयारी सुरू", "पूर्ण झाली").forEachIndexed { index, label ->
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Surface(
+                                            shape = androidx.compose.foundation.shape.CircleShape,
+                                            color = if (progress >= index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+                                                if (progress >= index) {
+                                                    Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(19.dp))
+                                                } else {
+                                                    Text((index + 1).toString(), style = MaterialTheme.typography.labelMedium)
+                                                }
+                                            }
+                                        }
+                                        Text(label, style = MaterialTheme.typography.labelSmall, color = if (progress >= index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = if (progress >= index) FontWeight.Bold else FontWeight.Normal)
+                                    }
+                                }
+                            }
+                        } else {
+                            Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                                Text("ही ऑर्डर रद्द करण्यात आली आहे.", color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp), fontWeight = FontWeight.SemiBold)
+                            }
+                        }
                         Text(statusLabel, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                         Text("Admin कडून स्थिती बदलताच येथे अपडेट दिसेल.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
