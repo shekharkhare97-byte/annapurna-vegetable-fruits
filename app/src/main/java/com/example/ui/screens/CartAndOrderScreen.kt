@@ -411,11 +411,11 @@ private fun CartLineCard(
     onRemove: () -> Unit
 ) {
     Card(
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
             .testTag("cart_line_${line.produce.id}")
@@ -424,14 +424,14 @@ private fun CartLineCard(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(14.dp)
         ) {
             if (line.produce.imageUrl.isNullOrBlank()) {
                 Image(
                     painter = painterResource(id = line.produce.imageRes),
                     contentDescription = line.produce.marathiName,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(68.dp).clip(MaterialTheme.shapes.small)
+                    modifier = Modifier.size(76.dp).clip(MaterialTheme.shapes.medium)
                 )
             } else {
                 AsyncImage(
