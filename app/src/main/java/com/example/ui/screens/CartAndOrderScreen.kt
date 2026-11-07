@@ -70,6 +70,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -372,14 +373,21 @@ private fun CartLineCard(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            Image(
-                painter = painterResource(id = line.produce.imageRes),
-                contentDescription = line.produce.marathiName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(68.dp)
-                    .clip(MaterialTheme.shapes.small)
-            )
+            if (line.produce.imageUrl.isNullOrBlank()) {
+                Image(
+                    painter = painterResource(id = line.produce.imageRes),
+                    contentDescription = line.produce.marathiName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(68.dp).clip(MaterialTheme.shapes.small)
+                )
+            } else {
+                AsyncImage(
+                    model = line.produce.imageUrl,
+                    contentDescription = line.produce.marathiName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(68.dp).clip(MaterialTheme.shapes.small)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
