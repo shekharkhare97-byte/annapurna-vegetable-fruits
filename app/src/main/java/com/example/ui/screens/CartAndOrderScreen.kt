@@ -362,8 +362,8 @@ fun CartAndOrderScreen(
                                 }
                             }
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text("ऑर्डर ट्रॅकिंग", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("तुमच्या ऑर्डरची सद्यस्थिती", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.order_tracking_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.order_tracking_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Surface(
                                 color = if (trackingStatus == "cancelled") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
@@ -396,7 +396,7 @@ fun CartAndOrderScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                listOf("ऑर्डर मिळाली", "तयारी सुरू", "पूर्ण झाली").forEachIndexed { index, label ->
+                                listOf(stringResource(R.string.status_order_received), stringResource(R.string.status_preparing), stringResource(R.string.status_completed)).forEachIndexed { index, label ->
                                     Column(
                                         modifier = Modifier.weight(1f),
                                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -421,11 +421,11 @@ fun CartAndOrderScreen(
                             }
                         } else {
                             Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-                                Text("ही ऑर्डर रद्द करण्यात आली आहे.", color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp), fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.status_cancelled_message), color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp), fontWeight = FontWeight.SemiBold)
                             }
                         }
                         Text(statusLabel, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                        Text("Admin कडून स्थिती बदलताच येथे अपडेट दिसेल.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.status_admin_update), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -604,7 +604,7 @@ private fun CartLineCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("एकूण किंमत", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.line_total_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = "₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}",
                         style = MaterialTheme.typography.titleMedium,
@@ -683,7 +683,7 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: 
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "तुमच्या ऑर्डरचा तपशील",
+                        text = stringResource(R.string.order_details_title),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -715,7 +715,7 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: 
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("डिलिव्हरी पार्टनर टिप", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.delivery_tip_title), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("₹${MarathiFormatters.toMarathiNumber(deliveryTip)}", fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -907,7 +907,7 @@ private fun CustomerOrderFormCard(
                 }
             }
             Text("डिलिव्हरी पार्टनरला टिप द्यायची आहे का?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("तुमची इच्छा असल्यास डिलिव्हरी पार्टनरला धन्यवाद म्हणून टिप द्या.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.delivery_tip_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 listOf("0", "20", "30", "50").forEach { option ->
                     val label = if (option == "0") "नको" else "₹$option"
@@ -935,7 +935,7 @@ private fun CustomerOrderFormCard(
                 )
             }
 
-            Text("पेमेंट पद्धत", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.payment_method_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
                 Text("Cash on Delivery")
@@ -946,21 +946,21 @@ private fun CustomerOrderFormCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = false, onClick = {}, enabled = false)
-                Text("Debit / Credit Card", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.payment_card), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("लवकरच", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = false, onClick = {}, enabled = false)
-                Text("Net Banking", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.payment_net_banking), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("लवकरच", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
-            Text("Debit/Credit Card आणि Net Banking सुरू करण्यासाठी सुरक्षित Payment Gateway जोडणे बाकी आहे.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.payment_gateway_pending), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (paymentMethod == "UPI") {
                 val context = LocalContext.current
                 Text("UPI ID: paytm.s3wcxb1@pty", fontWeight = FontWeight.SemiBold)
-                Text("UPI पेमेंट पूर्ण करून ऑर्डर द्या. पेमेंट Admin तपासेल.",
+                Text(stringResource(R.string.upi_payment_instruction),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedButton(
                     enabled = deliveryCharge != null,
@@ -969,7 +969,7 @@ private fun CustomerOrderFormCard(
                         runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), "UPI पेमेंट करा")) }
                     },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("UPI App उघडा") }
+                ) { Text(stringResource(R.string.open_upi_app)) }
             }
 
             val orderButtonLabel = if (!isCartEmpty && grandTotal > 0) {
@@ -1110,7 +1110,7 @@ private fun PastOrderCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("एकूण बिल", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.total_bill_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = "₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
                         style = MaterialTheme.typography.titleLarge,
@@ -1229,7 +1229,7 @@ private fun OrderConfirmedDialog(
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
                     ) {
                         Text(
-                            "एकूण बिल",
+                            stringResource(R.string.total_bill_label),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -1261,7 +1261,7 @@ private fun OrderConfirmedDialog(
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth().testTag("continue_shopping_after_order_button")
                 ) {
-                    Text("आणखी खरेदी करा")
+                    Text(stringResource(R.string.continue_shopping))
                 }
                 TextButton(
                     onClick = onDismiss,
