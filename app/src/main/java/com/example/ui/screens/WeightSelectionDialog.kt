@@ -53,7 +53,7 @@ fun WeightSelectionDialog(
         shape = MaterialTheme.shapes.extraLarge,
         title = {
             Text(
-                if (item.isPieceBased) "\${item.unitMarathi.removePrefix("१ ")} निवडा — \${item.marathiName}" else "वजन निवडा — \${item.marathiName}",
+                if (item.isPieceBased) "${item.unitMarathi.removePrefix("१ ")} निवडा — ${item.marathiName}" else "वजन निवडा — ${item.marathiName}",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
@@ -66,7 +66,7 @@ fun WeightSelectionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (item.isPieceBased) "दर: ₹\${item.priceRupees} / \${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹\${item.priceRupees} / किलो",
+                        text = if (item.isPieceBased) "दर: ₹${item.priceRupees} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${item.priceRupees} / किलो",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(12.dp)
                     )
@@ -113,7 +113,7 @@ fun WeightSelectionDialog(
                             color = if (valid) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
                         )
                         Text(
-                            text = if (valid) "₹\${"%.2f".format(amount)}" else "—",
+                            text = if (valid) "₹${"%.2f".format(amount)}" else "—",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
                             color = if (valid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
