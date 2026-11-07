@@ -30,6 +30,8 @@ import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -102,6 +104,22 @@ enum class AnnapurnaTab(
 }
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val language = newBase.getSharedPreferences("annapurna_settings", MODE_PRIVATE)
+            .getString("app_language", "mr") ?: "mr"
+        val locale = java.util.Locale(language)
+        java.util.Locale.setDefault(locale)
+        val config = android.content.res.Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
+
+    fun changeLanguage(language: String) {
+        getSharedPreferences("annapurna_settings", MODE_PRIVATE).edit()
+            .putString("app_language", language).apply()
+        recreate()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -141,6 +159,9 @@ fun AnnapurnaRootApp() {
     val studioState by aiViewModel.studioState.collectAsStateWithLifecycle()
 
     val totalCartItems = remember(cartItems) { cartItems.sumOf { it.quantity } }
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+    val currentLanguage = context.resources.configuration.locales[0].language
+    val languageLabel = when (currentLanguage) { "hi" -> "हिन्दी"; "en" -> "English"; else -> "मराठी" }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isWideScreen = maxWidth >= 600.dp
@@ -184,6 +205,30 @@ fun AnnapurnaRootApp() {
                         }
                     },
                     actions = {
+                        Box {
+                            FilledTonalButton(
+                                onClick = { languageMenuExpanded = true },
+                                colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = Color.White.copy(alpha = 0.18f),
+                                    contentColor = Color.White
+                                ),
+                                modifier = Modifier.padding(end = 4.dp)
+                            ) { Text(languageLabel, fontWeight = FontWeight.SemiBold) }
+                            DropdownMenu(
+                                expanded = languageMenuExpanded,
+                                onDismissRequest = { languageMenuExpanded = false }
+                            ) {
+                                listOf("mr" to "मराठी", "hi" to "हिन्दी", "en" to "English").forEach { (code, label) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = {
+                                            languageMenuExpanded = false
+                                            (context as? MainActivity)?.changeLanguage(code)
+                                        }
+                                    )
+                                }
+                            }
+                        }
                         if (currentTab != AnnapurnaTab.CART) {
                             FilledTonalButton(
                                 onClick = { currentTab = AnnapurnaTab.CART },
