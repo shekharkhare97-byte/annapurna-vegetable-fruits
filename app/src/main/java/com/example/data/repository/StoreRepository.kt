@@ -18,7 +18,7 @@ data class CartLineItem(
     val quantity: Int,
     val weightGrams: Int
 ) {
-    val lineTotalRupees: Int get() = ((WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity + 50L) / 100L).toInt()
+    val lineTotalRupees: Int get() = if (produce.isPieceBased) produce.priceRupees * quantity else ((WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity + 50L) / 100L).toInt()
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -130,6 +130,8 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "weightGrams" to line.weightGrams,
                 "quantity" to line.quantity,
                 "pricePerKgRupees" to line.produce.priceRupees,
+                "unit" to line.produce.unitMarathi,
+                "isPieceBased" to line.produce.isPieceBased,
                 "lineTotalRupees" to line.lineTotalRupees
             )
         }
