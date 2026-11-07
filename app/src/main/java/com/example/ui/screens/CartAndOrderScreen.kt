@@ -496,78 +496,44 @@ private fun CartLineCard(
 ) {
     Card(
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("cart_line_${line.produce.id}")
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth().testTag("cart_line_${line.produce.id}")
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (line.produce.imageUrl.isNullOrBlank()) {
-                Image(
-                    painter = painterResource(id = line.produce.imageRes),
-                    contentDescription = line.produce.marathiName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(76.dp).clip(MaterialTheme.shapes.medium)
-                )
-            } else {
-                AsyncImage(
-                    model = line.produce.imageUrl,
-                    contentDescription = line.produce.marathiName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(68.dp).clip(MaterialTheme.shapes.small)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = line.produce.marathiName,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = if (line.produce.isPieceBased) "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}" else "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "एकूण: ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onDecrease,
-                    modifier = Modifier.testTag("cart_minus_${line.produce.id}")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = stringResource(R.string.cd_decrease_qty)
+                if (line.produce.imageUrl.isNullOrBlank()) {
+                    Image(
+                        painter = painterResource(id = line.produce.imageRes),
+                        contentDescription = line.produce.marathiName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(76.dp).clip(MaterialTheme.shapes.medium)
+                    )
+                } else {
+                    AsyncImage(
+                        model = line.produce.imageUrl,
+                        contentDescription = line.produce.marathiName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(76.dp).clip(MaterialTheme.shapes.medium)
                     )
                 }
-                Text(
-                    text = MarathiFormatters.toMarathiNumber(line.quantity),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(
-                    onClick = onIncrease,
-                    modifier = Modifier.testTag("cart_plus_${line.produce.id}")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.cd_increase_qty)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = line.produce.marathiName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (line.produce.isPieceBased)
+                            "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
+                        else
+                            "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(
@@ -579,6 +545,46 @@ private fun CartLineCard(
                         contentDescription = stringResource(R.string.cd_remove_item),
                         tint = MaterialTheme.colorScheme.error
                     )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("एकूण किंमत", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = "₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = onDecrease,
+                            modifier = Modifier.size(38.dp).testTag("cart_minus_${line.produce.id}")
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.cd_decrease_qty), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                        Text(
+                            text = MarathiFormatters.toMarathiNumber(line.quantity),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        IconButton(
+                            onClick = onIncrease,
+                            modifier = Modifier.size(38.dp).testTag("cart_plus_${line.produce.id}")
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_increase_qty), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    }
                 }
             }
         }
