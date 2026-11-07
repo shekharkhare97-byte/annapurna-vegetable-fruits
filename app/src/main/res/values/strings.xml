@@ -35,7 +35,7 @@
     <string name="cart_header_title">माझी खरेदी पिशवी</string>
     <string name="cart_clear_all">पिशवी रिकामी करा</string>
     <string name="cart_empty_title">तुमची खरेदी पिशवी सध्या रिकामी आहे</string>
-    <string name="cart_empty_subtitle">ताज्या भाज्या आणि फळे निवडण्यासाठी \'ताजा बाजार\' टॅबवर जा.</string>
+    <string name="cart_empty_subtitle">ताज्या भाज्या आणि फळे निवडण्यासाठी 'ताजा बाजार' टॅबवर जा.</string>
     <string name="btn_browse_bazaar">ताजा बाजार पहा</string>
     <string name="bill_summary_title">बिलाचा तपशील</string>
     <string name="bill_items_total">मालाची एकूण रक्कम</string>
@@ -67,7 +67,7 @@
     <string name="btn_done">ठीक आहे</string>
     <string name="recent_orders_title">मागील नोंदवलेल्या ऑर्डर्स</string>
     <string name="btn_reorder">पुन्हा पिशवीत भरा</string>
-    <string name="order_status_confirmed">ऑर्डर स्वीकारली</string>
+    <string name="order_status_confirmed">ऑर्डर नोंदवली</string>
 
     <!-- Gemini Marathi Chatbot -->
     <string name="chat_title">अन्नपूर्णा AI सहाय्यक</string>
