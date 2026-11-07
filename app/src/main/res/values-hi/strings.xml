@@ -14,4 +14,13 @@
 <string name="order_success_title">आपका ऑर्डर सफलतापूर्वक दर्ज हो गया!</string><string name="order_success_subtitle">अन्नपूर्णा चुनने के लिए धन्यवाद।</string><string name="order_id_format">ऑर्डर नंबर: #%1$s</string><string name="btn_share_receipt">रसीद साझा करें</string><string name="btn_done">ठीक है</string><string name="recent_orders_title">पिछले ऑर्डर</string><string name="btn_reorder">फिर से टोकरी में डालें</string><string name="order_status_confirmed">ऑर्डर दर्ज हुआ</string>
 <string name="chat_title">अन्नपूर्णा AI सहायक</string><string name="chat_subtitle">रेसिपी, ताज़गी के सुझाव और आहार सलाह</string><string name="chat_clear_desc">बातचीत फिर शुरू करें</string><string name="model_fast_label">तेज़ (Flash-Lite)</string><string name="model_general_label">सामान्य (Flash 3.8)</string><string name="model_complex_label">विशेषज्ञ (Argon 4)</string><string name="chat_input_placeholder">हिंदी में सवाल पूछें (जैसे भरवाँ बैंगन कैसे बनाएँ?)...</string><string name="cd_send_message">संदेश भेजें</string><string name="chat_typing_indicator">अन्नपूर्णा सहायक जवाब लिख रहा है...</string>
 <string name="studio_title">अन्नपूर्णा AI फोटो स्टूडियो</string><string name="studio_subtitle">Gemini 3 Pro Image से १K, २K और ४K उच्च गुणवत्ता वाले फोटो बनाएँ</string><string name="studio_size_label">फोटो का आकार चुनें</string><string name="studio_ratio_label">फ्रेम अनुपात चुनें</string><string name="studio_prompt_label">फोटो का विवरण लिखें</string><string name="studio_prompt_placeholder">जैसे केले के पत्ते पर सजी महाराष्ट्रीयन शाकाहारी थाली और ताज़े फल...</string><string name="btn_generate_image">उच्च गुणवत्ता की फोटो बनाएँ</string><string name="studio_generating_msg">उच्च गुणवत्ता वाली %1$s फोटो बन रही है (३०-६० सेकंड लग सकते हैं)...</string><string name="btn_share_image">फोटो साझा करें</string><string name="studio_preset_label">त्वरित विचार चुनें:</string><string name="error_backend_not_configured">सुरक्षित बैकएंड सर्वर URL सेट नहीं है। कृपया सर्वर डिप्लॉय करें और BackendConfig.kt में HTTPS URL जोड़ें।</string>
+    <!-- Additional Bazaar translations -->
+    <string name="bazaar_today_title">आज के ताज़ा उत्पाद</string>
+    <string name="bazaar_subtitle">चुनें, वजन तय करें और कार्ट में डालें</string>
+    <string name="brand_name">अन्नपूर्णा</string>
+    <string name="brand_tagline">ताज़ी सब्ज़ियाँ और फल</string>
+    <string name="brand_fresh_daily">हर दिन ताज़ा</string>
+    <string name="unit_per_piece_bundle">प्रति नग / गुच्छा</string>
+    <string name="unit_per_kg">प्रति किलो</string>
+    <string name="ask_ai_recipe">AI रेसिपी पूछें</string>
 </resources>
