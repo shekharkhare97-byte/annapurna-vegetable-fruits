@@ -1051,56 +1051,102 @@ private fun OrderConfirmedDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.extraLarge,
         icon = {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp)
-            )
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(68.dp)
+            ) {
+                androidx.compose.foundation.layout.Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
+            }
         },
         title = {
             Text(
                 text = stringResource(R.string.order_success_title),
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     text = stringResource(R.string.order_success_subtitle),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                Text(
-                    text = stringResource(
-                        R.string.order_id_format,
-                        MarathiFormatters.toMarathiNumber(order.orderId.toInt())
-                    ),
-                    fontWeight = FontWeight.Bold
-                )
-                Text("ग्राहक: ${order.customerName}")
-                Text("मोबाईल: ${MarathiFormatters.toMarathiDigits(order.mobileNumber)}")
-                if (order.deliveryAddress.isNotBlank()) {
-                    Text("पत्ता: ${order.deliveryAddress}")
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        Text(
+                            text = stringResource(
+                                R.string.order_id_format,
+                                MarathiFormatters.toMarathiNumber(order.orderId.toInt())
+                            ),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text("ग्राहक: ${order.customerName}", style = MaterialTheme.typography.bodySmall)
+                        Text("मोबाईल: ${MarathiFormatters.toMarathiDigits(order.mobileNumber)}", style = MaterialTheme.typography.bodySmall)
+                        if (order.deliveryAddress.isNotBlank()) {
+                            Text(
+                                text = order.deliveryAddress,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = order.itemsSummaryMarathi,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "एकूण बिल: ₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            "एकूण बिल",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
             }
         },
         dismissButton = {
             OutlinedButton(
                 onClick = onShareReceipt,
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.testTag("share_receipt_button")
             ) {
                 Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -1109,16 +1155,17 @@ private fun OrderConfirmedDialog(
             }
         },
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Button(
                     onClick = onContinueShopping,
-                    modifier = Modifier.testTag("continue_shopping_after_order_button")
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth().testTag("continue_shopping_after_order_button")
                 ) {
                     Text("आणखी खरेदी करा")
                 }
-                Button(
+                TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.testTag("order_receipt_done_button")
+                    modifier = Modifier.align(Alignment.CenterHorizontally).testTag("order_receipt_done_button")
                 ) {
                     Text(stringResource(R.string.btn_done))
                 }
