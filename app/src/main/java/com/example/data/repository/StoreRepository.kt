@@ -24,6 +24,9 @@ data class CartLineItem(
 
 class StoreRepository(private val storeDao: StoreDao) {
 
+    @Volatile var latestTrackingToken: String? = null
+        private set
+
     val cartLineItems: Flow<List<CartLineItem>> = storeDao.observeCartItems().map { entities ->
         entities.mapNotNull { entity ->
             val produce = ProduceCatalog.findById(entity.produceId)
@@ -129,6 +132,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         val firestore = FirebaseFirestore.getInstance()
         val remoteOrder = firestore.collection("orders").document()
         val trackingToken = UUID.randomUUID().toString()
+        latestTrackingToken = trackingToken
         val remoteItems = items.map { line ->
             mapOf(
                 "productId" to line.produce.id,
