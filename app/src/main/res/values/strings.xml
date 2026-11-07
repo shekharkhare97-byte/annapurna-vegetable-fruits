@@ -50,7 +50,7 @@
     <string name="placeholder_customer_name">उदा. राजेश कुलकर्णी</string>
     <string name="label_mobile_number">मोबाईल नंबर (१० अंकी) *</string>
     <string name="placeholder_mobile_number">उदा. ९८७६५४३२१०</string>
-    <string name="label_delivery_address">पत्ता / जवळची खूण (ऐच्छिक)</string>
+    <string name="label_delivery_address">डिलिव्हरी पत्ता *</string>
     <string name="placeholder_delivery_address">उदा. शिवाजी नगर, पुणे</string>
     <string name="btn_place_order">ऑर्डर नोंदवा</string>
 
