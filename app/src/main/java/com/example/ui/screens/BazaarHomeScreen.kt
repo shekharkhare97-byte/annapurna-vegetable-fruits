@@ -507,12 +507,23 @@ private fun ProduceGridCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "₹${MarathiFormatters.toMarathiNumber(item.priceRupees)}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "₹${MarathiFormatters.toMarathiNumber(item.priceRupees)}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (item.isPieceBased) "/ नग किंवा जुडी" else "/ किलो",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 3.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(10.dp))
 
                 if (quantityInCart == 0) {
