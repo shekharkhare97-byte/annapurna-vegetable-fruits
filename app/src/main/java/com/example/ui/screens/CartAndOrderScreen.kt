@@ -866,6 +866,10 @@ private fun CustomerOrderFormCard(
                 maxLines = 2,
                 label = { Text(stringResource(R.string.label_delivery_address)) },
                 placeholder = { Text(stringResource(R.string.placeholder_delivery_address)) },
+                isError = formState.addressErrorMarathi != null,
+                supportingText = formState.addressErrorMarathi?.let { err ->
+                    { Text(err, color = MaterialTheme.colorScheme.error) }
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
