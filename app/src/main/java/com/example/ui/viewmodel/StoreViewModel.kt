@@ -38,7 +38,8 @@ data class CustomerFormState(
 )
 
 class StoreViewModel(
-    private val repository: StoreRepository
+    private val repository: StoreRepository,
+    context: Context
 ) : ViewModel() {
 
     private val _selectedCategory = MutableStateFlow(ProduceCategory.ALL)
@@ -331,7 +332,7 @@ class StoreViewModel(
         fun provideFactory(context: Context): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val db = AnnapurnaDatabase.getInstance(context)
-                StoreViewModel(StoreRepository(db.storeDao()))
+                StoreViewModel(StoreRepository(db.storeDao()), context.applicationContext)
             }
         }
     }
