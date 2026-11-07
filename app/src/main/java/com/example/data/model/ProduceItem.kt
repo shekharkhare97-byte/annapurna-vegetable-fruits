@@ -19,7 +19,8 @@ data class ProduceItem(
     val badgeMarathi: String,
     val descriptionMarathi: String,
     @DrawableRes val imageRes: Int,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val isPieceBased: Boolean = false
 )
 
 object ProduceCatalog {
