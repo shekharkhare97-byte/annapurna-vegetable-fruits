@@ -905,8 +905,8 @@ private fun CustomerOrderFormCard(
             Text("डिलिव्हरी पार्टनरला टिप द्यायची आहे का?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text("तुमची इच्छा असल्यास डिलिव्हरी पार्टनरला धन्यवाद म्हणून टिप द्या.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                listOf("0", "20", "30", "50", "CUSTOM").forEach { option ->
-                    val label = when (option) { "0" -> "नको"; "CUSTOM" -> "Custom"; else -> "₹$option" }
+                listOf("0", "20", "30", "50").forEach { option ->
+                    val label = if (option == "0") "नको" else "₹$option"
                     OutlinedButton(
                         onClick = { onTipOptionChange(option) },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
@@ -914,6 +914,11 @@ private fun CustomerOrderFormCard(
                     ) { Text(label, fontWeight = if (tipOption == option) FontWeight.Bold else FontWeight.Normal) }
                 }
             }
+            OutlinedButton(
+                onClick = { onTipOptionChange("CUSTOM") },
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                colors = if (tipOption == "CUSTOM") ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.primary) else ButtonDefaults.outlinedButtonColors()
+            ) { Text("Custom रक्कम", fontWeight = if (tipOption == "CUSTOM") FontWeight.Bold else FontWeight.Normal) }
             if (tipOption == "CUSTOM") {
                 OutlinedTextField(
                     value = customTipText,
