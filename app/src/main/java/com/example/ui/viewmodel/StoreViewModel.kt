@@ -13,6 +13,7 @@ import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceCategory
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import android.content.SharedPreferences
 import com.example.data.model.ProduceItem
 import com.example.data.repository.CartLineItem
 import com.example.data.repository.StoreRepository
@@ -42,6 +43,10 @@ class StoreViewModel(
 
     private val _selectedCategory = MutableStateFlow(ProduceCategory.ALL)
     private var productsListener: ListenerRegistration? = null
+    private var trackingListener: ListenerRegistration? = null
+    private val trackingPrefs = context.getSharedPreferences("annapurna_order_tracking", Context.MODE_PRIVATE)
+    private val _trackingStatus = MutableStateFlow("")
+    val trackingStatus: StateFlow<String> = _trackingStatus.asStateFlow()
     val selectedCategory: StateFlow<ProduceCategory> = _selectedCategory.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
@@ -93,6 +98,7 @@ class StoreViewModel(
     private var profileHydrated = false
 
     init {
+        trackingPrefs.getString("latest_token", null)?.let(::listenToOrderStatus)
         productsListener = FirebaseFirestore.getInstance().collection("products")
             .whereEqualTo("isVisible", true)
             .addSnapshotListener { snapshot, error ->
@@ -163,6 +169,7 @@ class StoreViewModel(
 
     override fun onCleared() {
         productsListener?.remove()
+        trackingListener?.remove()
         super.onCleared()
     }
 
@@ -278,8 +285,25 @@ class StoreViewModel(
                     mobileErrorMarathi = null
                 )
             }
+            repository.latestTrackingToken?.let { token ->
+                trackingPrefs.edit().putString("latest_token", token).apply()
+                listenToOrderStatus(token)
+            }
             _confirmedOrder.value = savedOrder
         }
+    }
+
+    private fun listenToOrderStatus(token: String) {
+        trackingListener?.remove()
+        trackingListener = FirebaseFirestore.getInstance()
+            .collection("orderTracking").document(token)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _trackingStatus.value = "unavailable"
+                } else if (snapshot != null && snapshot.exists()) {
+                    _trackingStatus.value = snapshot.getString("status") ?: "new"
+                }
+            }
     }
 
     fun dismissOrderReceipt() {
