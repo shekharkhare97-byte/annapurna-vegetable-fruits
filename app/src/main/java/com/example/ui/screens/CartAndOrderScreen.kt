@@ -891,7 +891,7 @@ private fun CustomerOrderFormCard(
             if (paymentMethod == "UPI") {
                 val context = LocalContext.current
                 Text("UPI ID: paytm.s3wcxb1@pty", fontWeight = FontWeight.SemiBold)
-                Text("पेमेंट केल्यानंतर Transaction ID / UTR भरा. Admin तपासल्यानंतरच Paid होईल.",
+                Text("UPI पेमेंट पूर्ण करून ऑर्डर द्या. पेमेंट Admin तपासेल.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedButton(
                     enabled = deliveryCharge != null,
@@ -901,15 +901,6 @@ private fun CustomerOrderFormCard(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("UPI App उघडा") }
-                OutlinedTextField(
-                    value = transactionId,
-                    onValueChange = onTransactionIdChange,
-                    singleLine = true,
-                    label = { Text("Transaction ID / UTR") },
-                    placeholder = { Text("पेमेंटनंतर UTR टाका") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done),
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
 
             val orderButtonLabel = if (!isCartEmpty && grandTotal > 0) {
