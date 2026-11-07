@@ -449,7 +449,7 @@ private fun CartLineCard(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = if (line.produce.isPieceBased) "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / नग • ${MarathiFormatters.toMarathiNumber(line.quantity)} नग" else "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
+                    text = if (line.produce.isPieceBased) "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}" else "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
