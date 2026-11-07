@@ -147,13 +147,13 @@ fun BazaarHomeScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            text = if (selectedCategory == ProduceCategory.ALL) "आजचे ताजे पदार्थ" else selectedCategory.marathiLabel,
+                            text = if (selectedCategory == ProduceCategory.ALL) stringResource(R.string.bazaar_today_title) else when (selectedCategory) { ProduceCategory.ALL -> stringResource(R.string.cat_all); ProduceCategory.VEGETABLE -> stringResource(R.string.cat_vegetables); ProduceCategory.FRUIT -> stringResource(R.string.cat_fruits) },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "निवडा, वजन ठरवा आणि कार्टमध्ये टाका",
+                            text = stringResource(R.string.bazaar_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -257,14 +257,14 @@ private fun StoreBrandHeader() {
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text(text = "अन्नपूर्णा", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                Text(text = "ताज्या भाज्या आणि फळे", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = stringResource(R.string.brand_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                Text(text = stringResource(R.string.brand_tagline), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
             Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 Icon(imageVector = Icons.Default.Eco, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(15.dp))
-                Text(text = "ताजे रोज", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.SemiBold)
+                Text(text = stringResource(R.string.brand_fresh_daily), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -775,7 +775,7 @@ private fun ProduceDetailSheetContent(
                         fontWeight = FontWeight.ExtraBold
                     )
                     Text(
-                        text = if (item.isPieceBased) "प्रति नग / जुडी" else "प्रति किलो",
+                        text = if (item.isPieceBased) stringResource(R.string.unit_per_piece_bundle) else stringResource(R.string.unit_per_kg),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -808,7 +808,7 @@ private fun ProduceDetailSheetContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("AI पाककृती विचारा")
+                Text(stringResource(R.string.ask_ai_recipe))
             }
 
             if (quantityInCart == 0) {
