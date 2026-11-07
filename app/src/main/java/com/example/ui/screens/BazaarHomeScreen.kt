@@ -377,11 +377,11 @@ private fun ProduceGridCard(
     onDecrease: () -> Unit
 ) {
     Card(
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onCardClick)
@@ -391,7 +391,8 @@ private fun ProduceGridCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1.08f)
+                    .aspectRatio(1.02f)
+                    .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 if (item.imageUrl.isNullOrBlank()) {
@@ -424,7 +425,7 @@ private fun ProduceGridCard(
             }
 
             Column(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 11.dp)
             ) {
                 Text(
                     text = item.marathiName,
@@ -457,7 +458,7 @@ private fun ProduceGridCard(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(44.dp)
                             .testTag("add_to_cart_${item.id}")
                     ) {
                         Icon(
@@ -477,7 +478,7 @@ private fun ProduceGridCard(
                         shape = MaterialTheme.shapes.small,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(44.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
