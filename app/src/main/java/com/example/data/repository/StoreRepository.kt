@@ -10,6 +10,7 @@ import com.example.data.model.WeightPricing
 import com.example.util.MarathiFormatters
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -124,8 +125,10 @@ class StoreRepository(private val storeDao: StoreDao) {
         )
         val generatedId = storeDao.insertOrder(draftOrder)
 
-        // Firestore queues this write while offline and syncs it when connectivity returns.
-        val remoteOrder = FirebaseFirestore.getInstance().collection("orders").document()
+        // A random token exposes status only, never customer details.
+        val firestore = FirebaseFirestore.getInstance()
+        val remoteOrder = firestore.collection("orders").document()
+        val trackingToken = UUID.randomUUID().toString()
         val remoteItems = items.map { line ->
             mapOf(
                 "productId" to line.produce.id,
@@ -140,6 +143,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         }
         val remoteOrderData = mutableMapOf<String, Any>(
                 "orderId" to remoteOrder.id,
+                "trackingToken" to trackingToken,
                 "customerName" to customerName.trim(),
                 "mobileNumber" to mobileNumber.trim(),
                 "deliveryAddress" to deliveryAddress.trim(),
@@ -162,7 +166,14 @@ class StoreRepository(private val storeDao: StoreDao) {
             remoteOrderData["longitude"] = longitude
             remoteOrderData["locationSource"] = "customer_address_geocoded"
         }
-        remoteOrder.set(remoteOrderData)
+        val batch = firestore.batch()
+        batch.set(remoteOrder, remoteOrderData)
+        batch.set(firestore.collection("orderTracking").document(trackingToken), mapOf(
+            "status" to "new",
+            "createdAtMillis" to now
+        ))
+        // Firestore queues the atomic order + tracking write while offline.
+        batch.commit()
 
         saveCustomerProfile(customerName.trim(), mobileNumber.trim(), deliveryAddress.trim())
         storeDao.clearCart()
