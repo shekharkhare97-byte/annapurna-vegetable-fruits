@@ -168,7 +168,60 @@ fun CartAndOrderScreen(
         if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
-    LaunchedEffect(Unit) { requestDeliveryLocation() }
+    LaunchedEffect(formState.deliveryAddress) {
+        val typedAddress = formState.deliveryAddress.trim()
+        if (typedAddress.length >= 5) {
+            deliveryCharge = null
+            deliveryDistanceKm = null
+            deliveryMessage = "पत्ता तपासून डिलिव्हरी चार्ज मोजत आहे..."
+            kotlinx.coroutines.delay(900)
+            val destination = withContext(Dispatchers.IO) {
+                runCatching {
+                    if (!Geocoder.isPresent()) null else {
+                        @Suppress("DEPRECATION")
+                        Geocoder(context, Locale("en", "IN"))
+                            .getFromLocationName("$typedAddress, Nashik, Maharashtra, India", 1)
+                            ?.firstOrNull()
+                    }
+                }.getOrNull()
+            }
+            if (destination == null) {
+                deliveryMessage = "हा पत्ता सापडला नाही. पूर्ण पत्ता व Satpur, Nashik लिहा."
+                deliveryLatitude = null
+                deliveryLongitude = null
+            } else {
+                deliveryLatitude = destination.latitude
+                deliveryLongitude = destination.longitude
+                val shop = withContext(Dispatchers.IO) {
+                    runCatching {
+                        @Suppress("DEPRECATION")
+                        Geocoder(context, Locale("en", "IN")).getFromLocationName(
+                            "Surya co op HSG society, Road Borgad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India",
+                            1
+                        )?.firstOrNull()
+                    }.getOrNull()
+                }
+                if (shop == null) {
+                    deliveryMessage = "दुकानाचे लोकेशन सापडले नाही. कृपया पुन्हा प्रयत्न करा."
+                    deliveryLatitude = null
+                    deliveryLongitude = null
+                } else {
+                    val meters = FloatArray(1)
+                    Location.distanceBetween(shop.latitude, shop.longitude, destination.latitude, destination.longitude, meters)
+                    val km = meters[0] / 1000.0
+                    deliveryDistanceKm = km
+                    deliveryCharge = kotlin.math.ceil(km).toInt().coerceAtLeast(1) * 10
+                    deliveryMessage = String.format(Locale.US, "पत्त्यापासून दुकानापर्यंत अंदाजे %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
+                }
+            }
+        } else {
+            deliveryCharge = null
+            deliveryDistanceKm = null
+            deliveryLatitude = null
+            deliveryLongitude = null
+            deliveryMessage = "पूर्ण डिलिव्हरी पत्ता लिहा; त्यानंतर चार्ज आपोआप मोजला जाईल."
+        }
+    }
 
     val itemsTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
     val grandTotal = itemsTotal + (deliveryCharge ?: 0)
