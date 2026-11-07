@@ -14,4 +14,13 @@
 <string name="order_success_title">Your order was placed successfully!</string><string name="order_success_subtitle">Thank you for choosing Annapurna.</string><string name="order_id_format">Order No.: #%1$s</string><string name="btn_share_receipt">Share Receipt</string><string name="btn_done">Done</string><string name="recent_orders_title">Recent Orders</string><string name="btn_reorder">Add Again to Cart</string><string name="order_status_confirmed">Order Placed</string>
 <string name="chat_title">Annapurna AI Assistant</string><string name="chat_subtitle">Recipes, freshness tips and nutrition advice</string><string name="chat_clear_desc">Restart conversation</string><string name="model_fast_label">Fast (Flash-Lite)</string><string name="model_general_label">General (Flash 3.8)</string><string name="model_complex_label">Expert (Argon 4)</string><string name="chat_input_placeholder">Ask a question in English (e.g. How do I make stuffed eggplant?)...</string><string name="cd_send_message">Send message</string><string name="chat_typing_indicator">Annapurna Assistant is typing...</string>
 <string name="studio_title">Annapurna AI Photo Studio</string><string name="studio_subtitle">Create high-quality 1K, 2K and 4K photos with Gemini 3 Pro Image</string><string name="studio_size_label">Choose Photo Size</string><string name="studio_ratio_label">Choose Aspect Ratio</string><string name="studio_prompt_label">Describe the photo</string><string name="studio_prompt_placeholder">e.g. A Maharashtrian vegetarian thali on a banana leaf with fresh fruits...</string><string name="btn_generate_image">Generate High-Quality Photo</string><string name="studio_generating_msg">Creating a high-quality %1$s photo (may take 30–60 seconds)...</string><string name="btn_share_image">Share Photo</string><string name="studio_preset_label">Choose a quick idea:</string><string name="error_backend_not_configured">Secure backend server URL is not configured. Deploy the server and add its HTTPS URL in BackendConfig.kt.</string>
+    <!-- Additional Bazaar translations -->
+    <string name="bazaar_today_title">Today's Fresh Picks</string>
+    <string name="bazaar_subtitle">Choose items, select weight and add to cart</string>
+    <string name="brand_name">Annapurna</string>
+    <string name="brand_tagline">Fresh Vegetables and Fruits</string>
+    <string name="brand_fresh_daily">Fresh Every Day</string>
+    <string name="unit_per_piece_bundle">Per piece / bunch</string>
+    <string name="unit_per_kg">Per kilogram</string>
+    <string name="ask_ai_recipe">Ask AI for a recipe</string>
 </resources>
