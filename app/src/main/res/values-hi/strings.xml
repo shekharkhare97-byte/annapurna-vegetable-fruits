@@ -23,4 +23,25 @@
     <string name="unit_per_piece_bundle">प्रति नग / गुच्छा</string>
     <string name="unit_per_kg">प्रति किलो</string>
     <string name="ask_ai_recipe">AI रेसिपी पूछें</string>
+    <!-- Cart and checkout translations -->
+    <string name="order_tracking_title">ऑर्डर ट्रैकिंग</string>
+    <string name="order_tracking_subtitle">आपके ऑर्डर की वर्तमान स्थिति</string>
+    <string name="status_order_received">ऑर्डर मिली</string>
+    <string name="status_preparing">तैयारी शुरू</string>
+    <string name="status_completed">पूरा हुआ</string>
+    <string name="status_cancelled_message">यह ऑर्डर रद्द कर दिया गया है।</string>
+    <string name="status_admin_update">Admin द्वारा स्थिति बदलते ही यहाँ अपडेट दिखेगा।</string>
+    <string name="order_details_title">आपके ऑर्डर का विवरण</string>
+    <string name="delivery_tip_title">डिलीवरी पार्टनर के लिए टिप</string>
+    <string name="delivery_tip_subtitle">चाहें तो डिलीवरी पार्टनर को धन्यवाद के रूप में टिप दें।</string>
+    <string name="payment_method_title">भुगतान का तरीका</string>
+    <string name="coming_soon">जल्द आ रहा है</string>
+    <string name="payment_card">डेबिट / क्रेडिट कार्ड</string>
+    <string name="payment_net_banking">नेट बैंकिंग</string>
+    <string name="payment_gateway_pending">कार्ड और नेट बैंकिंग शुरू करने के लिए सुरक्षित पेमेंट गेटवे जोड़ना बाकी है।</string>
+    <string name="upi_payment_instruction">UPI भुगतान पूरा करके ऑर्डर दें। भुगतान Admin जाँचेगा।</string>
+    <string name="open_upi_app">UPI ऐप खोलें</string>
+    <string name="continue_shopping">और खरीदारी करें</string>
+    <string name="line_total_label">कुल कीमत</string>
+    <string name="total_bill_label">कुल बिल</string>
 </resources>
