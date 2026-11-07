@@ -123,6 +123,10 @@ fun BazaarHomeScreen(
                 .testTag("produce_grid")
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
+                StoreBrandHeader()
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 SearchAndFilterBar(
                     searchQuery = searchQuery,
                     selectedCategory = selectedCategory,
@@ -201,6 +205,33 @@ fun BazaarHomeScreen(
                     onAskRecipeInChat(chosen)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun StoreBrandHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(48.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(imageVector = Icons.Default.Eco, contentDescription = "Annapurna", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(29.dp))
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(text = "अन्नपूर्णा", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                Text(text = "ताज्या भाज्या आणि फळे", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
+            Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Icon(imageVector = Icons.Default.Eco, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(15.dp))
+                Text(text = "ताजे रोज", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }
