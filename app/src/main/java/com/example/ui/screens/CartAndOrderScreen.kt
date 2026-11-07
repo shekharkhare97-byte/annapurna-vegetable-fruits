@@ -816,7 +816,7 @@ private fun CustomerOrderFormCard(
 
             Button(
                 onClick = onSubmitOrder,
-                enabled = !formState.isSubmitting && deliveryCharge != null,
+                enabled = !isCartEmpty && !formState.isSubmitting && deliveryCharge != null,
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
