@@ -23,4 +23,25 @@
     <string name="unit_per_piece_bundle">Per piece / bunch</string>
     <string name="unit_per_kg">Per kilogram</string>
     <string name="ask_ai_recipe">Ask AI for a recipe</string>
+    <!-- Cart and checkout translations -->
+    <string name="order_tracking_title">Order Tracking</string>
+    <string name="order_tracking_subtitle">Current status of your order</string>
+    <string name="status_order_received">Order received</string>
+    <string name="status_preparing">Preparing</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_cancelled_message">This order has been cancelled.</string>
+    <string name="status_admin_update">Updates will appear here when Admin changes the status.</string>
+    <string name="order_details_title">Your Order Details</string>
+    <string name="delivery_tip_title">Delivery Partner Tip</string>
+    <string name="delivery_tip_subtitle">Optionally thank your delivery partner with a tip.</string>
+    <string name="payment_method_title">Payment Method</string>
+    <string name="coming_soon">Coming Soon</string>
+    <string name="payment_card">Debit / Credit Card</string>
+    <string name="payment_net_banking">Net Banking</string>
+    <string name="payment_gateway_pending">A secure payment gateway is still needed to enable cards and net banking.</string>
+    <string name="upi_payment_instruction">Complete the UPI payment and place the order. Admin will verify the payment.</string>
+    <string name="open_upi_app">Open UPI App</string>
+    <string name="continue_shopping">Continue Shopping</string>
+    <string name="line_total_label">Line Total</string>
+    <string name="total_bill_label">Total Bill</string>
 </resources>
