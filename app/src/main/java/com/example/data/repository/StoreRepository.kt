@@ -99,7 +99,8 @@ class StoreRepository(private val storeDao: StoreDao) {
         paymentMethod: String = "COD",
         transactionId: String = "",
         deliveryChargeRupees: Int = 0,
-        deliveryDistanceKm: Double? = null
+        deliveryDistanceKm: Double? = null,
+        deliveryTipRupees: Int = 0
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
             val quantityLabel = if (line.produce.isPieceBased) {
@@ -112,8 +113,9 @@ class StoreRepository(private val storeDao: StoreDao) {
         val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}:${it.weightGrams}" }
         val totalQty = items.sumOf { it.quantity }
         val itemsTotal = items.sumOf { it.lineTotalRupees }
-        val grandTotal = itemsTotal + deliveryChargeRupees
-        val completeSummary = summaryLines + "\n• डिलिव्हरी चार्ज = ₹${MarathiFormatters.toMarathiNumber(deliveryChargeRupees)}"
+        val grandTotal = itemsTotal + deliveryChargeRupees + deliveryTipRupees
+        val tipSummary = if (deliveryTipRupees > 0) "\n• डिलिव्हरी पार्टनर टिप = ₹${MarathiFormatters.toMarathiNumber(deliveryTipRupees)}" else ""
+        val completeSummary = summaryLines + "\n• डिलिव्हरी चार्ज = ₹${MarathiFormatters.toMarathiNumber(deliveryChargeRupees)}" + tipSummary
         val now = System.currentTimeMillis()
 
         val draftOrder = OrderEntity(
@@ -156,6 +158,7 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "totalItemsCount" to totalQty,
                 "itemsTotalRupees" to itemsTotal,
                 "deliveryChargeRupees" to deliveryChargeRupees,
+                "deliveryTipRupees" to deliveryTipRupees,
                 "deliveryDistanceKm" to (deliveryDistanceKm ?: 0.0),
                 "totalAmountRupees" to grandTotal,
                 "status" to "new",
