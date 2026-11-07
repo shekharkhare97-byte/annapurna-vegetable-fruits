@@ -92,4 +92,13 @@
     <string name="btn_share_image">फोटो शेअर करा</string>
     <string name="studio_preset_label">झटपट कल्पना निवडा:</string>
     <string name="error_backend_not_configured">सुरक्षित बॅकएंड सर्व्हर URL सेट केलेली नाही. कृपया /backend मधील सर्व्हर डिप्लॉय करून BackendConfig.kt मध्ये HTTPS URL जोडा.</string>
+    <!-- Additional Bazaar translations -->
+    <string name="bazaar_today_title">आजचे ताजे पदार्थ</string>
+    <string name="bazaar_subtitle">निवडा, वजन ठरवा आणि कार्टमध्ये टाका</string>
+    <string name="brand_name">अन्नपूर्णा</string>
+    <string name="brand_tagline">ताज्या भाज्या आणि फळे</string>
+    <string name="brand_fresh_daily">ताजे रोज</string>
+    <string name="unit_per_piece_bundle">प्रति नग / जुडी</string>
+    <string name="unit_per_kg">प्रति किलो</string>
+    <string name="ask_ai_recipe">AI पाककृती विचारा</string>
 </resources>
