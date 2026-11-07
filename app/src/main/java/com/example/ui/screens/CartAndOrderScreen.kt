@@ -98,6 +98,7 @@ fun CartAndOrderScreen(
     formState: CustomerFormState,
     recentOrders: List<OrderEntity>,
     confirmedOrder: OrderEntity?,
+    trackingStatus: String,
     onIncreaseQty: (String) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
@@ -294,6 +295,29 @@ fun CartAndOrderScreen(
                 onTransactionIdChange = { transactionId = it },
                 onSubmitOrder = { if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, transactionId.trim()) }
             )
+        }
+
+        if (trackingStatus.isNotBlank()) {
+            item {
+                val statusLabel = when (trackingStatus) {
+                    "new" -> "नवीन ऑर्डर • दुकानाकडून पुष्टी बाकी"
+                    "accepted" -> "ऑर्डर स्वीकारली • तयारी सुरू"
+                    "completed" -> "ऑर्डर पूर्ण झाली"
+                    "cancelled" -> "ऑर्डर रद्द झाली"
+                    else -> "ऑर्डरची स्थिती सध्या मिळत नाही"
+                }
+                Card(
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.fillMaxWidth().testTag("live_order_tracking_card")
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("ऑर्डर ट्रॅकिंग", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(statusLabel, style = MaterialTheme.typography.bodyMedium)
+                        Text("Admin कडून स्थिती बदलताच येथे अपडेट दिसेल.", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
         }
 
         if (recentOrders.isNotEmpty()) {
