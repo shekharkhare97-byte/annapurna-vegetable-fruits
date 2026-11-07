@@ -106,9 +106,13 @@ class StoreViewModel(
                         .mapNotNull { doc.getString(it) }
                         .firstOrNull { it.isNotBlank() }
                         .orEmpty()
-                    val isPieceBased = unitText.contains("nos", ignoreCase = true) ||
-                        unitText.contains("piece", ignoreCase = true) ||
-                        unitText.contains("नग") || unitText.contains("पिस")
+                    val normalizedUnit = unitText.trim().lowercase()
+                    val isBundleBased = normalizedUnit.contains("bunch") ||
+                        normalizedUnit.contains("bundle") || unitText.contains("जुडी") ||
+                        unitText.contains("जुडी") || unitText.contains("गड्डी")
+                    val isPieceBased = isBundleBased ||
+                        normalizedUnit.contains("nos") || normalizedUnit.contains("piece") ||
+                        normalizedUnit.contains("pcs") || unitText.contains("नग") || unitText.contains("पिस")
                     val rate = if (isPieceBased) {
                         doc.getDouble("pricePerPiece") ?: doc.getLong("pricePerPiece")?.toDouble()
                             ?: doc.getDouble("price") ?: doc.getLong("price")?.toDouble()
@@ -125,7 +129,11 @@ class StoreViewModel(
                         englishKeywords = name.lowercase(),
                         category = category,
                         priceRupees = rate.toInt(),
-                        unitMarathi = if (isPieceBased) "१ नग" else "१ किलो",
+                        unitMarathi = when {
+                            isBundleBased -> "१ जुडी"
+                            isPieceBased -> "१ नग"
+                            else -> "१ किलो"
+                        },
                         badgeMarathi = "ताजा माल",
                         descriptionMarathi = name,
                         imageRes = if (category == ProduceCategory.FRUIT) R.drawable.img_prod_mango else R.drawable.img_prod_tomato,
