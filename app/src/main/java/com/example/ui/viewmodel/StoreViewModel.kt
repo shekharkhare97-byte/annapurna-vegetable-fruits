@@ -33,6 +33,7 @@ data class CustomerFormState(
     val deliveryAddress: String = "",
     val nameErrorMarathi: String? = null,
     val mobileErrorMarathi: String? = null,
+    val addressErrorMarathi: String? = null,
     val cartErrorMarathi: String? = null,
     val isSubmitting: Boolean = false
 )
@@ -230,7 +231,7 @@ class StoreViewModel(
 
     fun updateDeliveryAddress(address: String) {
         _formState.update {
-            it.copy(deliveryAddress = address)
+            it.copy(deliveryAddress = address, addressErrorMarathi = null)
         }
     }
 
@@ -249,13 +250,17 @@ class StoreViewModel(
         val mobileErr = if (!MarathiFormatters.isValidIndianMobile(currentForm.mobileNumber)) {
             "कृपया वैध १० अंकी मोबाईल नंबर प्रविष्ट करा (उदा. 9876543210)."
         } else null
+        val addressErr = if (currentForm.deliveryAddress.trim().length < 8) {
+            "कृपया पूर्ण डिलिव्हरी पत्ता लिहा."
+        } else null
 
-        if (cartErr != null || nameErr != null || mobileErr != null) {
+        if (cartErr != null || nameErr != null || mobileErr != null || addressErr != null) {
             _formState.update {
                 it.copy(
                     cartErrorMarathi = cartErr,
                     nameErrorMarathi = nameErr,
-                    mobileErrorMarathi = mobileErr
+                    mobileErrorMarathi = mobileErr,
+                    addressErrorMarathi = addressErr
                 )
             }
             return
