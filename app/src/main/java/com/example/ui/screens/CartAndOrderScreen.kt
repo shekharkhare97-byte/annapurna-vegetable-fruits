@@ -338,14 +338,43 @@ fun CartAndOrderScreen(
                     else -> "ऑर्डरची स्थिती सध्या मिळत नाही"
                 }
                 Card(
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth().testTag("live_order_tracking_card")
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("ऑर्डर ट्रॅकिंग", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text(statusLabel, style = MaterialTheme.typography.bodyMedium)
-                        Text("Admin कडून स्थिती बदलताच येथे अपडेट दिसेल.", style = MaterialTheme.typography.bodySmall)
+                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(42.dp)) {
+                                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                    Icon(imageVector = Icons.Default.Storefront, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text("ऑर्डर ट्रॅकिंग", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("तुमच्या ऑर्डरची सद्यस्थिती", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Surface(
+                                color = if (trackingStatus == "cancelled") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = if (trackingStatus == "cancelled") MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    text = when (trackingStatus) {
+                                        "new" -> "नवीन"
+                                        "accepted" -> "स्वीकारली"
+                                        "completed" -> "पूर्ण"
+                                        "cancelled" -> "रद्द"
+                                        else -> "अपडेट"
+                                    },
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                        Text(statusLabel, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                        Text("Admin कडून स्थिती बदलताच येथे अपडेट दिसेल.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -642,16 +671,16 @@ private fun CustomerOrderFormCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(18.dp)
         ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.customer_section_title),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = stringResource(R.string.customer_section_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(46.dp)) {
+                    androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                    }
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(text = stringResource(R.string.customer_section_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.customer_section_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
 
             if (formState.cartErrorMarathi != null) {
