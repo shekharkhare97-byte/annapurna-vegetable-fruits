@@ -50,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -156,7 +157,7 @@ fun AnnapurnaRootApp() {
                                 Icon(
                                     imageVector = Icons.Default.Eco,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = Color.White,
                                     modifier = Modifier
                                         .padding(7.dp)
                                         .size(22.dp)
@@ -167,14 +168,14 @@ fun AnnapurnaRootApp() {
                                 Text(
                                     text = stringResource(R.string.store_title_marathi),
                                     style = MaterialTheme.typography.headlineSmall,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = Color.White,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = stringResource(R.string.store_subtitle_marathi),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.86f),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -185,6 +186,10 @@ fun AnnapurnaRootApp() {
                         if (currentTab != AnnapurnaTab.CART) {
                             FilledTonalButton(
                                 onClick = { currentTab = AnnapurnaTab.CART },
+                                colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = Color.White.copy(alpha = 0.18f),
+                                    contentColor = Color.White
+                                ),
                                 modifier = Modifier
                                     .padding(end = 12.dp)
                                     .testTag("topbar_cart_button")
@@ -203,7 +208,9 @@ fun AnnapurnaRootApp() {
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = Color.White,
+                        actionIconContentColor = Color.White
                     )
                 )
             },
