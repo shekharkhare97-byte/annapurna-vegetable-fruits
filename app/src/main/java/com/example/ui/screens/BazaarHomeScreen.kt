@@ -746,13 +746,30 @@ private fun ProduceDetailSheetContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Text(
-                text = "₹${MarathiFormatters.toMarathiNumber(item.priceRupees)}",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)
+                ) {
+                    Text(
+                        text = "₹${MarathiFormatters.toMarathiNumber(item.priceRupees)}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = if (item.isPieceBased) "प्रति नग / जुडी" else "प्रति किलो",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = item.descriptionMarathi,
             style = MaterialTheme.typography.bodyLarge,
