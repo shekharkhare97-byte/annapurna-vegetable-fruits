@@ -335,7 +335,6 @@ fun CartAndOrderScreen(
                 onTipOptionChange = { deliveryTipOption = it },
                 customTipText = customTipText,
                 onCustomTipChange = { customTipText = it.filter(Char::isDigit).take(5) },
-                deliveryTipRupees = deliveryTipAmount,
                 onSubmitOrder = { if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount) }
             )
         }
@@ -757,7 +756,6 @@ private fun CustomerOrderFormCard(
     onTipOptionChange: (String) -> Unit,
     customTipText: String,
     onCustomTipChange: (String) -> Unit,
-    deliveryTipRupees: Int,
     grandTotal: Int,
     deliveryCharge: Int?,
     deliveryMessage: String,
