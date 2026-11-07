@@ -362,12 +362,12 @@ private fun SearchAndFilterBar(
     val vegCount = ProduceCatalog.items.count { it.category == ProduceCategory.VEGETABLE }
     val fruitCount = ProduceCatalog.items.count { it.category == ProduceCategory.FRUIT }
 
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             singleLine = true,
-            shape = MaterialTheme.shapes.medium,
+            shape = RoundedCornerShape(28.dp),
             placeholder = {
                 Text(
                     text = stringResource(R.string.search_placeholder),
@@ -397,11 +397,13 @@ private fun SearchAndFilterBar(
             ),
             modifier = Modifier
                 .fillMaxWidth()
+                .height(58.dp)
                 .testTag("search_produce_input")
         )
 
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(vertical = 2.dp)
         ) {
             val categoriesWithCounts = listOf(
                 ProduceCategory.ALL to allCount,
