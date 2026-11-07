@@ -36,7 +36,7 @@ fun WeightSelectionDialog(
     onDismiss: () -> Unit,
     onConfirm: (weightGrams: Int) -> Unit
 ) {
-    var selectedWeight by remember(item.id) { mutableIntStateOf(250) }
+    var selectedWeight by remember(item.id) { mutableIntStateOf(if (item.isPieceBased) 1000 else 250) }
     var customWeightText by remember(item.id) { mutableStateOf("") }
     val customWeightGrams = customWeightText.toBigDecimalOrNull()
         ?.movePointRight(3)
@@ -45,15 +45,15 @@ fun WeightSelectionDialog(
     val isCustom = selectedWeight == 0
     val grams = if (isCustom) customWeightGrams ?: 0 else selectedWeight
     val valid = if (isCustom) customWeightGrams?.let(WeightPricing::isValidCustomWeight) == true else true
-    val amount = if (valid && grams > 0) WeightPricing.priceForGrams(item.priceRupees, grams) else 0.0
+    val amount = if (item.isPieceBased) item.priceRupees.toDouble() else if (valid && grams > 0) WeightPricing.priceForGrams(item.priceRupees, grams) else 0.0
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("वजन निवडा — ${item.marathiName}") },
+        title = { Text(if (item.isPieceBased) "${item.unitMarathi.removePrefix("१ ")} निवडा — ${item.marathiName}" else "वजन निवडा — ${item.marathiName}") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("दर: ₹${item.priceRupees} / किलो")
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(if (item.isPieceBased) "दर: ₹${item.priceRupees} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${item.priceRupees} / किलो")
+                if (!item.isPieceBased) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(WeightPricing.standardOptions) { option ->
                         FilterChip(
                             selected = selectedWeight == (option.grams ?: 0),
@@ -62,7 +62,7 @@ fun WeightSelectionDialog(
                         )
                     }
                 }
-                if (isCustom) {
+                if (!item.isPieceBased && isCustom) {
                     OutlinedTextField(
                         value = customWeightText,
                         onValueChange = { value ->
@@ -89,8 +89,8 @@ fun WeightSelectionDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(grams) },
-                enabled = valid && grams > 0
+                onClick = { onConfirm(if (item.isPieceBased) 1000 else grams) },
+                enabled = item.isPieceBased || (valid && grams > 0)
             ) { Text("पिशवीत टाका") }
         },
         dismissButton = {

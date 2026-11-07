@@ -109,7 +109,7 @@ fun BazaarHomeScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 164.dp),
+            columns = GridCells.Adaptive(minSize = 150.dp),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
@@ -123,16 +123,16 @@ fun BazaarHomeScreen(
                 .testTag("produce_grid")
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                HeroMarketBanner()
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
                 SearchAndFilterBar(
                     searchQuery = searchQuery,
                     selectedCategory = selectedCategory,
                     onSearchQueryChange = onSearchQueryChange,
                     onSelectCategory = onSelectCategory
                 )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                HeroMarketBanner()
             }
 
             if (produceItems.isEmpty()) {
@@ -209,7 +209,7 @@ fun BazaarHomeScreen(
 private fun HeroMarketBanner() {
     Card(
         shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier
             .fillMaxWidth()
             .testTag("hero_market_banner")
@@ -217,7 +217,7 @@ private fun HeroMarketBanner() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(196.dp)
+                .height(154.dp)
         ) {
             Image(
                 painter = painterResource(id = R.drawable.img_hero_banner),

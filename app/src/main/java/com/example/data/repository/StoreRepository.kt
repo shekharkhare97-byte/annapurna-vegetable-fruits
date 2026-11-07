@@ -18,7 +18,7 @@ data class CartLineItem(
     val quantity: Int,
     val weightGrams: Int
 ) {
-    val lineTotalRupees: Int get() = ((WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity + 50L) / 100L).toInt()
+    val lineTotalRupees: Int get() = if (produce.isPieceBased) produce.priceRupees * quantity else ((WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity + 50L) / 100L).toInt()
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -98,9 +98,12 @@ class StoreRepository(private val storeDao: StoreDao) {
         deliveryDistanceKm: Double? = null
     ): OrderEntity {
         val summaryLines = items.joinToString(separator = "\n") { line ->
-            "• ${line.produce.marathiName} (${WeightPricing.formatWeightMarathi(line.weightGrams)}) × ${
-                MarathiFormatters.toMarathiNumber(line.quantity)
-            } = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
+            val quantityLabel = if (line.produce.isPieceBased) {
+                "${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
+            } else {
+                WeightPricing.formatWeightMarathi(line.weightGrams)
+            }
+            "• ${line.produce.marathiName} ($quantityLabel) = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
         }
         val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}:${it.weightGrams}" }
         val totalQty = items.sumOf { it.quantity }
@@ -130,6 +133,8 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "weightGrams" to line.weightGrams,
                 "quantity" to line.quantity,
                 "pricePerKgRupees" to line.produce.priceRupees,
+                "unit" to line.produce.unitMarathi,
+                "isPieceBased" to line.produce.isPieceBased,
                 "lineTotalRupees" to line.lineTotalRupees
             )
         }
@@ -155,7 +160,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         if (latitude != null && longitude != null) {
             remoteOrderData["latitude"] = latitude
             remoteOrderData["longitude"] = longitude
-            remoteOrderData["locationSource"] = "customer_gps"
+            remoteOrderData["locationSource"] = "customer_address_geocoded"
         }
         remoteOrder.set(remoteOrderData)
 

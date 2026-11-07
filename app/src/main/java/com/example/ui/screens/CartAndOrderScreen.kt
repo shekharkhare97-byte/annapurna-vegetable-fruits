@@ -56,6 +56,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +70,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -118,7 +120,7 @@ fun CartAndOrderScreen(
     var deliveryDistanceKm by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
-    var deliveryMessage by rememberSaveable { mutableStateOf("ऑर्डर देण्यापूर्वी डिलिव्हरी चार्ज मोजा.") }
+    var deliveryMessage by rememberSaveable { mutableStateOf("डिलिव्हरी चार्ज आपोआप मोजत आहे...") }
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var paymentMethod by rememberSaveable { mutableStateOf("COD") }
     var transactionId by rememberSaveable { mutableStateOf("") }
@@ -138,11 +140,9 @@ fun CartAndOrderScreen(
             val meters = FloatArray(1)
             Location.distanceBetween(shop.latitude, shop.longitude, location.latitude, location.longitude, meters)
             val km = meters[0] / 1000.0; deliveryDistanceKm = km
-            when {
-                km <= 2.0 -> { deliveryCharge = 10; deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹10", km) }
-                km <= 4.0 -> { deliveryCharge = 20; deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹20", km) }
-                else -> { deliveryCharge = null; deliveryMessage = String.format(Locale.US, "अंतर %.2f km. 4 km पेक्षा जास्त असल्याने डिलिव्हरी उपलब्ध नाही.", km) }
-            }
+            val chargeableKm = kotlin.math.ceil(km).toInt().coerceAtLeast(1)
+            deliveryCharge = chargeableKm * 10
+            deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
         }
     }
     fun fetchGpsForDelivery() {
@@ -166,6 +166,61 @@ fun CartAndOrderScreen(
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
         if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+    }
+
+    LaunchedEffect(formState.deliveryAddress) {
+        val typedAddress = formState.deliveryAddress.trim()
+        if (typedAddress.length >= 5) {
+            deliveryCharge = null
+            deliveryDistanceKm = null
+            deliveryMessage = "पत्ता तपासून डिलिव्हरी चार्ज मोजत आहे..."
+            kotlinx.coroutines.delay(900)
+            val destination = withContext(Dispatchers.IO) {
+                runCatching {
+                    if (!Geocoder.isPresent()) null else {
+                        @Suppress("DEPRECATION")
+                        Geocoder(context, Locale("en", "IN"))
+                            .getFromLocationName("$typedAddress, Nashik, Maharashtra, India", 1)
+                            ?.firstOrNull()
+                    }
+                }.getOrNull()
+            }
+            if (destination == null) {
+                deliveryMessage = "हा पत्ता सापडला नाही. पूर्ण पत्ता व Satpur, Nashik लिहा."
+                deliveryLatitude = null
+                deliveryLongitude = null
+            } else {
+                deliveryLatitude = destination.latitude
+                deliveryLongitude = destination.longitude
+                val shop = withContext(Dispatchers.IO) {
+                    runCatching {
+                        @Suppress("DEPRECATION")
+                        Geocoder(context, Locale("en", "IN")).getFromLocationName(
+                            "Surya co op HSG society, Road Borgad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India",
+                            1
+                        )?.firstOrNull()
+                    }.getOrNull()
+                }
+                if (shop == null) {
+                    deliveryMessage = "दुकानाचे लोकेशन सापडले नाही. कृपया पुन्हा प्रयत्न करा."
+                    deliveryLatitude = null
+                    deliveryLongitude = null
+                } else {
+                    val meters = FloatArray(1)
+                    Location.distanceBetween(shop.latitude, shop.longitude, destination.latitude, destination.longitude, meters)
+                    val km = meters[0] / 1000.0
+                    deliveryDistanceKm = km
+                    deliveryCharge = kotlin.math.ceil(km).toInt().coerceAtLeast(1) * 10
+                    deliveryMessage = String.format(Locale.US, "पत्त्यापासून दुकानापर्यंत अंदाजे %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
+                }
+            }
+        } else {
+            deliveryCharge = null
+            deliveryDistanceKm = null
+            deliveryLatitude = null
+            deliveryLongitude = null
+            deliveryMessage = "पूर्ण डिलिव्हरी पत्ता लिहा; त्यानंतर चार्ज आपोआप मोजला जाईल."
+        }
     }
 
     val itemsTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
@@ -229,7 +284,6 @@ fun CartAndOrderScreen(
                 grandTotal = grandTotal,
                 deliveryCharge = deliveryCharge,
                 deliveryMessage = deliveryMessage,
-                onCalculateDelivery = { requestDeliveryLocation() },
                 isCartEmpty = cartItems.isEmpty(),
                 onCustomerNameChange = onCustomerNameChange,
                 onMobileNumberChange = onMobileNumberChange,
@@ -372,14 +426,21 @@ private fun CartLineCard(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            Image(
-                painter = painterResource(id = line.produce.imageRes),
-                contentDescription = line.produce.marathiName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(68.dp)
-                    .clip(MaterialTheme.shapes.small)
-            )
+            if (line.produce.imageUrl.isNullOrBlank()) {
+                Image(
+                    painter = painterResource(id = line.produce.imageRes),
+                    contentDescription = line.produce.marathiName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(68.dp).clip(MaterialTheme.shapes.small)
+                )
+            } else {
+                AsyncImage(
+                    model = line.produce.imageUrl,
+                    contentDescription = line.produce.marathiName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(68.dp).clip(MaterialTheme.shapes.small)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
@@ -388,7 +449,7 @@ private fun CartLineCard(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
+                    text = if (line.produce.isPieceBased) "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}" else "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -506,7 +567,6 @@ private fun CustomerOrderFormCard(
     grandTotal: Int,
     deliveryCharge: Int?,
     deliveryMessage: String,
-    onCalculateDelivery: () -> Unit,
     isCartEmpty: Boolean,
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
@@ -631,7 +691,6 @@ private fun CustomerOrderFormCard(
             )
 
             Text("डिलिव्हरी", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            OutlinedButton(onClick = onCalculateDelivery, modifier = Modifier.fillMaxWidth()) { Text("डिलिव्हरी चार्ज मोजा") }
             Text(deliveryMessage, style = MaterialTheme.typography.bodySmall, color = if (deliveryCharge == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
             Text("पेमेंट पद्धत", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
