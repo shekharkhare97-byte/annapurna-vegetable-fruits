@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -49,10 +50,27 @@ fun WeightSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (item.isPieceBased) "${item.unitMarathi.removePrefix("१ ")} निवडा — ${item.marathiName}" else "वजन निवडा — ${item.marathiName}") },
+        shape = MaterialTheme.shapes.extraLarge,
+        title = {
+            Text(
+                if (item.isPieceBased) "\${item.unitMarathi.removePrefix("१ ")} निवडा — \${item.marathiName}" else "वजन निवडा — \${item.marathiName}",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(if (item.isPieceBased) "दर: ₹${item.priceRupees} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${item.priceRupees} / किलो")
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (item.isPieceBased) "दर: ₹\${item.priceRupees} / \${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹\${item.priceRupees} / किलो",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
                 if (!item.isPieceBased) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(WeightPricing.standardOptions) { option ->
                         FilterChip(
@@ -80,17 +98,36 @@ fun WeightSelectionDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                Text(
-                    text = if (valid) "या वजनाची किंमत: ₹${"%.2f".format(amount)}" else "कृपया योग्य वजन भरा",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (valid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
+                Surface(
+                    color = if (valid) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = if (valid) "या वजनाची किंमत" else "कृपया योग्य वजन भरा",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (valid) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            text = if (valid) "₹\${"%.2f".format(amount)}" else "—",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                            color = if (valid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = { onConfirm(if (item.isPieceBased) 1000 else grams) },
-                enabled = item.isPieceBased || (valid && grams > 0)
+                enabled = item.isPieceBased || (valid && grams > 0),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.height(48.dp)
             ) { Text("पिशवीत टाका") }
         },
         dismissButton = {
