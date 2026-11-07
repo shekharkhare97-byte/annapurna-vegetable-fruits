@@ -918,18 +918,9 @@ private fun CustomerOrderFormCard(
                 stringResource(R.string.btn_place_order)
             }
 
-            if (paymentMethod == "UPI" && transactionId.trim().isEmpty()) {
-                Text(
-                    "UPI पेमेंट निवडल्यानंतर ऑर्डर देण्यापूर्वी Transaction ID / UTR भरा.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
             Button(
                 onClick = onSubmitOrder,
-                enabled = !isCartEmpty && !formState.isSubmitting && deliveryCharge != null &&
-                    (paymentMethod != "UPI" || transactionId.trim().isNotEmpty()),
+                enabled = !isCartEmpty && !formState.isSubmitting && deliveryCharge != null,
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
