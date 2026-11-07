@@ -102,11 +102,21 @@ class StoreViewModel(
                     if (doc.getBoolean("isVisible") != true) return@mapNotNull null
                     val stock = doc.getDouble("stock") ?: (doc.getLong("stock")?.toDouble() ?: 0.0)
                     if (stock <= 0.0) return@mapNotNull null
-                    val rate = doc.getDouble("pricePerKg")
-                        ?: doc.getLong("pricePerKg")?.toDouble()
-                        ?: doc.getDouble("price")
-                        ?: doc.getLong("price")?.toDouble()
-                        ?: return@mapNotNull null
+                    val unitText = sequenceOf("unit", "stockUnit", "sellUnit", "unitMarathi", "measurementUnit")
+                        .mapNotNull { doc.getString(it) }
+                        .firstOrNull { it.isNotBlank() }
+                        .orEmpty()
+                    val isPieceBased = unitText.contains("nos", ignoreCase = true) ||
+                        unitText.contains("piece", ignoreCase = true) ||
+                        unitText.contains("नग") || unitText.contains("पिस")
+                    val rate = if (isPieceBased) {
+                        doc.getDouble("pricePerPiece") ?: doc.getLong("pricePerPiece")?.toDouble()
+                            ?: doc.getDouble("price") ?: doc.getLong("price")?.toDouble()
+                            ?: doc.getDouble("pricePerKg") ?: doc.getLong("pricePerKg")?.toDouble()
+                    } else {
+                        doc.getDouble("pricePerKg") ?: doc.getLong("pricePerKg")?.toDouble()
+                            ?: doc.getDouble("price") ?: doc.getLong("price")?.toDouble()
+                    } ?: return@mapNotNull null
                     val name = doc.getString("name")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
                     val category = if (doc.getString("category") == "fruit") ProduceCategory.FRUIT else ProduceCategory.VEGETABLE
                     ProduceItem(
@@ -115,11 +125,12 @@ class StoreViewModel(
                         englishKeywords = name.lowercase(),
                         category = category,
                         priceRupees = rate.toInt(),
-                        unitMarathi = "१ किलो",
+                        unitMarathi = if (isPieceBased) "१ नग" else "१ किलो",
                         badgeMarathi = "ताजा माल",
                         descriptionMarathi = name,
                         imageRes = if (category == ProduceCategory.FRUIT) R.drawable.img_prod_mango else R.drawable.img_prod_tomato,
-                        imageUrl = imageUrl
+                        imageUrl = imageUrl,
+                        isPieceBased = isPieceBased
                     )
                 }
                 ProduceCatalog.replaceFromAdmin(products)
