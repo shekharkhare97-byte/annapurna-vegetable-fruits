@@ -49,10 +49,10 @@ fun WeightSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (item.isPieceBased) "नग निवडा — ${item.marathiName}" else "वजन निवडा — ${item.marathiName}") },
+        title = { Text(if (item.isPieceBased) "${item.unitMarathi.removePrefix("१ ")} निवडा — ${item.marathiName}" else "वजन निवडा — ${item.marathiName}") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(if (item.isPieceBased) "दर: ₹${item.priceRupees} / नग" else "दर: ₹${item.priceRupees} / किलो")
+                Text(if (item.isPieceBased) "दर: ₹${item.priceRupees} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${item.priceRupees} / किलो")
                 if (!item.isPieceBased) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(WeightPricing.standardOptions) { option ->
                         FilterChip(
