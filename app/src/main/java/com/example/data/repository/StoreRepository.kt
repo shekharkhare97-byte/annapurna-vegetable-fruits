@@ -174,7 +174,8 @@ class StoreRepository(private val storeDao: StoreDao) {
         batch.set(remoteOrder, remoteOrderData)
         batch.set(firestore.collection("orderTracking").document(trackingToken), mapOf(
             "status" to "new",
-            "createdAtMillis" to now
+            "createdAtMillis" to now,
+            "orderId" to remoteOrder.id
         ))
         // Firestore queues the atomic order + tracking write while offline.
         batch.commit()
