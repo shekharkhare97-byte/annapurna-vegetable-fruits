@@ -145,7 +145,7 @@ fun CartAndOrderScreen(
             val km = meters[0] / 1000.0; deliveryDistanceKm = km
             val chargeableKm = kotlin.math.ceil(km).toInt().coerceAtLeast(1)
             deliveryCharge = chargeableKm * 10
-            deliveryMessage = String.format(Locale.US, "अंतर %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
+            deliveryMessage = String.format(Locale.US, "अंदाजे सरळ अंतर %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
         }
     }
     fun fetchGpsForDelivery() {
@@ -214,7 +214,7 @@ fun CartAndOrderScreen(
                     val km = meters[0] / 1000.0
                     deliveryDistanceKm = km
                     deliveryCharge = kotlin.math.ceil(km).toInt().coerceAtLeast(1) * 10
-                    deliveryMessage = String.format(Locale.US, "पत्त्यापासून दुकानापर्यंत अंदाजे %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
+                    deliveryMessage = String.format(Locale.US, "पत्त्यापासून दुकानापर्यंत अंदाजे सरळ अंतर %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
                 }
             }
         } else {
