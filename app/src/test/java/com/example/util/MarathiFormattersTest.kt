@@ -13,6 +13,12 @@ class MarathiFormattersTest {
     }
 
     @Test
+    fun preservesCountryPrefixWhileNumberIsBeingTyped() {
+        assertEquals("91987654321", MarathiFormatters.normalizePhoneDigits("+91 987654321"))
+        assertEquals("9876543210", MarathiFormatters.normalizePhoneDigits("+91 9876543210"))
+    }
+
+    @Test
     fun acceptsOnlyValidTenDigitIndianMobileNumbers() {
         assertTrue(MarathiFormatters.isValidIndianMobile("9876543210"))
         assertTrue(MarathiFormatters.isValidIndianMobile("६७६५४३२१०९"))
