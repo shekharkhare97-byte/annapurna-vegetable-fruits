@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Button
@@ -138,6 +139,34 @@ fun BazaarHomeScreen(
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 HeroMarketBanner()
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                "अंदाजे डिलिव्हरी वेळ: ३०–६० मिनिटे",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                "अंतर आणि ऑर्डरच्या गर्दीनुसार वेळ बदलू शकतो.",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
