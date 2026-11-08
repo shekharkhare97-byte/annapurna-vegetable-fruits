@@ -43,7 +43,11 @@ object MarathiFormatters {
             }
         }
         val digits = sb.toString()
-        return if (digits.length == 12 && digits.startsWith("91")) digits.drop(2) else digits.take(10)
+        return when {
+            digits.length == 12 && digits.startsWith("91") -> digits.drop(2)
+            digits.length == 11 && digits.startsWith("91") -> digits
+            else -> digits.take(10)
+        }
     }
 
     fun isValidIndianMobile(raw: String): Boolean {
