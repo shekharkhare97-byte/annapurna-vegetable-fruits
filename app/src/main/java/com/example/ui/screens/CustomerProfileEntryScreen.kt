@@ -96,7 +96,7 @@ fun CustomerProfileEntryScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "एकदाच माहिती द्या. पुढच्या वेळी ती आपोआप दिसेल.",
+                    text = "माहिती तपासून पुढे जा. पुढच्या वेळी ती आधीच भरलेली दिसेल.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
