@@ -145,7 +145,7 @@ fun CartAndOrderScreen(
             val km = meters[0] / 1000.0; deliveryDistanceKm = km
             val chargeableKm = kotlin.math.ceil(km).toInt().coerceAtLeast(1)
             deliveryCharge = chargeableKm * 10
-            deliveryMessage = String.format(Locale.US, "अंदाजे सरळ अंतर %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
+            deliveryMessage = "डिलिव्हरी चार्ज बिलात आपोआप जोडला आहे."
         }
     }
     fun fetchGpsForDelivery() {
@@ -214,7 +214,7 @@ fun CartAndOrderScreen(
                     val km = meters[0] / 1000.0
                     deliveryDistanceKm = km
                     deliveryCharge = kotlin.math.ceil(km).toInt().coerceAtLeast(1) * 10
-                    deliveryMessage = String.format(Locale.US, "पत्त्यापासून दुकानापर्यंत अंदाजे सरळ अंतर %.2f km • डिलिव्हरी ₹%d (प्रति किमी ₹10)", km, deliveryCharge)
+                    deliveryMessage = "डिलिव्हरी चार्ज बिलात आपोआप जोडला आहे."
                 }
             }
         } else {
@@ -726,18 +726,6 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: 
                 Text(stringResource(R.string.bill_items_total), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("₹${MarathiFormatters.toMarathiNumber(itemsTotal)}", fontWeight = FontWeight.SemiBold)
             }
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.bill_delivery_label), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(
-                    text = deliveryCharge?.let { "₹${MarathiFormatters.toMarathiNumber(it)}" } ?: "चार्ज मोजायचा आहे",
-                    color = if (deliveryCharge == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
             if (deliveryTip > 0) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -915,26 +903,6 @@ private fun CustomerOrderFormCard(
                     .testTag("delivery_address_input")
             )
 
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = if (deliveryCharge == null) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Text("डिलिव्हरी माहिती", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    }
-                    Text(
-                        deliveryMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (deliveryCharge == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
             Text("डिलिव्हरी पार्टनरला टिप द्यायची आहे का?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.delivery_tip_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
