@@ -27,6 +27,8 @@
     <string name="order_tracking_title">Order Tracking</string>
     <string name="order_tracking_subtitle">Current status of your order</string>
     <string name="status_order_received">Order received</string>
+    <string name="status_order_accepted">Order accepted</string>
+    <string name="status_out_for_delivery">Out for delivery</string>
     <string name="status_preparing">Preparing</string>
     <string name="status_completed">Completed</string>
     <string name="status_cancelled_message">This order has been cancelled.</string>
