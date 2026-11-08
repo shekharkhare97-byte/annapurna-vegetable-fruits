@@ -1,6 +1,10 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
@@ -64,17 +67,15 @@ fun CustomerProfileEntryScreen(
                 modifier = Modifier.padding(22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF198754))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Eco,
-                        contentDescription = "Annapurna",
-                        tint = Color.White,
-                        modifier = Modifier.padding(20.dp)
-                    )
-                }
+                Image(
+                    painter = painterResource(id = com.example.R.drawable.img_launcher_logo),
+                    contentDescription = "Annapurna Vegetables and Fruits",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .height(104.dp)
+                        .fillMaxWidth(0.42f)
+                        .clip(RoundedCornerShape(22.dp))
+                )
                 Spacer(Modifier.height(14.dp))
                 Text(
                     text = "अन्नपूर्णा",
