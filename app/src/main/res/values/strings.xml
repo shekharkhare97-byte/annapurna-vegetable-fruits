@@ -105,6 +105,8 @@
     <string name="order_tracking_title">ऑर्डर ट्रॅकिंग</string>
     <string name="order_tracking_subtitle">तुमच्या ऑर्डरची सद्यस्थिती</string>
     <string name="status_order_received">ऑर्डर मिळाली</string>
+    <string name="status_order_accepted">ऑर्डर स्वीकारली</string>
+    <string name="status_out_for_delivery">डिलिव्हरीसाठी निघाली</string>
     <string name="status_preparing">तयारी सुरू</string>
     <string name="status_completed">पूर्ण झाली</string>
     <string name="status_cancelled_message">ही ऑर्डर रद्द करण्यात आली आहे.</string>
