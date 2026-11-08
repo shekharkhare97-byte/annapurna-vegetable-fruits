@@ -342,11 +342,14 @@ fun CartAndOrderScreen(
         if (trackingStatus.isNotBlank()) {
             item {
                 val statusLabel = when (trackingStatus) {
-                    "new" -> "नवीन ऑर्डर • दुकानाकडून पुष्टी बाकी"
-                    "accepted" -> "ऑर्डर स्वीकारली • तयारी सुरू"
-                    "completed" -> "ऑर्डर पूर्ण झाली"
+                    "new" -> "ऑर्डर मिळाली • दुकानाकडून पुष्टी बाकी"
+                    "accepted" -> "ऑर्डर स्वीकारली • दुकानाने पुष्टी केली"
+                    "preparing" -> "तुमची ऑर्डर पॅक केली जात आहे"
+                    "out_for_delivery" -> "डिलिव्हरीसाठी निघाली आहे"
+                    "completed" -> "ऑर्डर तुमच्यापर्यंत पोहोचली"
                     "cancelled" -> "ऑर्डर रद्द झाली"
-                    else -> "ऑर्डरची स्थिती सध्या मिळत नाही"
+                    "unavailable" -> "ऑर्डरची स्थिती मिळवता आली नाही"
+                    else -> "ऑर्डरची स्थिती अपडेट होत आहे"
                 }
                 Card(
                     shape = MaterialTheme.shapes.extraLarge,
@@ -372,9 +375,11 @@ fun CartAndOrderScreen(
                             ) {
                                 Text(
                                     text = when (trackingStatus) {
-                                        "new" -> "नवीन"
+                                        "new" -> "मिळाली"
                                         "accepted" -> "स्वीकारली"
-                                        "completed" -> "पूर्ण"
+                                        "preparing" -> "पॅकिंग"
+                                        "out_for_delivery" -> "निघाली"
+                                        "completed" -> "पोहोचली"
                                         "cancelled" -> "रद्द"
                                         else -> "अपडेट"
                                     },
@@ -387,7 +392,9 @@ fun CartAndOrderScreen(
                         val progress = when (trackingStatus) {
                             "new" -> 0
                             "accepted" -> 1
-                            "completed" -> 2
+                            "preparing" -> 2
+                            "out_for_delivery" -> 3
+                            "completed" -> 4
                             else -> -1
                         }
                         if (trackingStatus != "cancelled") {
@@ -396,7 +403,13 @@ fun CartAndOrderScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                listOf(stringResource(R.string.status_order_received), stringResource(R.string.status_preparing), stringResource(R.string.status_completed)).forEachIndexed { index, label ->
+                                listOf(
+                                    stringResource(R.string.status_order_received),
+                                    stringResource(R.string.status_order_accepted),
+                                    stringResource(R.string.status_preparing),
+                                    stringResource(R.string.status_out_for_delivery),
+                                    stringResource(R.string.status_completed)
+                                ).forEachIndexed { index, label ->
                                     Column(
                                         modifier = Modifier.weight(1f),
                                         horizontalAlignment = Alignment.CenterHorizontally,
