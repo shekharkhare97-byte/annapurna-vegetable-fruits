@@ -66,8 +66,8 @@ jobs:
 
       - name: Verify APK signature and package
         run: |
-          apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
-          aapt dump badging app/build/outputs/apk/release/app-release.apk | head -n 5
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk | head -n 5
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
