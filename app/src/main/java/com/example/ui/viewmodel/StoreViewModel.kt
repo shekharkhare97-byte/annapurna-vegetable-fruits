@@ -267,34 +267,45 @@ class StoreViewModel(
         }
 
         viewModelScope.launch {
-            _formState.update { it.copy(isSubmitting = true) }
-            val normalizedMobile = MarathiFormatters.normalizePhoneDigits(currentForm.mobileNumber)
-            val savedOrder = repository.placeOrder(
-                customerName = currentForm.customerName,
-                mobileNumber = normalizedMobile,
-                deliveryAddress = currentForm.deliveryAddress,
-                items = currentCart,
-                latitude = latitude,
-                longitude = longitude,
-                paymentMethod = paymentMethod,
-                transactionId = transactionId.trim(),
-                deliveryChargeRupees = deliveryChargeRupees,
-                deliveryDistanceKm = deliveryDistanceKm,
-                deliveryTipRupees = deliveryTipRupees
-            )
-            _formState.update {
-                it.copy(
-                    isSubmitting = false,
-                    cartErrorMarathi = null,
-                    nameErrorMarathi = null,
-                    mobileErrorMarathi = null
+            _formState.update { it.copy(isSubmitting = true, cartErrorMarathi = null) }
+            try {
+                val normalizedMobile = MarathiFormatters.normalizePhoneDigits(currentForm.mobileNumber)
+                val savedOrder = repository.placeOrder(
+                    customerName = currentForm.customerName,
+                    mobileNumber = normalizedMobile,
+                    deliveryAddress = currentForm.deliveryAddress,
+                    items = currentCart,
+                    latitude = latitude,
+                    longitude = longitude,
+                    paymentMethod = paymentMethod,
+                    transactionId = transactionId.trim(),
+                    deliveryChargeRupees = deliveryChargeRupees,
+                    deliveryDistanceKm = deliveryDistanceKm,
+                    deliveryTipRupees = deliveryTipRupees
                 )
+                _formState.update {
+                    it.copy(
+                        isSubmitting = false,
+                        cartErrorMarathi = null,
+                        nameErrorMarathi = null,
+                        mobileErrorMarathi = null,
+                        addressErrorMarathi = null
+                    )
+                }
+                repository.latestTrackingToken?.let { token ->
+                    trackingPrefs.edit().putString("latest_token", token).apply()
+                    listenToOrderStatus(token)
+                }
+                _confirmedOrder.value = savedOrder
+            } catch (error: Exception) {
+                if (error is kotlinx.coroutines.CancellationException) throw error
+                _formState.update {
+                    it.copy(
+                        isSubmitting = false,
+                        cartErrorMarathi = "ऑर्डर Firebase मध्ये सेव्ह झाली नाही. इंटरनेट तपासा आणि पुन्हा प्रयत्न करा."
+                    )
+                }
             }
-            repository.latestTrackingToken?.let { token ->
-                trackingPrefs.edit().putString("latest_token", token).apply()
-                listenToOrderStatus(token)
-            }
-            _confirmedOrder.value = savedOrder
         }
     }
 
