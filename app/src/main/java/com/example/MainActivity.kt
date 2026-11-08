@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -64,6 +65,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.screens.BazaarHomeScreen
 import com.example.ui.screens.CartAndOrderScreen
+import com.example.ui.screens.CustomerProfileEntryScreen
 import com.example.ui.screens.ImageStudioScreen
 import com.example.ui.screens.MarathiChatScreen
 import com.example.ui.theme.AnnapurnaTheme
@@ -148,6 +150,8 @@ fun AnnapurnaRootApp() {
     val cartItems by storeViewModel.cartItems.collectAsStateWithLifecycle()
     val selectedDetailItem by storeViewModel.selectedProduceDetail.collectAsStateWithLifecycle()
     val formState by storeViewModel.formState.collectAsStateWithLifecycle()
+    val customerProfileLoaded by storeViewModel.customerProfileLoaded.collectAsStateWithLifecycle()
+    val customerProfileReady by storeViewModel.customerProfileReady.collectAsStateWithLifecycle()
     val recentOrders by storeViewModel.recentOrders.collectAsStateWithLifecycle()
     val confirmedOrder by storeViewModel.confirmedOrder.collectAsStateWithLifecycle()
     val trackingStatus by storeViewModel.trackingStatus.collectAsStateWithLifecycle()
@@ -163,6 +167,20 @@ fun AnnapurnaRootApp() {
     val currentLanguage = context.resources.configuration.locales[0].language
     val languageLabel = when (currentLanguage) { "hi" -> "हिन्दी"; "en" -> "English"; else -> "मराठी" }
 
+    if (!customerProfileLoaded) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
+    } else if (!customerProfileReady) {
+        CustomerProfileEntryScreen(
+            formState = formState,
+            onNameChange = storeViewModel::updateCustomerName,
+            onMobileChange = storeViewModel::updateMobileNumber,
+            onAddressChange = storeViewModel::updateDeliveryAddress,
+            onContinue = storeViewModel::saveCustomerProfileForEntry,
+            modifier = Modifier.fillMaxSize()
+        )
+    } else {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isWideScreen = maxWidth >= 600.dp
 
@@ -416,6 +434,7 @@ fun AnnapurnaRootApp() {
                 }
             }
         }
+    }
     }
 }
 
