@@ -47,7 +47,7 @@ jobs:
             -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Run unit tests
-        run: gradle --no-daemon testDebugUnitTest --tests 'com.example.data.model.*'
+        run: gradle --no-daemon testDebugUnitTest --tests 'com.example.data.model.*' --tests 'com.example.util.*'
 
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
