@@ -318,6 +318,22 @@ fun CartAndOrderScreen(
             }
         }
 
+        // Let customers use GPS when address geocoding is inaccurate or unavailable.
+        item {
+            TextButton(
+                onClick = { requestDeliveryLocation() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("माझे सध्याचे लोकेशन वापरा")
+            }
+        }
+
         // Customer Name, Mobile Number & Place Order Section
         item {
             CustomerOrderFormCard(
