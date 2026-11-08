@@ -13,6 +13,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -30,9 +31,14 @@ class StoreRepository(private val storeDao: StoreDao) {
     @Volatile var latestTrackingToken: String? = null
         private set
 
-    val cartLineItems: Flow<List<CartLineItem>> = storeDao.observeCartItems().map { entities ->
+    // Re-map persisted cart rows whenever either Room rows or the Firebase product catalog changes.
+    // This prevents a restored cart from appearing empty while products are still loading at app startup.
+    val cartLineItems: Flow<List<CartLineItem>> = combine(
+        storeDao.observeCartItems(),
+        ProduceCatalog.itemsFlow
+    ) { entities, products ->
         entities.mapNotNull { entity ->
-            val produce = ProduceCatalog.findById(entity.produceId)
+            val produce = products.firstOrNull { it.id == entity.produceId }
             if (produce != null && entity.quantity > 0) {
                 CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = entity.weightGrams)
             } else {
