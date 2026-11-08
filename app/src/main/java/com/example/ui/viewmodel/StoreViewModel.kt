@@ -169,9 +169,6 @@ class StoreViewModel(
                                 deliveryAddress = current.deliveryAddress.ifBlank { saved.deliveryAddress }
                             )
                         }
-                        _customerProfileReady.value = saved.customerName.trim().length >= 2 &&
-                            MarathiFormatters.isValidIndianMobile(saved.mobileNumber) &&
-                            saved.deliveryAddress.trim().length >= 8
                     }
                     _customerProfileLoaded.value = true
                 }
