@@ -726,6 +726,18 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: 
                 Text(stringResource(R.string.bill_items_total), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("₹${MarathiFormatters.toMarathiNumber(itemsTotal)}", fontWeight = FontWeight.SemiBold)
             }
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.bill_delivery_label), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = deliveryCharge?.let { "₹${MarathiFormatters.toMarathiNumber(it)}" } ?: "पत्ता टाकल्यानंतर मोजला जाईल",
+                    color = if (deliveryCharge == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
             if (deliveryTip > 0) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
