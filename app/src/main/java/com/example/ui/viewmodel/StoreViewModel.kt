@@ -93,6 +93,10 @@ class StoreViewModel(
 
     private val _formState = MutableStateFlow(CustomerFormState())
     val formState: StateFlow<CustomerFormState> = _formState.asStateFlow()
+    private val _customerProfileLoaded = MutableStateFlow(false)
+    val customerProfileLoaded: StateFlow<Boolean> = _customerProfileLoaded.asStateFlow()
+    private val _customerProfileReady = MutableStateFlow(false)
+    val customerProfileReady: StateFlow<Boolean> = _customerProfileReady.asStateFlow()
 
     private val _confirmedOrder = MutableStateFlow<OrderEntity?>(null)
     val confirmedOrder: StateFlow<OrderEntity?> = _confirmedOrder.asStateFlow()
@@ -155,15 +159,21 @@ class StoreViewModel(
 
         viewModelScope.launch {
             repository.customerProfile.collect { saved ->
-                if (!profileHydrated && saved != null) {
+                if (!profileHydrated) {
                     profileHydrated = true
-                    _formState.update { current ->
-                        current.copy(
-                            customerName = current.customerName.ifBlank { saved.customerName },
-                            mobileNumber = current.mobileNumber.ifBlank { saved.mobileNumber },
-                            deliveryAddress = current.deliveryAddress.ifBlank { saved.deliveryAddress }
-                        )
+                    if (saved != null) {
+                        _formState.update { current ->
+                            current.copy(
+                                customerName = current.customerName.ifBlank { saved.customerName },
+                                mobileNumber = current.mobileNumber.ifBlank { saved.mobileNumber },
+                                deliveryAddress = current.deliveryAddress.ifBlank { saved.deliveryAddress }
+                            )
+                        }
+                        _customerProfileReady.value = saved.customerName.trim().length >= 2 &&
+                            MarathiFormatters.isValidIndianMobile(saved.mobileNumber) &&
+                            saved.deliveryAddress.trim().length >= 8
                     }
+                    _customerProfileLoaded.value = true
                 }
             }
         }
@@ -232,6 +242,28 @@ class StoreViewModel(
     fun updateDeliveryAddress(address: String) {
         _formState.update {
             it.copy(deliveryAddress = address, addressErrorMarathi = null)
+        }
+    }
+
+    fun saveCustomerProfileForEntry() {
+        val current = _formState.value
+        val nameError = if (current.customerName.trim().length < 2) "कृपया तुमचे पूर्ण नाव लिहा." else null
+        val mobileError = if (!MarathiFormatters.isValidIndianMobile(current.mobileNumber)) "१० अंकी योग्य मोबाईल नंबर लिहा." else null
+        val addressError = if (current.deliveryAddress.trim().length < 8) "पूर्ण घरचा पत्ता लिहा." else null
+        if (nameError != null || mobileError != null || addressError != null) {
+            _formState.update { it.copy(nameErrorMarathi = nameError, mobileErrorMarathi = mobileError, addressErrorMarathi = addressError) }
+            return
+        }
+        viewModelScope.launch {
+            _formState.update { it.copy(isSubmitting = true, cartErrorMarathi = null) }
+            try {
+                val normalizedMobile = MarathiFormatters.normalizePhoneDigits(current.mobileNumber)
+                repository.saveCustomerProfile(current.customerName.trim(), normalizedMobile, current.deliveryAddress.trim())
+                _formState.update { it.copy(mobileNumber = normalizedMobile, isSubmitting = false) }
+                _customerProfileReady.value = true
+            } catch (error: Exception) {
+                _formState.update { it.copy(isSubmitting = false, cartErrorMarathi = "माहिती सेव्ह झाली नाही. पुन्हा प्रयत्न करा.") }
+            }
         }
     }
 
