@@ -42,7 +42,8 @@ object MarathiFormatters {
                 in '०'..'९' -> sb.append(('0'.code + (ch.code - '०'.code)).toChar())
             }
         }
-        return sb.toString().take(10)
+        val digits = sb.toString()
+        return if (digits.length == 12 && digits.startsWith("91")) digits.drop(2) else digits.take(10)
     }
 
     fun isValidIndianMobile(raw: String): Boolean {
