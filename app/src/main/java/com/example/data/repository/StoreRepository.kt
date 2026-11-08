@@ -13,6 +13,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 data class CartLineItem(
     val produce: ProduceItem,
@@ -128,8 +131,6 @@ class StoreRepository(private val storeDao: StoreDao) {
             totalAmountRupees = grandTotal,
             createdAtMillis = now
         )
-        val generatedId = storeDao.insertOrder(draftOrder)
-
         // A random token exposes status only, never customer details.
         val firestore = FirebaseFirestore.getInstance()
         val remoteOrder = firestore.collection("orders").document()
@@ -180,9 +181,19 @@ class StoreRepository(private val storeDao: StoreDao) {
             "createdAtMillis" to now,
             "orderId" to remoteOrder.id
         ))
-        // Firestore queues the atomic order + tracking write while offline.
-        batch.commit()
+        // Wait until Firestore confirms that both order and tracking records were accepted.
+        // Firestore can queue this write while offline; failures are surfaced to the customer.
+        suspendCancellableCoroutine<Unit> { continuation ->
+            batch.commit()
+                .addOnSuccessListener {
+                    if (continuation.isActive) continuation.resume(Unit)
+                }
+                .addOnFailureListener { error ->
+                    if (continuation.isActive) continuation.resumeWithException(error)
+                }
+        }
 
+        val generatedId = storeDao.insertOrder(draftOrder)
         saveCustomerProfile(customerName.trim(), mobileNumber.trim(), deliveryAddress.trim())
         storeDao.clearCart()
         return draftOrder.copy(orderId = generatedId)
