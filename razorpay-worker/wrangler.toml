@@ -1,0 +1,9 @@
+name = "annapurna-razorpay"
+main = "src/index.js"
+compatibility_date = "2026-11-09"
+
+[ observability ]
+enabled = true
+
+[ vars ]
+# Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET as Worker Secrets in Cloudflare.
