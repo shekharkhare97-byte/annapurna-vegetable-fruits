@@ -100,6 +100,7 @@ fun CartAndOrderScreen(
     recentOrders: List<OrderEntity>,
     confirmedOrder: OrderEntity?,
     trackingStatus: String,
+    trackingLocation: String,
     onIncreaseQty: (String) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
@@ -403,6 +404,16 @@ fun CartAndOrderScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                                 )
+                            }
+                        }
+                        if (trackingLocation.isNotBlank()) {
+                            val parts = trackingLocation.split(",")
+                            if (parts.size == 2) {
+                                Text("डिलिव्हरी पार्टनरचे Live Location उपलब्ध आहे.", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                TextButton(onClick = {
+                                    val uri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${parts[0]},${parts[1]}")
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                }) { Text("Google Maps वर Live Location पाहा") }
                             }
                         }
                         val progress = when (trackingStatus) {
