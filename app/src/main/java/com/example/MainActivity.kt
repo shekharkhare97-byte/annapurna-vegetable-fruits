@@ -155,6 +155,7 @@ fun AnnapurnaRootApp() {
     val recentOrders by storeViewModel.recentOrders.collectAsStateWithLifecycle()
     val confirmedOrder by storeViewModel.confirmedOrder.collectAsStateWithLifecycle()
     val trackingStatus by storeViewModel.trackingStatus.collectAsStateWithLifecycle()
+    val trackingLocation by storeViewModel.trackingLocation.collectAsStateWithLifecycle()
 
     val chatState by aiViewModel.chatState.collectAsStateWithLifecycle()
     val selectedImageSize by aiViewModel.selectedImageSize.collectAsStateWithLifecycle()
@@ -378,6 +379,7 @@ fun AnnapurnaRootApp() {
                                 recentOrders = recentOrders,
                                 confirmedOrder = confirmedOrder,
                                 trackingStatus = trackingStatus,
+                    trackingLocation = trackingLocation,
                                 onIncreaseQty = storeViewModel::increaseQuantity,
                                 onDecreaseQty = storeViewModel::decreaseQuantity,
                                 onRemoveItem = storeViewModel::removeFromCart,
