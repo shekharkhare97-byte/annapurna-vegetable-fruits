@@ -49,6 +49,8 @@ class StoreViewModel(
     private val trackingPrefs = context.getSharedPreferences("annapurna_order_tracking", Context.MODE_PRIVATE)
     private val _trackingStatus = MutableStateFlow("")
     val trackingStatus: StateFlow<String> = _trackingStatus.asStateFlow()
+    private val _trackingLocation = MutableStateFlow("")
+    val trackingLocation: StateFlow<String> = _trackingLocation.asStateFlow()
     val selectedCategory: StateFlow<ProduceCategory> = _selectedCategory.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
@@ -347,6 +349,9 @@ class StoreViewModel(
                     _trackingStatus.value = "unavailable"
                 } else if (snapshot != null && snapshot.exists()) {
                     _trackingStatus.value = snapshot.getString("status") ?: "new"
+                    val latitude = snapshot.getDouble("deliveryLatitude")
+                    val longitude = snapshot.getDouble("deliveryLongitude")
+                    _trackingLocation.value = if (snapshot.getBoolean("deliveryLocationSharing") == true && latitude != null && longitude != null) "$latitude,$longitude" else ""
                 }
             }
     }
