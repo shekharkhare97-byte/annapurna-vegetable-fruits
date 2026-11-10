@@ -198,7 +198,12 @@ class _DetailState extends State<Detail>{
     ]
     else if(t.contains('खाते'))...[
      const Text('ग्राहक खाते / खाता',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
-     const Text('नोंदवलेल्या विक्रीची माहिती येथे दिसते. उधारीची स्वतंत्र नोंद पुढील आवृत्तीत जोडली जाईल.'),
+     const Text('ग्राहकाची उधारी आणि जमा रक्कम येथे नोंदवा.',style:TextStyle(color:Colors.black54)),
+     _KhataForm(onSave:(entry)=>widget.onRecord(widget.khataEntries,entry)),
+     const SizedBox(height:12),
+     const Text('खात्याचा इतिहास',style:TextStyle(fontWeight:FontWeight.bold,fontSize:17)),
+     ...widget.khataEntries.map((s)=>Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.account_balance_wallet_outlined,color:green),title:Text(s)))),
+     if(widget.khataEntries.isEmpty)const Text('अजून उधारी किंवा जमा नोंद नाही.'),
      ...widget.sales.map((s)=>Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.person_outline,color:green),title:Text(s))))
     ]
     else if(t.contains('रिपोर्ट')||t.contains('विक्री'))...[
@@ -238,4 +243,33 @@ class _DetailState extends State<Detail>{
    ])
   );
  }
+}
+
+class _KhataForm extends StatefulWidget {
+ const _KhataForm({required this.onSave});
+ final ValueChanged<String> onSave;
+ @override State<_KhataForm> createState()=>_KhataFormState();
+}
+class _KhataFormState extends State<_KhataForm> {
+ final name=TextEditingController(),phone=TextEditingController(),amount=TextEditingController(),note=TextEditingController();
+ String kind='उधारी';
+ @override void dispose(){name.dispose();phone.dispose();amount.dispose();note.dispose();super.dispose();}
+ @override Widget build(BuildContext context)=>Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[
+  TextField(controller:name,decoration:const InputDecoration(labelText:'ग्राहकाचे नाव',border:OutlineInputBorder())),
+  const SizedBox(height:8),
+  TextField(controller:phone,keyboardType:TextInputType.phone,maxLength:10,decoration:const InputDecoration(labelText:'मोबाईल नंबर (ऐच्छिक)',border:OutlineInputBorder())),
+  DropdownButtonFormField<String>(value:kind,decoration:const InputDecoration(labelText:'नोंदीचा प्रकार'),items:const [DropdownMenuItem(value:'उधारी',child:Text('उधारी वाढवा')),DropdownMenuItem(value:'जमा',child:Text('पैसे जमा झाले'))],onChanged:(v)=>setState(()=>kind=v??'उधारी')),
+  const SizedBox(height:8),
+  TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'रक्कम (₹)',border:OutlineInputBorder())),
+  const SizedBox(height:8),
+  TextField(controller:note,decoration:const InputDecoration(labelText:'तपशील (ऐच्छिक)',border:OutlineInputBorder())),
+  const SizedBox(height:10),
+  SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:(){
+   final n=name.text.trim(),v=double.tryParse(amount.text.trim()),ph=phone.text.trim();
+   if(n.isEmpty||v==null||v<=0||(ph.isNotEmpty&&!RegExp(r'^[6-9][0-9]{9}$').hasMatch(ph))){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('ग्राहकाचे नाव, योग्य रक्कम आणि योग्य मोबाईल नंबर भरा')));return;}
+   final stamp=DateTime.now().toString().substring(0,16);
+   widget.onSave('$stamp • $n • ${ph.isEmpty?'मोबाईल नाही':ph} • $kind • ₹${v.toStringAsFixed(2)} • ${note.text.trim()}');
+   amount.clear();note.clear();ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('खात्याची नोंद जतन झाली')));
+  },icon:const Icon(Icons.save),label:const Text('खात्यात नोंद जतन करा')))
+ ])));
 }
