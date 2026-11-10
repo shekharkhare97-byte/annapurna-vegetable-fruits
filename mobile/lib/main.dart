@@ -21,6 +21,12 @@ class _AppState extends State<AnnapurnaApp>{
    amount:total,
    lines:cart.entries.map((e){final p=items.firstWhere((x)=>x.name==e.key);return '${p.name} • ${(e.value*1000).round()} ग्रॅम • ₹${(price(p)*e.value).toStringAsFixed(2)}';}).toList(),
    onConfirm:(name,phone,address,payment){
+    final insufficient=cart.entries.where((e){final p=items.firstWhere((x)=>x.name==e.key);return e.value>p.stock;}).toList();
+    if(insufficient.isNotEmpty){
+     final e=insufficient.first;final p=items.firstWhere((x)=>x.name==e.key);
+     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('${p.name} साठी फक्त ${p.stock.toStringAsFixed(2)} किलो स्टॉक उपलब्ध आहे')));
+     return;
+    }
     final amount=total;
     for(final e in cart.entries){final p=items.firstWhere((x)=>x.name==e.key);p.stock=(p.stock-e.value).clamp(0,999999).toDouble();}
     setState((){
