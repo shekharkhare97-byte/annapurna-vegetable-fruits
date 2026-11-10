@@ -25,7 +25,7 @@ class _AppState extends State<AnnapurnaApp>{
     if(insufficient.isNotEmpty){
      final e=insufficient.first;final p=items.firstWhere((x)=>x.name==e.key);
      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('${p.name} साठी फक्त ${p.stock.toStringAsFixed(2)} किलो स्टॉक उपलब्ध आहे')));
-     return;
+     return false;
     }
     final amount=total;
     for(final e in cart.entries){final p=items.firstWhere((x)=>x.name==e.key);p.stock=(p.stock-e.value).clamp(0,999999).toDouble();}
@@ -35,6 +35,7 @@ class _AppState extends State<AnnapurnaApp>{
      cart.clear();
     });
     save();
+    return true;
    },
   )));
  }
@@ -70,7 +71,7 @@ class _AppState extends State<AnnapurnaApp>{
 class DeliveryCheckout extends StatefulWidget{
  const DeliveryCheckout({super.key,required this.amount,required this.lines,required this.onConfirm});
  final double amount;final List<String> lines;
- final void Function(String,String,String,String) onConfirm;
+ final bool Function(String,String,String,String) onConfirm;
  @override State<DeliveryCheckout> createState()=>_DeliveryCheckoutState();
 }
 class _DeliveryCheckoutState extends State<DeliveryCheckout>{
@@ -106,7 +107,8 @@ class _DeliveryCheckoutState extends State<DeliveryCheckout>{
     if(n.isEmpty||!RegExp(r'^[6-9][0-9]{9}
     }
     setState(()=>saving=true);
-    widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment);
+    final confirmed = widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment);
+    if (!confirmed) { setState(() => saving = false); return; }
     showDialog(context:context,barrierDismissible:false,builder:(_)=>AlertDialog(
      icon:const Icon(Icons.check_circle,color:green,size:48),
      title:const Text('ऑर्डर नोंदवली!'),
