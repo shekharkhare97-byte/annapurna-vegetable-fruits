@@ -30,7 +30,7 @@ class _AppState extends State<AnnapurnaApp>{
     final amount=total;
     for(final e in cart.entries){final p=items.firstWhere((x)=>x.name==e.key);p.stock=(p.stock-e.value).clamp(0,999999).toDouble();}
     setState((){
-     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • ${payment} • स्थिती: नवीन');
+     final itemSummary=cart.entries.map((e)=>'${e.key} ${(e.value*1000).round()}g').join(', ');\n     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • ${payment} • वस्तू: ${itemSummary} • स्थिती: नवीन');
      sales.insert(0,'विक्री • ₹${amount.toStringAsFixed(2)}');
      cart.clear();
     });
