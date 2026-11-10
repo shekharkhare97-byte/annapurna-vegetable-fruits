@@ -1,0 +1,51 @@
+name: Build Annapurna Delivery APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-delivery-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Android platform files if missing
+        working-directory: mobile
+        run: |
+          if [ ! -d android ]; then
+            flutter create --platforms=android --org com.annapurna --project-name annapurna_mobile .
+          fi
+
+      - name: Get packages
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Analyze Flutter app
+        working-directory: mobile
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        working-directory: mobile
+        run: flutter test
+
+      - name: Build release APK
+        working-directory: mobile
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: annapurna-nashik-delivery-apk
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
