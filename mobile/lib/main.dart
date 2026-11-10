@@ -150,6 +150,6 @@ class _DetailState extends State<Detail>{Item? selected;final val=TextEditingCon
  else if(t.contains('खाते')||t.contains('रिपोर्ट')||t.contains('विक्री'))...widget.sales.map((s)=>ListTile(title:Text(s),leading:const Icon(Icons.currency_rupee,color:green)))
  else if(t.contains('AI'))const Text('अन्नपूर्णा AI\\nभाजीपाला दर, स्टॉक आणि विक्रीचे नियोजन सहाय्य. AI जोडण्यासाठी सुरक्षित API सेटअप आवश्यक आहे.')
  else if(t.contains('Photo'))const Text('Photo Studio\\nउत्पादनांचे फोटो निवडण्याची सुविधा पुढील टप्प्यात जोडायची आहे.')
- else if(t.contains('ताजा'))const Text('ताजा बाजार\\nआजचे ताजे भाजीपाला आणि फळांचे दर येथे दाखवले जातील.'),
+ else if(t.contains('ताजा'))const Text('ताजा बाजार\\nआजचे ताजे भाजीपाला आणि फळांचे दर येथे दाखवले जातील.')
  else const Text('हा विभाग तयार होत आहे.')
  ]));}}
