@@ -104,7 +104,9 @@ class _DeliveryCheckoutState extends State<DeliveryCheckout>{
    style:FilledButton.styleFrom(backgroundColor:green,padding:const EdgeInsets.all(16)),
    onPressed:saving?null:(){
     final n=name.text.trim(),ph=phone.text.trim(),ad=address.text.trim();
-    if(n.isEmpty||!RegExp(r'^[6-9][0-9]{9}
+    if(n.isEmpty || !RegExp(r'^[6-9][0-9]{9}$').hasMatch(ph) || ad.isEmpty){
+     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नाव, योग्य १० अंकी भारतीय मोबाईल नंबर आणि पूर्ण पत्ता भरा')));
+     return;
     }
     setState(()=>saving=true);
     final confirmed = widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment);
