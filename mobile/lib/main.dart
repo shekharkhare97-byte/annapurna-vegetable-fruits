@@ -148,16 +148,91 @@ class _DeliveryPartnerPageState extends State<DeliveryPartnerPage>{
  })
  );
 }
-class Detail extends StatefulWidget{const Detail({super.key,required this.title,required this.items,required this.orders,required this.sales,required this.onPrice,required this.onStock});final String title;final List<Item> items;final List<String> orders,sales;final void Function(Item,double) onPrice,onStock;@override State<Detail> createState()=>_DetailState();}
-class _DetailState extends State<Detail>{Item? selected;final val=TextEditingController();@override Widget build(BuildContext context){final t=widget.title;return Scaffold(appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:Text(t)),body:ListView(padding:const EdgeInsets.all(15),children:[
- if(t.contains('स्टॉक')||t.contains('खरेदी')||t.contains('नासाडी'))...[
- DropdownButtonFormField<Item>(decoration:const InputDecoration(labelText:'उत्पादन निवडा',border:OutlineInputBorder()),items:widget.items.map((p)=>DropdownMenuItem(value:p,child:Text(p.name))).toList(),onChanged:(p)=>setState(()=>selected=p)),if(selected!=null)Text('सध्याचा स्टॉक: '+selected!.stock.toStringAsFixed(2)+' किलो'),TextField(controller:val,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'प्रमाण (किलो)')),FilledButton(onPressed:(){final p=selected,q=double.tryParse(val.text);if(p==null||q==null)return;widget.onStock(p,t.contains('नासाडी')?-q:q);val.clear();setState((){});},child:Text(t.contains('नासाडी')?'नासाडी नोंदवा':'खरेदी / स्टॉक नोंदवा')),...widget.items.map((p)=>ListTile(title:Text(p.name),trailing:Text(p.stock.toStringAsFixed(1)+' kg')))]
- else if(t.contains('सेटिंग')||t.contains('दर'))...[
- const Text('दुकानाचे दर',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),...widget.items.map((p)=>ListTile(title:Text(p.name),subtitle:Text('₹'+p.price.toStringAsFixed(0)+'/kg'),trailing:IconButton(icon:const Icon(Icons.edit,color:green),onPressed:(){final c=TextEditingController(text:p.price.toString());showDialog(context:context,builder:(_)=>AlertDialog(title:Text(p.name+' चा दर'),content:TextField(controller:c,keyboardType:TextInputType.number),actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('रद्द')),FilledButton(onPressed:(){final v=double.tryParse(c.text);if(v!=null)widget.onPrice(p,v);Navigator.pop(context);setState((){});},child:const Text('जतन'))]));})))]
- else if(t.contains('ऑर्डर'))...widget.orders.map((s)=>ListTile(title:Text(s),leading:const Icon(Icons.receipt_long,color:green)))
- else if(t.contains('खाते')||t.contains('रिपोर्ट')||t.contains('विक्री'))...widget.sales.map((s)=>ListTile(title:Text(s),leading:const Icon(Icons.currency_rupee,color:green)))
- else if(t.contains('AI'))const Text('अन्नपूर्णा AI\\nभाजीपाला दर, स्टॉक आणि विक्रीचे नियोजन सहाय्य. AI जोडण्यासाठी सुरक्षित API सेटअप आवश्यक आहे.')
- else if(t.contains('Photo'))const Text('Photo Studio\\nउत्पादनांचे फोटो निवडण्याची सुविधा पुढील टप्प्यात जोडायची आहे.')
- else if(t.contains('ताजा'))const Text('ताजा बाजार\\nआजचे ताजे भाजीपाला आणि फळांचे दर येथे दाखवले जातील.')
- else const Text('हा विभाग तयार होत आहे.')
- ]));}}
+class Detail extends StatefulWidget{
+ const Detail({super.key,required this.title,required this.items,required this.orders,required this.sales,required this.onPrice,required this.onStock});
+ final String title;final List<Item> items;final List<String> orders,sales;final void Function(Item,double) onPrice,onStock;
+ @override State<Detail> createState()=>_DetailState();
+}
+class _DetailState extends State<Detail>{
+ Item? selected;final val=TextEditingController();
+ @override void dispose(){val.dispose();super.dispose();}
+ @override Widget build(BuildContext context){
+  final t=widget.title;
+  final isStock=t.contains('स्टॉक'),isPurchase=t.contains('खरेदी'),isWaste=t.contains('नासाडी');
+  return Scaffold(appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:Text(t)),
+   body:ListView(padding:const EdgeInsets.all(15),children:[
+    if(isStock||isPurchase||isWaste)...[
+     Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Text(isWaste?'नासाडी / खराब माल नोंदवा':isPurchase?'आजची खरेदी नोंदवा':'उपलब्ध स्टॉक',style:const TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
+      const SizedBox(height:10),
+      DropdownButtonFormField<Item>(decoration:const InputDecoration(labelText:'उत्पादन निवडा',border:OutlineInputBorder()),items:widget.items.map((p)=>DropdownMenuItem(value:p,child:Text(p.name))).toList(),onChanged:(p)=>setState(()=>selected=p)),
+      if(selected!=null)Padding(padding:const EdgeInsets.symmetric(vertical:8),child:Text('सध्याचा स्टॉक: '+selected!.stock.toStringAsFixed(2)+' किलो')),
+      TextField(controller:val,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:isWaste?'नासाडीचे वजन (किलो)':'प्रमाण (किलो)',hintText:'उदा. 2.5',border:const OutlineInputBorder())),
+      const SizedBox(height:10),
+      SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:(){
+       final p=selected,q=double.tryParse(val.text.trim());
+       if(p==null||q==null||q<=0){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('उत्पादन निवडा आणि योग्य प्रमाण भरा')));return;}
+       if(isWaste&&q>p.stock){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नासाडीचे प्रमाण उपलब्ध स्टॉकपेक्षा जास्त आहे')));return;}
+       widget.onStock(p,isWaste?-q:q);val.clear();setState((){});ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(isWaste?'नासाडी नोंदवली':'स्टॉकमध्ये नोंद झाली')));
+      },icon:Icon(isWaste?Icons.delete_outline:Icons.save),label:Text(isWaste?'नासाडी जतन करा':isPurchase?'खरेदी जतन करा':'स्टॉक वाढवा'))),
+     ]))),
+     const SizedBox(height:8),const Text('सर्व उत्पादनांचा सध्याचा स्टॉक',style:TextStyle(fontWeight:FontWeight.bold,fontSize:17)),
+     ...widget.items.map((p)=>Card(color:Colors.white,child:ListTile(leading:Text(p.emoji,style:const TextStyle(fontSize:25)),title:Text(p.name),trailing:Text(p.stock.toStringAsFixed(2)+' kg',style:const TextStyle(fontWeight:FontWeight.bold)))))
+    ]
+    else if(t.contains('सेटिंग')||t.contains('दर'))...[
+     const Text('उत्पादनांचे विक्री दर (प्रति किलो)',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
+     ...widget.items.map((p)=>Card(color:Colors.white,child:ListTile(title:Text(p.name),subtitle:Text('सध्याचा दर: ₹'+p.price.toStringAsFixed(2)+' / किलो'),trailing:IconButton(icon:const Icon(Icons.edit,color:green),onPressed:(){
+      final c=TextEditingController(text:p.price.toString());
+      showDialog(context:context,builder:(_)=>AlertDialog(title:Text(p.name+' चा दर बदला'),content:TextField(controller:c,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'नवीन दर (₹/किलो)')),actions:[
+       TextButton(onPressed:()=>Navigator.pop(context),child:const Text('रद्द')),
+       FilledButton(onPressed:(){final v=double.tryParse(c.text.trim());if(v==null||v<0){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('योग्य दर भरा')));return;}widget.onPrice(p,v);Navigator.pop(context);setState((){});ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('दर जतन झाला')));},child:const Text('जतन करा'))
+      ]));
+     }))))
+    ]
+    else if(t.contains('ऑर्डर'))...[
+     if(widget.orders.isEmpty)const Center(child:Padding(padding:EdgeInsets.all(30),child:Text('अजून कोणतीही ऑर्डर नाही'))),
+     ...widget.orders.map((s)=>Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.receipt_long,color:green),title:Text(s))))
+    ]
+    else if(t.contains('खाते'))...[
+     const Text('ग्राहक खाते / खाता',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
+     const Text('नोंदवलेल्या विक्रीची माहिती येथे दिसते. उधारीची स्वतंत्र नोंद पुढील आवृत्तीत जोडली जाईल.'),
+     ...widget.sales.map((s)=>Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.person_outline,color:green),title:Text(s))))
+    ]
+    else if(t.contains('रिपोर्ट')||t.contains('विक्री'))...[
+     Text('एकूण नोंदी: '+widget.sales.length.toString(),style:const TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
+     ...widget.sales.map((s)=>Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.currency_rupee,color:green),title:Text(s)))),
+     if(widget.sales.isEmpty)const Text('विक्री नोंदी उपलब्ध नाहीत.')
+    ]
+    else if(t.contains('ताजा')||t.contains('बाजार'))...[
+     const Text('आजचे ताजे उत्पादन आणि दर',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
+     ...widget.items.map((p)=>Card(color:Colors.white,child:ListTile(leading:Text(p.emoji,style:const TextStyle(fontSize:25)),title:Text(p.name),trailing:Text('₹'+p.price.toStringAsFixed(0)+' / kg'))))
+    ]
+    else if(t.contains('AI'))...[
+     const Icon(Icons.auto_awesome,color:green,size:48),const Text('अन्नपूर्णा AI',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold)),
+     const Text('भाजीपाला दर, उपलब्ध स्टॉक आणि विक्रीचे नियोजन यासाठी AI सहाय्य. AI उत्तरांसाठी सुरक्षित सर्व्हर/API जोडणी आवश्यक आहे.')
+    ]
+    else if(t.contains('Photo'))...[
+     const Icon(Icons.photo_camera_outlined,color:green,size:48),const Text('Photo Studio',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold)),
+     const Text('उत्पादनांचे फोटो अपलोड व संपादन सुविधा पुढील आवृत्तीत जोडायची आहे.')
+    ]
+    else if(t.contains('ऑफर'))...[
+     const Text('आजच्या ऑफर',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold)),
+     const Text('सध्या कोणतीही ऑफर जाहीर केलेली नाही. दुकानाचे दर सेटिंग्जमधून बदलू शकता.')
+    ]
+    else if(t.contains('सूचना'))...[
+     const Icon(Icons.notifications_none,color:green,size:44),const Text('सूचना',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold)),
+     const Text('नवीन ऑर्डर आणि डिलिव्हरी अपडेट्स या विभागात दाखवले जातील.')
+    ]
+    else if(t.contains('पत्ता'))...[
+     const Text('पत्ता व्यवस्थापन',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
+     const Text('ऑर्डर करताना ग्राहकाचा पूर्ण डिलिव्हरी पत्ता भरता येतो.')
+    ]
+    else if(t.contains('मदत'))...[
+     const Icon(Icons.support_agent,color:green,size:48),const Text('मदत आणि समर्थन',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold)),
+     const Text('ऑर्डर, स्टॉक किंवा दरांबाबत मदत हवी असल्यास दुकानाशी संपर्क साधा.')
+    ]
+    else const Text('हा विभाग पुढील आवृत्तीत अधिक सुविधांसह उपलब्ध होईल.')
+   ])
+  );
+ }
+}
