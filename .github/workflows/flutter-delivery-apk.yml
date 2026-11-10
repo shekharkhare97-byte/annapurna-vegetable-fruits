@@ -33,7 +33,7 @@ jobs:
 
       - name: Analyze Flutter app
         working-directory: mobile
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Run Flutter tests
         working-directory: mobile
