@@ -93,7 +93,7 @@ class _DeliveryCheckoutState extends State<DeliveryCheckout>{
   const SizedBox(height:16),
   const Text('पेमेंट पद्धत',style:TextStyle(fontWeight:FontWeight.bold,fontSize:16)),
   RadioListTile<String>(contentPadding:EdgeInsets.zero,value:'घरपोच पैसे (Cash on Delivery)',groupValue:payment,title:const Text('घरपोच पैसे द्या'),onChanged:(v)=>setState(()=>payment=v!)),
-  RadioListTile<String>(contentPadding:EdgeInsets.zero,value:'UPI',groupValue:payment,title:const Text('UPI पेमेंट'),onChanged:(v)=>setState(()=>payment=v!)),
+  RadioListTile<String>(contentPadding:EdgeInsets.zero,value:'UPI (पेमेंटची पुष्टी दुकानाकडून)',groupValue:payment,title:const Text('UPI (पेमेंटची पुष्टी दुकानाकडून)'),onChanged:(v)=>setState(()=>payment=v!)),
   const Divider(),
   const Text('तुमची ऑर्डर',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),
   ...widget.lines.map((s)=>ListTile(dense:true,title:Text(s))),
@@ -103,8 +103,63 @@ class _DeliveryCheckoutState extends State<DeliveryCheckout>{
    style:FilledButton.styleFrom(backgroundColor:green,padding:const EdgeInsets.all(16)),
    onPressed:saving?null:(){
     final n=name.text.trim(),ph=phone.text.trim(),ad=address.text.trim();
-    if(n.isEmpty||ph.length!=10||ad.isEmpty){
-     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नाव, १० अंकी मोबाईल नंबर आणि पूर्ण पत्ता भरा')));
+    if(n.isEmpty||!RegExp(r'^[6-9][0-9]{9}
+     return;
+    }
+    setState(()=>saving=true);
+    widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment);
+    showDialog(context:context,barrierDismissible:false,builder:(_)=>AlertDialog(
+     icon:const Icon(Icons.check_circle,color:green,size:48),
+     title:const Text('ऑर्डर नोंदवली!'),
+     content:const Text('तुमची ऑर्डर या फोनमध्ये जतन झाली आहे. दुकानाकडून पुष्टी मिळाल्यावर डिलिव्हरीची माहिती कळेल.'),
+     actions:[FilledButton(onPressed:(){Navigator.pop(context);Navigator.pop(context);Navigator.pop(context);},child:const Text('ठीक आहे'))],
+    ));
+   },
+   icon:const Icon(Icons.delivery_dining),label:const Text('ऑर्डर निश्चित करा'),
+  ),
+  const SizedBox(height:8),
+  const Text('टीप: डिलिव्हरीचा वेळ आणि उपलब्धता दुकानाकडून निश्चित केली जाईल.',style:TextStyle(color:Colors.black54,fontSize:12)),
+ ])
+ );
+}
+class DeliveryPartnerPage extends StatefulWidget{
+ const DeliveryPartnerPage({super.key,required this.orders,required this.onUpdate});
+ final List<String> orders;final void Function(int,String) onUpdate;
+ @override State<DeliveryPartnerPage> createState()=>_DeliveryPartnerPageState();
+}
+class _DeliveryPartnerPageState extends State<DeliveryPartnerPage>{
+ static const stages=['नवीन','ऑर्डर स्वीकारली','पॅकिंग सुरू','डिलिव्हरीसाठी निघाली','पोहोचवली'];
+ @override Widget build(BuildContext context)=>Scaffold(
+ appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:const Text('डिलिव्हरी पार्टनर')),
+ body:widget.orders.isEmpty
+ ?const Center(child:Text('सध्या कोणतीही ऑर्डर नाही'))
+ :ListView.builder(padding:const EdgeInsets.all(12),itemCount:widget.orders.length,itemBuilder:(context,i){
+  final order=widget.orders[i];final parts=order.split(' • स्थिती: ');final status=parts.length>1?parts.last:'नवीन';
+  return Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+   Text(parts.first,style:const TextStyle(fontWeight:FontWeight.bold)),
+   const SizedBox(height:8),
+   Row(children:[const Icon(Icons.delivery_dining,color:green),const SizedBox(width:6),Expanded(child:Text('सध्याची स्थिती: $status'))]),
+   const SizedBox(height:8),
+   DropdownButtonFormField<String>(value:stages.contains(status)?status:'नवीन',decoration:const InputDecoration(labelText:'ऑर्डरची स्थिती बदला',border:OutlineInputBorder()),items:stages.map((s)=>DropdownMenuItem(value:s,child:Text(s))).toList(),onChanged:(s){if(s!=null){widget.onUpdate(i,s);setState((){});}}),
+  ])));
+ })
+ );
+}
+class Detail extends StatefulWidget{const Detail({super.key,required this.title,required this.items,required this.orders,required this.sales,required this.onPrice,required this.onStock});final String title;final List<Item> items;final List<String> orders,sales;final void Function(Item,double) onPrice,onStock;@override State<Detail> createState()=>_DetailState();}
+class _DetailState extends State<Detail>{Item? selected;final val=TextEditingController();@override Widget build(BuildContext context){final t=widget.title;return Scaffold(appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:Text(t)),body:ListView(padding:const EdgeInsets.all(15),children:[
+ if(t.contains('स्टॉक')||t.contains('खरेदी')||t.contains('नासाडी'))...[
+ DropdownButtonFormField<Item>(decoration:const InputDecoration(labelText:'उत्पादन निवडा',border:OutlineInputBorder()),items:widget.items.map((p)=>DropdownMenuItem(value:p,child:Text(p.name))).toList(),onChanged:(p)=>setState(()=>selected=p)),if(selected!=null)Text('सध्याचा स्टॉक: '+selected!.stock.toStringAsFixed(2)+' किलो'),TextField(controller:val,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'प्रमाण (किलो)')),FilledButton(onPressed:(){final p=selected,q=double.tryParse(val.text);if(p==null||q==null)return;widget.onStock(p,t.contains('नासाडी')?-q:q);val.clear();setState((){});},child:Text(t.contains('नासाडी')?'नासाडी नोंदवा':'खरेदी / स्टॉक नोंदवा')),...widget.items.map((p)=>ListTile(title:Text(p.name),trailing:Text(p.stock.toStringAsFixed(1)+' kg')))]
+ else if(t.contains('सेटिंग')||t.contains('दर'))...[
+ const Text('दुकानाचे दर',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),...widget.items.map((p)=>ListTile(title:Text(p.name),subtitle:Text('₹'+p.price.toStringAsFixed(0)+'/kg'),trailing:IconButton(icon:const Icon(Icons.edit,color:green),onPressed:(){final c=TextEditingController(text:p.price.toString());showDialog(context:context,builder:(_)=>AlertDialog(title:Text(p.name+' चा दर'),content:TextField(controller:c,keyboardType:TextInputType.number),actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('रद्द')),FilledButton(onPressed:(){final v=double.tryParse(c.text);if(v!=null)widget.onPrice(p,v);Navigator.pop(context);setState((){});},child:const Text('जतन'))]));})))]
+ else if(t.contains('ऑर्डर'))...widget.orders.map((s)=>ListTile(title:Text(s),leading:const Icon(Icons.receipt_long,color:green)))
+ else if(t.contains('खाते')||t.contains('रिपोर्ट')||t.contains('विक्री'))...widget.sales.map((s)=>ListTile(title:Text(s),leading:const Icon(Icons.currency_rupee,color:green)))
+ else if(t.contains('AI'))const Text('अन्नपूर्णा AI\\nभाजीपाला दर, स्टॉक आणि विक्रीचे नियोजन सहाय्य. AI जोडण्यासाठी सुरक्षित API सेटअप आवश्यक आहे.')
+ else if(t.contains('Photo'))const Text('Photo Studio\\nउत्पादनांचे फोटो निवडण्याची सुविधा पुढील टप्प्यात जोडायची आहे.')
+ else if(t.contains('ताजा'))const Text('ताजा बाजार\\nआजचे ताजे भाजीपाला आणि फळांचे दर येथे दाखवले जातील.')
+ else const Text('हा विभाग तयार होत आहे.')
+ ]));}}
+).hasMatch(ph)||ad.isEmpty){
+     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नाव, योग्य १० अंकी भारतीय मोबाईल नंबर आणि पूर्ण पत्ता भरा')));
      return;
     }
     setState(()=>saving=true);
