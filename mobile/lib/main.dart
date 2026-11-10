@@ -30,7 +30,8 @@ class _AppState extends State<AnnapurnaApp>{
     final amount=total;
     for(final e in cart.entries){final p=items.firstWhere((x)=>x.name==e.key);p.stock=(p.stock-e.value).clamp(0,999999).toDouble();}
     setState((){
-     final itemSummary=cart.entries.map((e)=>'${e.key} ${(e.value*1000).round()}g').join(', ');\n     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • ${payment} • वस्तू: ${itemSummary} • स्थिती: नवीन');
+     final itemSummary=cart.entries.map((e)=>e.key+' '+(e.value*1000).round().toString()+'g').join(', ');
+     orders.insert(0,'ऑर्डर #'+(1241+orders.length).toString()+' • ₹'+amount.toStringAsFixed(2)+' • '+name+' • '+phone+' • '+address+' • '+payment+' • वस्तू: '+itemSummary+' • स्थिती: नवीन');
      sales.insert(0,'विक्री • ₹${amount.toStringAsFixed(2)}');
      cart.clear();
     });
@@ -59,8 +60,36 @@ class _AppState extends State<AnnapurnaApp>{
  }),style:FilledButton.styleFrom(backgroundColor:green),child:const Text('＋ वजन निवडा'))
  ])));
  Widget cartPage()=>ListView(padding:const EdgeInsets.all(14),children:[const Text('माझी पिशवी',style:TextStyle(fontSize:22,fontWeight:FontWeight.bold)),if(cart.isEmpty)const Padding(padding:EdgeInsets.all(30),child:Text('तुमची पिशवी रिकामी आहे 🛒')),...cart.entries.map((e){final p=items.firstWhere((x)=>x.name==e.key);return Card(color:Colors.white,child:ListTile(leading:Text(p.emoji,style:const TextStyle(fontSize:28)),title:Text(p.name),subtitle:Text((e.value*1000).round().toString()+' ग्रॅम • ₹'+price(p).toStringAsFixed(0)+'/kg'),trailing:Row(mainAxisSize:MainAxisSize.min,children:[IconButton(onPressed:(){setState((){if(e.value<=.125){cart.remove(e.key);}else{cart[e.key]=e.value-.125;}});save();},icon:const Icon(Icons.remove)),Text((e.value*1000).round().toString()+'g'),IconButton(onPressed:()=>add(p),icon:const Icon(Icons.add)),IconButton(onPressed:(){setState(()=>cart.remove(e.key));save();},icon:const Icon(Icons.delete_outline,color:Colors.red))])));}),Card(color:Colors.white,child:ListTile(title:const Text('एकूण रक्कम'),trailing:Text('₹'+total.toStringAsFixed(2),style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)))),FilledButton(onPressed:cart.isEmpty?null:checkout,child:const Text('ऑर्डर करा / चेकआउट'))]);
- Widget profile()=>ListView(padding:const EdgeInsets.all(14),children:[const CircleAvatar(radius:40,backgroundColor:Color(0xFFD7F0DF),child:Icon(Icons.person,size:48,color:green)),Center(child:Text(ownerName,style:const TextStyle(fontSize:20,fontWeight:FontWeight.bold))),Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.store,color:green),title:const Text('दुकान मालकाची माहिती'),subtitle:Text(ownerPhone.isEmpty?'मोबाईल नंबर जोडलेला नाही':ownerPhone),trailing:const Icon(Icons.edit),onTap:editOwner)),...['माझ्या ऑर्डर्स','पत्ता व्यवस्थापन','कूपन / सवलत','सेटिंग्ज','मदत आणि समर्थन','डिलिव्हरी पार्टनर','स्टॉक व्यवस्थापन','ग्राहक खाते'].map((s)=>Card(color:Colors.white,child:ListTile(title:Text(s),trailing:const Icon(Icons.chevron_right),onTap:()=>open(s))))]);
- Future<void> editOwner()async{final n=TextEditingController(text:ownerName);final p=TextEditingController(text:ownerPhone);final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(title:const Text('दुकान मालकाची माहिती'),content:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:n,decoration:const InputDecoration(labelText:'मालकाचे नाव')),TextField(controller:p,keyboardType:TextInputType.phone,maxLength:10,decoration:const InputDecoration(labelText:'मोबाईल नंबर'))]),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द')),FilledButton(onPressed:(){if(n.text.trim().isEmpty||(p.text.trim().isNotEmpty&&!RegExp(r'^[6-9][0-9]{9}
+ Widget profile()=>ListView(padding:const EdgeInsets.all(14),children:[
+  const CircleAvatar(radius:40,backgroundColor:Color(0xFFD7F0DF),child:Icon(Icons.person,size:48,color:green)),
+  Center(child:Text(ownerName,style:const TextStyle(fontSize:20,fontWeight:FontWeight.bold))),
+  Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.store,color:green),title:const Text('दुकान मालकाची माहिती'),subtitle:Text(ownerPhone.isEmpty?'मोबाईल नंबर जोडलेला नाही':ownerPhone),trailing:const Icon(Icons.edit),onTap:editOwner)),
+  ...['माझ्या ऑर्डर्स','पत्ता व्यवस्थापन','कूपन / सवलत','सेटिंग्ज','मदत आणि समर्थन','डिलिव्हरी पार्टनर','स्टॉक व्यवस्थापन','ग्राहक खाते'].map((s)=>Card(color:Colors.white,child:ListTile(title:Text(s),trailing:const Icon(Icons.chevron_right),onTap:()=>open(s))))
+ ]);
+ Future<void> editOwner() async {
+  final n=TextEditingController(text:ownerName);
+  final p=TextEditingController(text:ownerPhone);
+  final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
+   title:const Text('दुकान मालकाची माहिती'),
+   content:Column(mainAxisSize:MainAxisSize.min,children:[
+    TextField(controller:n,decoration:const InputDecoration(labelText:'मालकाचे नाव')),
+    TextField(controller:p,keyboardType:TextInputType.phone,maxLength:10,decoration:const InputDecoration(labelText:'मोबाईल नंबर'))
+   ]),
+   actions:[
+    TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द')),
+    FilledButton(onPressed:(){
+     final mobile=p.text.trim();
+     if(n.text.trim().isEmpty || (mobile.isNotEmpty && (mobile.length!=10 || int.tryParse(mobile)==null || !'6789'.contains(mobile[0])))){
+      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content:Text('नाव आणि योग्य १० अंकी मोबाईल नंबर भरा')));
+      return;
+     }
+     Navigator.pop(ctx,true);
+    },child:const Text('जतन करा'))
+   ]
+  ));
+  if(ok==true){setState((){ownerName=n.text.trim();ownerPhone=p.text.trim();});await save();}
+  n.dispose();p.dispose();
+ }
  void open(String title){
  if(title=='डिलिव्हरी पार्टनर'){
   Navigator.push(context,MaterialPageRoute(builder:(_)=>DeliveryPartnerPage(orders:orders,onUpdate:(i,status){setState((){final parts=orders[i].split(' • स्थिती: ');orders[i]=parts.first+' • स्थिती: '+status;});save();})));
