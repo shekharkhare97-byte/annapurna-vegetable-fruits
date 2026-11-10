@@ -7,11 +7,11 @@ class Item{String name,cat,emoji;double price,stock;Item(this.name,this.cat,this
 class MyApp extends AnnapurnaApp{const MyApp({super.key});}
 class AnnapurnaApp extends StatefulWidget{const AnnapurnaApp({super.key});@override State<AnnapurnaApp> createState()=>_AppState();}
 class _AppState extends State<AnnapurnaApp>{
- int tab=0;String cat='सर्व',search='';final cart=<String,double>{};final customPrices=<String,double>{};final orders=<String>[];final sales=<String>[];final purchases=<String>[];final wastages=<String>[];
+ int tab=0;String cat='सर्व',search='';final cart=<String,double>{};final customPrices=<String,double>{};final orders=<String>[];final sales=<String>[];final purchases=<String>[];final wastages=<String>[];final khataEntries=<String>[];
  final items=<Item>[Item('टोमॅटो','भाजीपाला',40,'🍅'),Item('कांदा','भाजीपाला',30,'🧅'),Item('बटाटा','भाजीपाला',25,'🥔'),Item('भेंडी','भाजीपाला',50,'🥒'),Item('दुधी भोपळा','भाजीपाला',30,'🥬'),Item('पालक','भाजीपाला',20,'🥬'),Item('मेथी','भाजीपाला',15,'🌿'),Item('कोबी','भाजीपाला',25,'🥬'),Item('गाजर','भाजीपाला',40,'🥕'),Item('मिरची','भाजीपाला',60,'🌶️'),Item('सफरचंद','फळे',140,'🍎'),Item('केळी','फळे',50,'🍌'),Item('संत्रे','फळे',80,'🍊'),Item('द्राक्षे','फळे',100,'🍇'),Item('डाळिंब','फळे',120,'🍎'),Item('आंबा','फळे',100,'🥭'),Item('पेरू','फळे',60,'🍐'),Item('अननस','फळे',70,'🍍')];
  @override void initState(){super.initState();load();}
- Future<void> load()async{final p=await SharedPreferences.getInstance();Map<String,dynamic> read(String k)=>p.getString(k)==null?{}:jsonDecode(p.getString(k)!) as Map<String,dynamic>;cart.addAll(read('cart').map((k,v)=>MapEntry(k,(v as num).toDouble())));customPrices.addAll(read('prices').map((k,v)=>MapEntry(k,(v as num).toDouble())));final st=read('stock');for(final x in items){if(st[x.name] is num)x.stock=(st[x.name] as num).toDouble();}orders.addAll(p.getStringList('orders')??[]);sales.addAll(p.getStringList('sales')??[]);purchases.addAll(p.getStringList('purchases')??[]);wastages.addAll(p.getStringList('wastages')??[]);if(mounted)setState((){});}
- Future<void> save()async{final p=await SharedPreferences.getInstance();await p.setString('cart',jsonEncode(cart));await p.setString('prices',jsonEncode(customPrices));await p.setString('stock',jsonEncode({for(final x in items)x.name:x.stock}));await p.setStringList('orders',orders);await p.setStringList('sales',sales);await p.setStringList('purchases',purchases);await p.setStringList('wastages',wastages);}
+ Future<void> load()async{final p=await SharedPreferences.getInstance();Map<String,dynamic> read(String k)=>p.getString(k)==null?{}:jsonDecode(p.getString(k)!) as Map<String,dynamic>;cart.addAll(read('cart').map((k,v)=>MapEntry(k,(v as num).toDouble())));customPrices.addAll(read('prices').map((k,v)=>MapEntry(k,(v as num).toDouble())));final st=read('stock');for(final x in items){if(st[x.name] is num)x.stock=(st[x.name] as num).toDouble();}orders.addAll(p.getStringList('orders')??[]);sales.addAll(p.getStringList('sales')??[]);purchases.addAll(p.getStringList('purchases')??[]);wastages.addAll(p.getStringList('wastages')??[]);khataEntries.addAll(p.getStringList('khataEntries')??[]);if(mounted)setState((){});}
+ Future<void> save()async{final p=await SharedPreferences.getInstance();await p.setString('cart',jsonEncode(cart));await p.setString('prices',jsonEncode(customPrices));await p.setString('stock',jsonEncode({for(final x in items)x.name:x.stock}));await p.setStringList('orders',orders);await p.setStringList('sales',sales);await p.setStringList('purchases',purchases);await p.setStringList('wastages',wastages);await p.setStringList('khataEntries',khataEntries);}
  double price(Item p)=>customPrices[p.name]??p.price;
  double get total=>cart.entries.fold(0,(s,e)=>s+price(items.firstWhere((p)=>p.name==e.key))*e.value);
  void add(Item p,[double qty=.125]){setState(()=>cart[p.name]=(cart[p.name]??0)+qty);save();}
@@ -65,7 +65,7 @@ class _AppState extends State<AnnapurnaApp>{
   Navigator.push(context,MaterialPageRoute(builder:(_)=>DeliveryPartnerPage(orders:orders,onUpdate:(i,status){setState((){final parts=orders[i].split(' • स्थिती: ');orders[i]=parts.first+' • स्थिती: '+status;});save();})));
   return;
  }
- Navigator.push(context,MaterialPageRoute(builder:(_)=>Detail(title:title,items:items,orders:orders,sales:sales,purchases:purchases,wastages:wastages,onRecord:(list,entry){setState(()=>list.insert(0,entry));save();},onPrice:(p,v){setState(()=>customPrices[p.name]=v);save();},onStock:(p,v){setState(()=>p.stock=(p.stock+v).clamp(0,999999).toDouble());save();} )));
+ Navigator.push(context,MaterialPageRoute(builder:(_)=>Detail(title:title,items:items,orders:orders,sales:sales,purchases:purchases,wastages:wastages,khataEntries:khataEntries,onRecord:(list,entry){setState(()=>list.insert(0,entry));save();},onPrice:(p,v){setState(()=>customPrices[p.name]=v);save();},onStock:(p,v){setState(()=>p.stock=(p.stock+v).clamp(0,999999).toDouble());save();} )));
 }
 }
 class DeliveryCheckout extends StatefulWidget{
@@ -149,8 +149,8 @@ class _DeliveryPartnerPageState extends State<DeliveryPartnerPage>{
  );
 }
 class Detail extends StatefulWidget{
- const Detail({super.key,required this.title,required this.items,required this.orders,required this.sales,required this.purchases,required this.wastages,required this.onRecord,required this.onPrice,required this.onStock});
- final String title;final List<Item> items;final List<String> orders,sales,purchases,wastages;final void Function(List<String>,String) onRecord;final void Function(Item,double) onPrice,onStock;
+ const Detail({super.key,required this.title,required this.items,required this.orders,required this.sales,required this.purchases,required this.wastages,required this.khataEntries,required this.onRecord,required this.onPrice,required this.onStock});
+ final String title;final List<Item> items;final List<String> orders,sales,purchases,wastages,khataEntries;final void Function(List<String>,String) onRecord;final void Function(Item,double) onPrice,onStock;
  @override State<Detail> createState()=>_DetailState();
 }
 class _DetailState extends State<Detail>{
