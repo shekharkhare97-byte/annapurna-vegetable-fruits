@@ -156,6 +156,16 @@ class Detail extends StatefulWidget{
 class _DetailState extends State<Detail>{
  Item? selected;final val=TextEditingController();final khataName=TextEditingController(),khataAmount=TextEditingController();String khataType='उधारी';
  @override void dispose(){val.dispose();khataName.dispose();khataAmount.dispose();super.dispose();}
+ double _khataBalance(String customer){
+  double balance=0;
+  for(final entry in widget.khataEntries){
+   final parts=entry.split(' • ');
+   if(parts.length<4||parts[1]!=customer)continue;
+   final amount=double.tryParse(parts[3].replaceAll('₹','').trim())??0;
+   balance+=parts[2]=='उधारी'?amount:-amount;
+  }
+  return balance;
+ }
  @override Widget build(BuildContext context){
   final t=widget.title;
   final isStock=t.contains('स्टॉक'),isPurchase=t.contains('खरेदी'),isWaste=t.contains('नासाडी');
@@ -206,6 +216,9 @@ class _DetailState extends State<Detail>{
      const SizedBox(height:8),
      SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final n=khataName.text.trim(),a=double.tryParse(khataAmount.text.trim());if(n.isEmpty||a==null||a<=0){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('ग्राहकाचे नाव आणि योग्य रक्कम भरा')));return;}final stamp=DateTime.now().toString().substring(0,16);widget.onRecord(widget.khataEntries,'$stamp • $n • $khataType • ₹${a.toStringAsFixed(2)}');khataAmount.clear();ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('खात्याची नोंद जतन झाली')));},child:const Text('खात्यात नोंद जतन करा'))),
      const SizedBox(height:10),
+     const Text('ग्राहकनिहाय बाकी रक्कम',style:TextStyle(fontWeight:FontWeight.bold,fontSize:17)),
+     ...widget.khataEntries.map((s)=>s.split(' • ').length>1?s.split(' • ')[1]:'').where((n)=>n.isNotEmpty).toSet().map((n)=>Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.person_outline,color:green),title:Text(n),trailing:Text('₹${_khataBalance(n).toStringAsFixed(2)}',style:TextStyle(fontWeight:FontWeight.bold,color:_khataBalance(n)>0?Colors.red:green))))),
+     const SizedBox(height:8),
      const Text('खात्याचा इतिहास',style:TextStyle(fontWeight:FontWeight.bold,fontSize:17)),
      ...widget.khataEntries.map((s)=>Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.account_balance_wallet_outlined,color:green),title:Text(s)))),
      if(widget.khataEntries.isEmpty)const Text('अजून उधारी किंवा जमा नोंद नाही.')
