@@ -23,7 +23,7 @@ class _AppState extends State<AnnapurnaApp>{
     final amount=total;
     for(final e in cart.entries){final p=items.firstWhere((x)=>x.name==e.key);p.stock=(p.stock-e.value).clamp(0,999999).toDouble();}
     setState((){
-     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • ${payment}');
+     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • ${payment} • स्थिती: नवीन');
      sales.insert(0,'विक्री • ₹${amount.toStringAsFixed(2)}');
      cart.clear();
     });
@@ -31,7 +31,7 @@ class _AppState extends State<AnnapurnaApp>{
    },
   )));
  }
- @override Widget build(BuildContext context)=>MaterialApp(debugShowCheckedModeBanner:false,title:'अन्नपूर्णा',theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:green),scaffoldBackgroundColor:pale,useMaterial3:true),home:Scaffold(appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('अन्नपूर्णा',style:TextStyle(fontWeight:FontWeight.bold)),Text('Vegetable and Fruits',style:TextStyle(fontSize:11))]),actions:[IconButton(onPressed:()=>open('सूचना'),icon:const Icon(Icons.notifications_none))]),drawer:Drawer(child:ListView(children:[const DrawerHeader(decoration:BoxDecoration(color:green),child:Text('🧺 अन्नपूर्णा\\nदुकान व्यवस्थापन',style:TextStyle(color:Colors.white,fontSize:24))),...['डॅशबोर्ड','भाजीपाला व फळे','माझी पिशवी','माझ्या ऑर्डर्स','स्टॉक व्यवस्थापन','खरेदी नोंद','नासाडी नोंद','ग्राहक खाते','विक्री व रिपोर्ट','ताजा बाजार','अन्नपूर्णा AI','Photo Studio','सेटिंग्ज'].map((s)=>ListTile(title:Text(s),leading:const Icon(Icons.eco,color:green),onTap:(){Navigator.pop(context);open(s);} ))])),body:IndexedStack(index:tab,children:[home(),catalog(),cartPage(),profile()]),bottomNavigationBar:NavigationBar(selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:const [NavigationDestination(icon:Icon(Icons.home_outlined),label:'होम'),NavigationDestination(icon:Icon(Icons.grid_view),label:'भाजी / फळे'),NavigationDestination(icon:Icon(Icons.shopping_cart_outlined),label:'कार्ट'),NavigationDestination(icon:Icon(Icons.person_outline),label:'प्रोफाइल')]))); 
+ @override Widget build(BuildContext context)=>MaterialApp(debugShowCheckedModeBanner:false,title:'अन्नपूर्णा',theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:green),scaffoldBackgroundColor:pale,useMaterial3:true),home:Scaffold(appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('अन्नपूर्णा',style:TextStyle(fontWeight:FontWeight.bold)),Text('Vegetable and Fruits',style:TextStyle(fontSize:11))]),actions:[IconButton(onPressed:()=>open('सूचना'),icon:const Icon(Icons.notifications_none))]),drawer:Drawer(child:ListView(children:[const DrawerHeader(decoration:BoxDecoration(color:green),child:Text('🧺 अन्नपूर्णा\\nदुकान व्यवस्थापन',style:TextStyle(color:Colors.white,fontSize:24))),...['डॅशबोर्ड','भाजीपाला व फळे','माझी पिशवी','माझ्या ऑर्डर्स','डिलिव्हरी पार्टनर','स्टॉक व्यवस्थापन','खरेदी नोंद','नासाडी नोंद','ग्राहक खाते','विक्री व रिपोर्ट','ताजा बाजार','अन्नपूर्णा AI','Photo Studio','सेटिंग्ज'].map((s)=>ListTile(title:Text(s),leading:const Icon(Icons.eco,color:green),onTap:(){Navigator.pop(context);open(s);} ))])),body:IndexedStack(index:tab,children:[home(),catalog(),cartPage(),profile()]),bottomNavigationBar:NavigationBar(selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:const [NavigationDestination(icon:Icon(Icons.home_outlined),label:'होम'),NavigationDestination(icon:Icon(Icons.grid_view),label:'भाजी / फळे'),NavigationDestination(icon:Icon(Icons.shopping_cart_outlined),label:'कार्ट'),NavigationDestination(icon:Icon(Icons.person_outline),label:'प्रोफाइल')]))); 
  Widget home()=>ListView(padding:const EdgeInsets.all(14),children:[Container(height:145,padding:const EdgeInsets.all(18),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),gradient:const LinearGradient(colors:[Color(0xFF05652B),Color(0xFF35A653)])),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[Text('ताज्या भाज्या, ताजी फळे...',style:TextStyle(color:Colors.white,fontSize:22,fontWeight:FontWeight.bold)),Text('आता तुमच्या मोबाईलवर !',style:TextStyle(color:Colors.white,fontSize:18)),Text('ताजे • विश्वासार्ह • घरपोच सेवा',style:TextStyle(color:Colors.white))])),const SizedBox(height:12),GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,childAspectRatio:1.7,children:[tile('🥬','भाज्या',()=>setState(()=>tab=1)),tile('🍎','फळे',()=>setState(()=>tab=1)),tile('％','आजचे ऑफर',()=>open('आजचे ऑफर')),tile('🛒','माझ्या ऑर्डर्स',()=>open('माझ्या ऑर्डर्स'))]),const Text('लोकप्रिय उत्पादने',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold)),GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:3,children:items.take(6).map(card).toList()),Wrap(spacing:8,children:['ताजा बाजार','माझी पिशवी','अन्नपूर्णा AI','Photo Studio'].map((s)=>ActionChip(label:Text(s),onPressed:()=>open(s))).toList())]);
  Widget tile(String e,String s,VoidCallback f)=>Card(color:Colors.white,child:InkWell(onTap:f,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(e,style:const TextStyle(fontSize:27)),Text(s,style:const TextStyle(fontWeight:FontWeight.bold))])));
  Widget catalog()=>Column(children:[Padding(padding:const EdgeInsets.all(12),child:TextField(decoration:InputDecoration(prefixIcon:const Icon(Icons.search),hintText:'भाजी किंवा फळ शोधा...',filled:true,fillColor:Colors.white,border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide.none)))),Wrap(children:['सर्व','भाजीपाला','फळे'].map((s)=>ChoiceChip(label:Text(s),selected:cat==s,onSelected:(_)=>setState(()=>cat=s))).toList()),Expanded(child:GridView.count(padding:const EdgeInsets.all(10),crossAxisCount:2,childAspectRatio:.95,children:items.where((p)=>cat=='सर्व'||p.cat==cat).map(card).toList()))]);
@@ -51,8 +51,14 @@ class _AppState extends State<AnnapurnaApp>{
  }),style:FilledButton.styleFrom(backgroundColor:green),child:const Text('＋ वजन निवडा'))
  ])));
  Widget cartPage()=>ListView(padding:const EdgeInsets.all(14),children:[const Text('माझी पिशवी',style:TextStyle(fontSize:22,fontWeight:FontWeight.bold)),if(cart.isEmpty)const Padding(padding:EdgeInsets.all(30),child:Text('तुमची पिशवी रिकामी आहे 🛒')),...cart.entries.map((e){final p=items.firstWhere((x)=>x.name==e.key);return Card(color:Colors.white,child:ListTile(leading:Text(p.emoji,style:const TextStyle(fontSize:28)),title:Text(p.name),subtitle:Text((e.value*1000).round().toString()+' ग्रॅम • ₹'+price(p).toStringAsFixed(0)+'/kg'),trailing:Row(mainAxisSize:MainAxisSize.min,children:[IconButton(onPressed:()=>setState(()=>cart[e.key]=(e.value-.125).clamp(.125,100).toDouble()),icon:const Icon(Icons.remove)),Text((e.value*1000).round().toString()+'g'),IconButton(onPressed:()=>add(p),icon:const Icon(Icons.add)),IconButton(onPressed:(){setState(()=>cart.remove(e.key));save();},icon:const Icon(Icons.delete_outline,color:Colors.red))])));}),Card(color:Colors.white,child:ListTile(title:const Text('एकूण रक्कम'),trailing:Text('₹'+total.toStringAsFixed(2),style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)))),FilledButton(onPressed:cart.isEmpty?null:checkout,child:const Text('ऑर्डर करा / चेकआउट'))]);
- Widget profile()=>ListView(padding:const EdgeInsets.all(14),children:[const CircleAvatar(radius:40,backgroundColor:Color(0xFFD7F0DF),child:Icon(Icons.person,size:48,color:green)),const Center(child:Text('शेखर खरे',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold))),...['माझ्या ऑर्डर्स','पत्ता व्यवस्थापन','कूपन / सवलत','सेटिंग्ज','मदत आणि समर्थन','स्टॉक व्यवस्थापन','ग्राहक खाते'].map((s)=>Card(color:Colors.white,child:ListTile(title:Text(s),trailing:const Icon(Icons.chevron_right),onTap:()=>open(s))))]);
- void open(String title){Navigator.push(context,MaterialPageRoute(builder:(_)=>Detail(title:title,items:items,orders:orders,sales:sales,onPrice:(p,v){setState(()=>customPrices[p.name]=v);save();},onStock:(p,v){setState(()=>p.stock=(p.stock+v).clamp(0,999999).toDouble());save();} )));}
+ Widget profile()=>ListView(padding:const EdgeInsets.all(14),children:[const CircleAvatar(radius:40,backgroundColor:Color(0xFFD7F0DF),child:Icon(Icons.person,size:48,color:green)),const Center(child:Text('शेखर खरे',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold))),...['माझ्या ऑर्डर्स','पत्ता व्यवस्थापन','कूपन / सवलत','सेटिंग्ज','मदत आणि समर्थन','डिलिव्हरी पार्टनर','स्टॉक व्यवस्थापन','ग्राहक खाते'].map((s)=>Card(color:Colors.white,child:ListTile(title:Text(s),trailing:const Icon(Icons.chevron_right),onTap:()=>open(s))))]);
+ void open(String title){
+ if(title=='डिलिव्हरी पार्टनर'){
+  Navigator.push(context,MaterialPageRoute(builder:(_)=>DeliveryPartnerPage(orders:orders,onUpdate:(i,status){setState((){final parts=orders[i].split(' • स्थिती: ');orders[i]=parts.first+' • स्थिती: '+status;});save();})));
+  return;
+ }
+ Navigator.push(context,MaterialPageRoute(builder:(_)=>Detail(title:title,items:items,orders:orders,sales:sales,onPrice:(p,v){setState(()=>customPrices[p.name]=v);save();},onStock:(p,v){setState(()=>p.stock=(p.stock+v).clamp(0,999999).toDouble());save();} )));
+}
 }
 class DeliveryCheckout extends StatefulWidget{
  const DeliveryCheckout({super.key,required this.amount,required this.lines,required this.onConfirm});
@@ -108,6 +114,29 @@ class _DeliveryCheckoutState extends State<DeliveryCheckout>{
   const SizedBox(height:8),
   const Text('टीप: डिलिव्हरीचा वेळ आणि उपलब्धता दुकानाकडून निश्चित केली जाईल.',style:TextStyle(color:Colors.black54,fontSize:12)),
  ])
+ );
+}
+class DeliveryPartnerPage extends StatefulWidget{
+ const DeliveryPartnerPage({super.key,required this.orders,required this.onUpdate});
+ final List<String> orders;final void Function(int,String) onUpdate;
+ @override State<DeliveryPartnerPage> createState()=>_DeliveryPartnerPageState();
+}
+class _DeliveryPartnerPageState extends State<DeliveryPartnerPage>{
+ static const stages=['नवीन','ऑर्डर स्वीकारली','पॅकिंग सुरू','डिलिव्हरीसाठी निघाली','पोहोचवली'];
+ @override Widget build(BuildContext context)=>Scaffold(
+ appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:const Text('डिलिव्हरी पार्टनर')),
+ body:widget.orders.isEmpty
+ ?const Center(child:Text('सध्या कोणतीही ऑर्डर नाही'))
+ :ListView.builder(padding:const EdgeInsets.all(12),itemCount:widget.orders.length,itemBuilder:(context,i){
+  final order=widget.orders[i];final parts=order.split(' • स्थिती: ');final status=parts.length>1?parts.last:'नवीन';
+  return Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+   Text(parts.first,style:const TextStyle(fontWeight:FontWeight.bold)),
+   const SizedBox(height:8),
+   Row(children:[const Icon(Icons.delivery_dining,color:green),const SizedBox(width:6),Expanded(child:Text('सध्याची स्थिती: $status'))]),
+   const SizedBox(height:8),
+   DropdownButtonFormField<String>(value:stages.contains(status)?status:'नवीन',decoration:const InputDecoration(labelText:'ऑर्डरची स्थिती बदला',border:OutlineInputBorder()),items:stages.map((s)=>DropdownMenuItem(value:s,child:Text(s))).toList(),onChanged:(s){if(s!=null){widget.onUpdate(i,s);setState((){});}}),
+  ])));
+ })
  );
 }
 class Detail extends StatefulWidget{const Detail({super.key,required this.title,required this.items,required this.orders,required this.sales,required this.onPrice,required this.onStock});final String title;final List<Item> items;final List<String> orders,sales;final void Function(Item,double) onPrice,onStock;@override State<Detail> createState()=>_DetailState();}
