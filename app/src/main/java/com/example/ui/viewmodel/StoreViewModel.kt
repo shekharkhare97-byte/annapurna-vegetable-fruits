@@ -46,7 +46,8 @@ class StoreViewModel(
     private val _selectedCategory = MutableStateFlow(ProduceCategory.ALL)
     private var productsListener: ListenerRegistration? = null
     private var trackingListener: ListenerRegistration? = null
-    private val trackingPrefs = context.getSharedPreferences("annapurna_order_tracking", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val trackingPrefs = appContext.getSharedPreferences("annapurna_order_tracking", Context.MODE_PRIVATE)
     private val _trackingStatus = MutableStateFlow("")
     val trackingStatus: StateFlow<String> = _trackingStatus.asStateFlow()
     private val _trackingLocation = MutableStateFlow("")
@@ -246,9 +247,9 @@ class StoreViewModel(
 
     fun saveCustomerProfileForEntry() {
         val current = _formState.value
-        val nameError = if (current.customerName.trim().length < 2) "कृपया तुमचे पूर्ण नाव लिहा." else null
-        val mobileError = if (!MarathiFormatters.isValidIndianMobile(current.mobileNumber)) "१० अंकी योग्य मोबाईल नंबर लिहा." else null
-        val addressError = if (current.deliveryAddress.trim().length < 8) "पूर्ण घरचा पत्ता लिहा." else null
+        val nameError = if (current.customerName.trim().length < 2) appContext.getString(R.string.error_invalid_name) else null
+        val mobileError = if (!MarathiFormatters.isValidIndianMobile(current.mobileNumber)) appContext.getString(R.string.error_invalid_mobile) else null
+        val addressError = if (current.deliveryAddress.trim().length < 8) appContext.getString(R.string.error_invalid_address) else null
         if (nameError != null || mobileError != null || addressError != null) {
             _formState.update { it.copy(nameErrorMarathi = nameError, mobileErrorMarathi = mobileError, addressErrorMarathi = addressError) }
             return
@@ -261,7 +262,7 @@ class StoreViewModel(
                 _formState.update { it.copy(mobileNumber = normalizedMobile, isSubmitting = false) }
                 _customerProfileReady.value = true
             } catch (error: Exception) {
-                _formState.update { it.copy(isSubmitting = false, cartErrorMarathi = "माहिती सेव्ह झाली नाही. पुन्हा प्रयत्न करा.") }
+                _formState.update { it.copy(isSubmitting = false, cartErrorMarathi = appContext.getString(R.string.profile_save_failed)) }
             }
         }
     }
@@ -271,18 +272,18 @@ class StoreViewModel(
         val currentForm = _formState.value
 
         val cartErr = if (currentCart.isEmpty()) {
-            "ऑर्डर देण्यापूर्वी कृपया पिशवीत किमान एक भाजी किंवा फळ टाका."
+            appContext.getString(R.string.error_empty_cart)
         } else null
 
         val nameErr = if (currentForm.customerName.trim().length < 2) {
-            "कृपया ग्राहकाचे पूर्ण नाव प्रविष्ट करा."
+            appContext.getString(R.string.error_invalid_name)
         } else null
 
         val mobileErr = if (!MarathiFormatters.isValidIndianMobile(currentForm.mobileNumber)) {
-            "कृपया वैध १० अंकी मोबाईल नंबर प्रविष्ट करा (उदा. 9876543210)."
+            appContext.getString(R.string.error_invalid_mobile)
         } else null
         val addressErr = if (currentForm.deliveryAddress.trim().length < 8) {
-            "कृपया पूर्ण डिलिव्हरी पत्ता लिहा."
+            appContext.getString(R.string.error_invalid_address)
         } else null
 
         if (cartErr != null || nameErr != null || mobileErr != null || addressErr != null) {
@@ -333,7 +334,7 @@ class StoreViewModel(
                 _formState.update {
                     it.copy(
                         isSubmitting = false,
-                        cartErrorMarathi = "ऑर्डर Firebase मध्ये सेव्ह झाली नाही. इंटरनेट तपासा आणि पुन्हा प्रयत्न करा."
+                        cartErrorMarathi = appContext.getString(R.string.order_save_failed)
                     )
                 }
             }
