@@ -363,15 +363,27 @@ class StoreViewModel(
             onResult(false)
             return
         }
-        FirebaseFirestore.getInstance().collection("orderTracking").document(token)
-            .update(
-                mapOf(
+        val firestore = FirebaseFirestore.getInstance()
+        val trackingRef = firestore.collection("orderTracking").document(token)
+        trackingRef.get()
+            .addOnSuccessListener { tracking ->
+                val orderId = tracking.getString("orderId")
+                if (!tracking.exists() || tracking.getString("status") != "completed" || orderId.isNullOrBlank()) {
+                    onResult(false)
+                    return@addOnSuccessListener
+                }
+                val reviewData = mapOf(
                     "customerRating" to rating,
                     "customerReview" to review.trim(),
                     "reviewSubmittedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
                 )
-            )
-            .addOnSuccessListener { onResult(true) }
+                firestore.batch()
+                    .update(trackingRef, reviewData)
+                    .update(firestore.collection("orders").document(orderId), reviewData)
+                    .commit()
+                    .addOnSuccessListener { onResult(true) }
+                    .addOnFailureListener { onResult(false) }
+            }
             .addOnFailureListener { onResult(false) }
     }
 
