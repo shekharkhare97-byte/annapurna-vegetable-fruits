@@ -68,7 +68,7 @@ fun WeightSelectionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (item.isPieceBased) "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${item.priceRupees} / किलो",
+                        text = if (item.isPieceBased) "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / किलो",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(12.dp)
                     )
@@ -115,7 +115,7 @@ fun WeightSelectionDialog(
                             color = if (valid) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
                         )
                         Text(
-                            text = if (valid) "₹${"%.2f".format(amount)}" else "—",
+                            text = if (valid) "₹${com.example.util.MarathiFormatters.formatRupees(amount)}" else "—",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
                             color = if (valid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
