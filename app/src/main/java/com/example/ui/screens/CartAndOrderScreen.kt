@@ -235,7 +235,7 @@ fun CartAndOrderScreen(
         "CUSTOM" -> customTipText.toIntOrNull()?.coerceAtLeast(0) ?: 0
         else -> 0
     }
-    val grandTotal = itemsTotal + (deliveryCharge ?: 0) + deliveryTipAmount
+    val grandTotal = itemsTotal + (deliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -620,7 +620,7 @@ private fun CartLineCard(
                     )
                     Text(
                         text = if (line.produce.isPieceBased)
-                            "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
+                            "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
                         else
                             "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
                         style = MaterialTheme.typography.bodySmall,
@@ -646,7 +646,7 @@ private fun CartLineCard(
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(stringResource(R.string.line_total_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        text = "₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}",
+                        text = "₹${MarathiFormatters.formatRupees(line.lineTotalRupees)}",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
@@ -683,7 +683,7 @@ private fun CartLineCard(
 }
 
 @Composable
-private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: Int, grandTotal: Int) {
+private fun BillSummaryCard(itemsTotal: Double, deliveryCharge: Int?, deliveryTip: Int, grandTotal: Double) {
     Card(
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
@@ -735,7 +735,7 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: 
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.bill_items_total), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("₹${MarathiFormatters.toMarathiNumber(itemsTotal)}", fontWeight = FontWeight.SemiBold)
+                Text("₹${MarathiFormatters.formatRupees(itemsTotal)}", fontWeight = FontWeight.SemiBold)
             }
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -776,7 +776,7 @@ private fun BillSummaryCard(itemsTotal: Int, deliveryCharge: Int?, deliveryTip: 
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (deliveryCharge == null) "चार्ज मोजल्यावर" else "₹${MarathiFormatters.toMarathiNumber(grandTotal)}",
+                        text = if (deliveryCharge == null) "चार्ज मोजल्यावर" else "₹${MarathiFormatters.formatRupees(grandTotal)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
@@ -796,7 +796,7 @@ private fun CustomerOrderFormCard(
     onTipOptionChange: (String) -> Unit,
     customTipText: String,
     onCustomTipChange: (String) -> Unit,
-    grandTotal: Int,
+    grandTotal: Double,
     deliveryCharge: Int?,
     deliveryMessage: String,
     isCartEmpty: Boolean,
@@ -1132,7 +1132,7 @@ private fun PastOrderCard(
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(stringResource(R.string.total_bill_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        text = "₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
+                        text = "₹${MarathiFormatters.formatRupees(order.totalAmountRupeesDecimal)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
@@ -1307,7 +1307,7 @@ private fun formatOrderShareReceipt(order: OrderEntity): String {
         ---------------------------
         ${order.itemsSummaryMarathi}
         ---------------------------
-        एकूण देय रक्कम: ₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}
+        एकूण देय रक्कम: ₹${MarathiFormatters.formatRupees(order.totalAmountRupeesDecimal)}
         धन्यवाद! ताजा शेतमाल लवकरच घरपोच केला जाईल.
     """.trimIndent()
 }
