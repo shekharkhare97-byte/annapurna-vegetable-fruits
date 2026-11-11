@@ -408,7 +408,7 @@ fun CartAndOrderScreen(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("माझे सध्याचे लोकेशन वापरा")
+                Text(stringResource(R.string.use_current_location))
             }
         }
 
@@ -494,11 +494,11 @@ fun CartAndOrderScreen(
                         if (trackingLocation.isNotBlank()) {
                             val parts = trackingLocation.split(",")
                             if (parts.size == 2) {
-                                Text("डिलिव्हरी पार्टनरचे Live Location उपलब्ध आहे.", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.tracking_live_location_available), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                                 TextButton(onClick = {
                                     val uri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${parts[0]},${parts[1]}")
                                     context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                                }) { Text("Google Maps वर Live Location पाहा") }
+                                }) { Text(stringResource(R.string.tracking_open_google_maps)) }
                             }
                         }
                         val progress = when (trackingStatus) {
@@ -583,19 +583,19 @@ fun CartAndOrderScreen(
     if (showGpsOffDialog) {
         AlertDialog(
             onDismissRequest = { showGpsOffDialog = false },
-            title = { Text("GPS Location बंद आहे") },
-            text = { Text("डिलिव्हरी चार्ज मोजण्यासाठी कृपया GPS / Location सुरू करा.") },
+            title = { Text(stringResource(R.string.gps_location_off)) },
+            text = { Text(stringResource(R.string.gps_enable_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showGpsOffDialog = false
                     context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                }) { Text("Location सुरू करा") }
+                }) { Text(stringResource(R.string.gps_enable_action)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showGpsOffDialog = false
-                    deliveryMessage = "डिलिव्हरी चार्ज मोजण्यासाठी GPS आवश्यक आहे."
-                }) { Text("ठीक आहे") }
+                    deliveryMessage = context.getString(R.string.gps_enable_message)
+                }) { Text(stringResource(R.string.action_ok)) }
             }
         )
     }
@@ -1013,11 +1013,11 @@ private fun CustomerOrderFormCard(
                     .testTag("delivery_address_input")
             )
 
-            Text("डिलिव्हरी पार्टनरला टिप द्यायची आहे का?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.delivery_tip_question), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.delivery_tip_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 listOf("0", "20", "30", "50").forEach { option ->
-                    val label = if (option == "0") "नको" else "₹$option"
+                    val label = if (option == "0") stringResource(R.string.tip_none) else "₹$option"
                     OutlinedButton(
                         onClick = { onTipOptionChange(option) },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
@@ -1029,14 +1029,14 @@ private fun CustomerOrderFormCard(
                 onClick = { onTipOptionChange("CUSTOM") },
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
                 colors = if (tipOption == "CUSTOM") ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.primary) else ButtonDefaults.outlinedButtonColors()
-            ) { Text("Custom रक्कम", fontWeight = if (tipOption == "CUSTOM") FontWeight.Bold else FontWeight.Normal) }
+            ) { Text(stringResource(R.string.tip_custom_amount), fontWeight = if (tipOption == "CUSTOM") FontWeight.Bold else FontWeight.Normal) }
             if (tipOption == "CUSTOM") {
                 OutlinedTextField(
                     value = customTipText,
                     onValueChange = onCustomTipChange,
                     singleLine = true,
-                    label = { Text("तुमची टिप (₹)") },
-                    placeholder = { Text("उदा. 40") },
+                    label = { Text(stringResource(R.string.tip_amount_label)) },
+                    placeholder = { Text(stringResource(R.string.tip_amount_example)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1045,11 +1045,11 @@ private fun CustomerOrderFormCard(
             Text(stringResource(R.string.payment_method_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
-                Text("Cash on Delivery")
+                Text(stringResource(R.string.payment_cod))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "RAZORPAY", onClick = { onPaymentMethodChange("RAZORPAY") })
-                Text("Online Payment (Razorpay)")
+                Text(stringResource(R.string.payment_razorpay))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "UPI", onClick = { onPaymentMethodChange("UPI") })
@@ -1068,7 +1068,7 @@ private fun CustomerOrderFormCard(
                 Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
             Text(
-                if (paymentMethod == "RAZORPAY") "UPI, कार्ड आणि नेट बँकिंगसह Razorpay सुरक्षित पेमेंट" else stringResource(R.string.payment_gateway_pending),
+                if (paymentMethod == "RAZORPAY") stringResource(R.string.payment_secure_hint) else stringResource(R.string.payment_gateway_pending),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1320,8 +1320,8 @@ private fun OrderConfirmedDialog(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        Text("ग्राहक: ${order.customerName}", style = MaterialTheme.typography.bodySmall)
-                        Text("मोबाईल: ${MarathiFormatters.toMarathiDigits(order.mobileNumber)}", style = MaterialTheme.typography.bodySmall)
+                        Text("${stringResource(R.string.customer_name_prefix)} ${order.customerName}", style = MaterialTheme.typography.bodySmall)
+                        Text("${stringResource(R.string.mobile_prefix)} ${MarathiFormatters.toMarathiDigits(order.mobileNumber)}", style = MaterialTheme.typography.bodySmall)
                         if (order.deliveryAddress.isNotBlank()) {
                             Text(
                                 text = order.deliveryAddress,
