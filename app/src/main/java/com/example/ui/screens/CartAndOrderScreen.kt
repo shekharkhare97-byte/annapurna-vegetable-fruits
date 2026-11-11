@@ -295,7 +295,7 @@ fun CartAndOrderScreen(
                                 if (verified) {
                                     onSubmitOrder(
                                         deliveryLatitude, deliveryLongitude, deliveryCharge!!,
-                                        deliveryDistanceKm, "RAZORPAY", paymentId, deliveryTipAmount
+                                        deliveryDistanceKm, paymentMethod, paymentId, deliveryTipAmount
                                     )
                                 } else {
                                     paymentError = context.getString(R.string.payment_server_verification_failed)
@@ -432,7 +432,7 @@ fun CartAndOrderScreen(
                 paymentError = paymentError,
                 paymentInProgress = paymentInProgress,
                 onSubmitOrder = {
-                    if (paymentMethod == "RAZORPAY" || paymentMethod == "UPI") {
+                    if (paymentMethod != "COD") {
                         startRazorpayPayment()
                     } else if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) {
                         onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount)
@@ -1043,32 +1043,31 @@ private fun CustomerOrderFormCard(
             }
 
             Text(stringResource(R.string.payment_method_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
-                Text(stringResource(R.string.payment_cod))
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = paymentMethod == "RAZORPAY", onClick = { onPaymentMethodChange("RAZORPAY") })
-                Text(stringResource(R.string.payment_razorpay))
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = paymentMethod == "UPI", onClick = { onPaymentMethodChange("UPI") })
-                Text(stringResource(R.string.payment_upi))
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = false, onClick = {}, enabled = false)
-                Text(stringResource(R.string.payment_card), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = false, onClick = {}, enabled = false)
-                Text(stringResource(R.string.payment_net_banking), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            val paymentOptions = listOf(
+                "COD" to "Cash on Delivery",
+                "RAZORPAY" to "Razorpay",
+                "NETBANKING" to "Net Banking",
+                "CREDIT_CARD" to "Credit Card",
+                "DEBIT_CARD" to "Debit Card",
+                "UPI" to "UPI",
+                "PHONEPE" to "PhonePe",
+                "PAYTM" to "Paytm"
+            )
+            paymentOptions.forEach { (code, label) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = paymentMethod == code,
+                        onClick = { onPaymentMethodChange(code) }
+                    )
+                    Text(label)
+                }
             }
             Text(
-                if (paymentMethod == "RAZORPAY" || paymentMethod == "UPI") stringResource(R.string.payment_secure_hint) else stringResource(R.string.payment_gateway_pending),
+                if (paymentMethod == "COD") stringResource(R.string.payment_cod_hint)
+                else stringResource(R.string.payment_secure_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
