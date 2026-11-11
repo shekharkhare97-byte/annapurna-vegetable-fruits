@@ -117,7 +117,7 @@ class StoreRepository(private val storeDao: StoreDao) {
             } else {
                 WeightPricing.formatWeightMarathi(line.weightGrams)
             }
-            "• ${line.produce.marathiName} ($quantityLabel) = ₹${MarathiFormatters.toMarathiNumber(line.lineTotalRupees)}"
+            "• ${line.produce.marathiName} ($quantityLabel) = ₹${MarathiFormatters.formatRupees(line.lineTotalRupees)}"
         }
         val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}:${it.weightGrams}" }
         val totalQty = items.sumOf { it.quantity }
