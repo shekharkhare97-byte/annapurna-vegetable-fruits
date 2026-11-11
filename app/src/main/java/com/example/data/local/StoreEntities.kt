@@ -29,5 +29,6 @@ data class OrderEntity(
     val serializedItems: String, // format: produceId:qty:weightGrams
     val totalItemsCount: Int,
     val totalAmountRupees: Int,
+    val totalAmountRupeesDecimal: Double = totalAmountRupees.toDouble(),
     val createdAtMillis: Long = System.currentTimeMillis()
 )
