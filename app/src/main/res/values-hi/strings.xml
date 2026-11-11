@@ -44,4 +44,6 @@
     <string name="continue_shopping">और खरीदारी करें</string>
     <string name="line_total_label">कुल कीमत</string>
     <string name="total_bill_label">कुल बिल</string>
+    <string name="status_order_accepted">ऑर्डर स्वीकार किया गया</string>
+    <string name="status_out_for_delivery">डिलीवरी के लिए निकल गया</string>
 </resources>
