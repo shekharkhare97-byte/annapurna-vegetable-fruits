@@ -99,4 +99,19 @@
     <string name="bill_waiting_charge">शुल्क की गणना के बाद</string>
     <string name="upi_open_title">UPI से भुगतान करें</string>
     <string name="payment_upi">UPI</string>
+    <string name="profile_brand_name">अन्नपूर्णा</string>
+    <string name="profile_tagline">ताज़ी सब्ज़ियाँ और फल</string>
+    <string name="profile_title">आगे बढ़ने के लिए अपनी जानकारी भरें</string>
+    <string name="profile_subtitle">जानकारी जाँचकर आगे बढ़ें। अगली बार यह पहले से भरी मिलेगी।</string>
+    <string name="profile_name">आपका नाम</string>
+    <string name="profile_mobile">मोबाइल नंबर</string>
+    <string name="profile_address">पूरा घर का पता</string>
+    <string name="profile_continue">आगे बढ़ें</string>
+    <string name="weight_enter_kg">वज़न किलोग्राम में लिखें</string>
+    <string name="weight_example">जैसे 0.350 या 1.5</string>
+    <string name="weight_add_cart">कार्ट में जोड़ें</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="studio_idea_number">आइडिया</string>
+    <string name="studio_result_placeholder">आपकी बनाई गई 1K / 2K / 4K तस्वीर यहाँ दिखेगी</string>
+    <string name="studio_prompt_hint">ऊपर से कोई आइडिया चुनें या अपना विवरण लिखें और 'उच्च गुणवत्ता वाली तस्वीर बनाएँ' दबाएँ।</string>
 </resources>
