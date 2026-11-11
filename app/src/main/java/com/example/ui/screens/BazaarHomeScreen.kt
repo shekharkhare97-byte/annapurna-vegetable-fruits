@@ -623,7 +623,7 @@ private fun ProduceGridCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "₹${MarathiFormatters.toMarathiNumber(item.priceRupees)}",
+                        text = "₹${MarathiFormatters.formatRupees(item.priceRupees)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
@@ -725,7 +725,7 @@ private fun ProduceGridCard(
 @Composable
 private fun FloatingCartBanner(
     totalItems: Int,
-    totalRupees: Int,
+    totalRupees: Double,
     onGoToCart: () -> Unit
 ) {
     Surface(
@@ -756,7 +756,7 @@ private fun FloatingCartBanner(
                     text = stringResource(
                         R.string.cart_items_summary_format,
                         MarathiFormatters.toMarathiNumber(totalItems),
-                        MarathiFormatters.toMarathiNumber(totalRupees)
+                        MarathiFormatters.formatRupees(totalRupees)
                     ),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary
