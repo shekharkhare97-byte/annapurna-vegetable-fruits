@@ -23,7 +23,7 @@ data class CartLineItem(
     val quantity: Int,
     val weightGrams: Int
 ) {
-    val lineTotalRupees: Int get() = if (produce.isPieceBased) produce.priceRupees * quantity else ((WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity + 50L) / 100L).toInt()
+    val lineTotalRupees: Double get() = if (produce.isPieceBased) produce.priceRupees * quantity else (WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity) / 100.0
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -134,7 +134,8 @@ class StoreRepository(private val storeDao: StoreDao) {
             itemsSummaryMarathi = completeSummary,
             serializedItems = serialized,
             totalItemsCount = totalQty,
-            totalAmountRupees = grandTotal,
+            totalAmountRupees = grandTotal.roundToInt(),
+            totalAmountRupeesDecimal = grandTotal,
             createdAtMillis = now
         )
         // A random token exposes status only, never customer details.
