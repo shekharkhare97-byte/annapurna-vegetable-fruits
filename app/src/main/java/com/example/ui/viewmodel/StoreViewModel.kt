@@ -357,6 +357,24 @@ class StoreViewModel(
             }
     }
 
+    fun submitDeliveryReview(rating: Int, review: String, onResult: (Boolean) -> Unit = {}) {
+        val token = trackingPrefs.getString("latest_token", null)
+        if (token.isNullOrBlank() || rating !in 1..5) {
+            onResult(false)
+            return
+        }
+        FirebaseFirestore.getInstance().collection("orderTracking").document(token)
+            .update(
+                mapOf(
+                    "customerRating" to rating,
+                    "customerReview" to review.trim(),
+                    "reviewSubmittedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                )
+            )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
     fun dismissOrderReceipt() {
         _confirmedOrder.value = null
     }
