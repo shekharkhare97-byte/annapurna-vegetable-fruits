@@ -98,4 +98,5 @@
     <string name="bill_address_calculating">पता भरने के बाद गणना होगी</string>
     <string name="bill_waiting_charge">शुल्क की गणना के बाद</string>
     <string name="upi_open_title">UPI से भुगतान करें</string>
+    <string name="payment_upi">UPI</string>
 </resources>
