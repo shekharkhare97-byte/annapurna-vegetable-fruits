@@ -98,4 +98,5 @@
     <string name="bill_address_calculating">Calculated after entering address</string>
     <string name="bill_waiting_charge">After fee calculation</string>
     <string name="upi_open_title">Pay with UPI</string>
+    <string name="payment_upi">UPI</string>
 </resources>
