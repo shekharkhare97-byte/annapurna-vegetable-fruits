@@ -141,7 +141,8 @@
     <string name="tip_amount_example">उदा. 40</string>
     <string name="payment_cod">Cash on Delivery</string>
     <string name="payment_razorpay">Online Payment (Razorpay)</string>
-    <string name="payment_secure_hint">UPI, कार्ड आणि नेट बँकिंगसह Razorpay सुरक्षित पेमेंट</string>
+    <string name="payment_secure_hint">निवडलेल्या ऑनलाइन पर्यायासाठी Razorpay सुरक्षित पेमेंट स्क्रीन उघडेल. उपलब्ध पर्याय तुमच्या पेमेंट खात्यावर अवलंबून आहेत.</string>
+    <string name="payment_cod_hint">ऑर्डर मिळाल्यावर रोख रक्कम देय द्या.</string>
     <string name="customer_name_prefix">ग्राहक:</string>
     <string name="mobile_prefix">मोबाईल:</string>
     <string name="delivery_auto_calculating">डिलिव्हरी चार्ज आपोआप मोजत आहे...</string>
