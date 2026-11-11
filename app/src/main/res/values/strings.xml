@@ -191,5 +191,5 @@
     <string name="action_cancel">रद्द करा</string>
     <string name="studio_idea_number">कल्पना</string>
     <string name="studio_result_placeholder">तुमचा तयार केलेला १K / २K / ४K फोटो येथे दिसेल</string>
-    <string name="studio_prompt_hint">वरीलपैकी कोणतीही मराठी कल्पना निवडा किंवा स्वतःचे वर्णन लिहून 'उच्च दर्जाचा फोटो तयार करा' दाबा.</string>
+    <string name="studio_prompt_hint">वरील कल्पना निवडा किंवा स्वतःचे वर्णन लिहा आणि फोटो तयार करा.</string>
 </resources>
