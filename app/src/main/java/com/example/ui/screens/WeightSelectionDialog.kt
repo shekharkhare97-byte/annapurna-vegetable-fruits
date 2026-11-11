@@ -91,8 +91,8 @@ fun WeightSelectionDialog(
                             val fraction = normalized.substringAfter('.', "").replace(".", "").take(3)
                             customWeightText = if ('.' in normalized) "$whole.$fraction" else whole
                         },
-                        label = { Text("वजन किलोमध्ये लिहा") },
-                        placeholder = { Text("उदा. ०.३५० किंवा १.५") },
+                        label = { Text(stringResource(R.string.weight_enter_kg)) },
+                        placeholder = { Text(stringResource(R.string.weight_example)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         isError = customWeightText.isNotEmpty() && !valid,
@@ -130,10 +130,10 @@ fun WeightSelectionDialog(
                 enabled = item.isPieceBased || (valid && grams > 0),
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.height(48.dp)
-            ) { Text("पिशवीत टाका") }
+            ) { Text(stringResource(R.string.weight_add_cart)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("रद्द करा") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }
