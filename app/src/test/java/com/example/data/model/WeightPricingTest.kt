@@ -24,6 +24,12 @@ class WeightPricingTest {
     }
 
     @Test
+    fun decimalPerKilogramRateKeepsPaiseAccurate() {
+        assertEquals(319L, WeightPricing.priceInPaiseForGrams(25.5, 125))
+        assertEquals(6.38, WeightPricing.priceForGrams(25.5, 250), 0.0)
+    }
+
+    @Test
     fun customWeightRangeIsValidated() {
         assertTrue(WeightPricing.isValidCustomWeight(1))
         assertTrue(WeightPricing.isValidCustomWeight(100000))
