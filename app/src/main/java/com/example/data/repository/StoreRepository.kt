@@ -173,7 +173,7 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "status" to "new",
                 "paymentMethod" to paymentMethod,
                 "transactionId" to transactionId.trim(),
-                "paymentStatus" to if (paymentMethod == "UPI") "pending_verification" else "pending",
+                "paymentStatus" to when (paymentMethod) { "RAZORPAY" -> "paid"; "UPI" -> "pending_verification"; else -> "pending" },
                 "createdAt" to FieldValue.serverTimestamp(),
                 "createdAtMillis" to now
             )
