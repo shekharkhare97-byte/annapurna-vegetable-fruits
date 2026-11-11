@@ -371,10 +371,10 @@ class StoreViewModel(
         val items = cartItems.value
         if (items.isEmpty()) return "सध्या ग्राहकाची खरेदी पिशवी रिकामी आहे."
         val lines = items.joinToString("; ") {
-            "${it.produce.marathiName} × ${it.quantity} (₹${it.lineTotalRupees})"
+            "${it.produce.marathiName} × ${it.quantity} (₹${MarathiFormatters.formatRupees(it.lineTotalRupees)})"
         }
         val total = items.sumOf { it.lineTotalRupees }
-        return "$lines | एकूण रक्कम: ₹$total"
+        return "$lines | एकूण रक्कम: ₹${MarathiFormatters.formatRupees(total)}"
     }
 
     companion object {
