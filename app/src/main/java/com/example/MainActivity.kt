@@ -70,6 +70,10 @@ import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
 import com.example.ui.viewmodel.StoreViewModel
 import com.example.util.MarathiFormatters
+import com.razorpay.Checkout
+import com.razorpay.PaymentData
+import com.razorpay.PaymentResultWithDataListener
+import org.json.JSONObject
 
 enum class AnnapurnaTab(
     val labelRes: Int,
@@ -103,7 +107,34 @@ enum class AnnapurnaTab(
     )
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
+    private var paymentResultCallback: ((String?, String?, String?, String?) -> Unit)? = null
+
+    fun startRazorpayCheckout(
+        options: JSONObject,
+        callback: (String?, String?, String?, String?) -> Unit
+    ) {
+        paymentResultCallback = callback
+        try {
+            Checkout().open(this, options)
+        } catch (error: Exception) {
+            paymentResultCallback = null
+            callback(null, null, null, error.message ?: "पेमेंट सुरू करता आले नाही.")
+        }
+    }
+
+    override fun onPaymentSuccess(razorpayPaymentId: String?, paymentData: PaymentData?) {
+        val callback = paymentResultCallback
+        paymentResultCallback = null
+        callback?.invoke(razorpayPaymentId, paymentData?.orderId, paymentData?.signature, null)
+    }
+
+    override fun onPaymentError(errorCode: Int, response: String?, paymentData: PaymentData?) {
+        val callback = paymentResultCallback
+        paymentResultCallback = null
+        callback?.invoke(null, null, null, response ?: "पेमेंट रद्द झाले किंवा अयशस्वी झाले.")
+    }
+
     override fun attachBaseContext(newBase: android.content.Context) {
         val language = newBase.getSharedPreferences("annapurna_settings", MODE_PRIVATE)
             .getString("app_language", "mr") ?: "mr"
