@@ -48,7 +48,7 @@ fun WeightSelectionDialog(
     val isCustom = selectedWeight == 0
     val grams = if (isCustom) customWeightGrams ?: 0 else selectedWeight
     val valid = if (isCustom) customWeightGrams?.let(WeightPricing::isValidCustomWeight) == true else true
-    val amount = if (item.isPieceBased) item.priceRupees.toDouble() else if (valid && grams > 0) WeightPricing.priceForGrams(item.priceRupees, grams) else 0.0
+    val amount = if (item.isPieceBased) item.priceRupees else if (valid && grams > 0) WeightPricing.priceForGrams(item.priceRupees, grams) else 0.0
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -68,7 +68,7 @@ fun WeightSelectionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (item.isPieceBased) "दर: ₹${item.priceRupees} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${item.priceRupees} / किलो",
+                        text = if (item.isPieceBased) "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${item.priceRupees} / किलो",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(12.dp)
                     )
