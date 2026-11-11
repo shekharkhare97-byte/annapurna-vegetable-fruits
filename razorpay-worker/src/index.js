@@ -84,6 +84,11 @@ export default {
       if (![orderId, paymentId, signature].every((v) => typeof v === "string" && v.length > 0 && v.length < 256)) {
         return json({ verified: false, error: "Missing payment verification fields" }, 400);
       }
+      const amount = Number(body.amount);
+      if (!Number.isSafeInteger(amount) || amount < 100 || amount > 50000000) {
+        return json({ verified: false, error: "A valid expected amount in paise is required" }, 400);
+      }
+
       const expected = await hmacSha256Hex(
         env.RAZORPAY_KEY_SECRET,
         `${orderId}|${paymentId}`
@@ -91,7 +96,36 @@ export default {
       if (!safeEqual(expected, signature.toLowerCase())) {
         return json({ verified: false, error: "Payment signature is invalid" }, 400);
       }
-      return json({ verified: true, order_id: orderId, payment_id: paymentId });
+
+      // A valid checkout signature alone is not enough to fulfil an order.
+      // Confirm the payment with Razorpay and verify its order, amount and capture state.
+      const auth = btoa(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`);
+      const paymentResponse = await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}`, {
+        method: "GET",
+        headers: { "Authorization": `Basic ${auth}` },
+      });
+      const payment = await paymentResponse.json().catch(() => ({}));
+      if (!paymentResponse.ok) {
+        return json({ verified: false, error: "Could not confirm payment with Razorpay" }, 502);
+      }
+      if (
+        payment.order_id !== orderId ||
+        payment.amount !== amount ||
+        payment.currency !== "INR" ||
+        payment.status !== "captured" ||
+        payment.captured !== true
+      ) {
+        return json({ verified: false, error: "Payment is not captured for this order and amount" }, 400);
+      }
+
+      return json({
+        verified: true,
+        order_id: orderId,
+        payment_id: paymentId,
+        amount: payment.amount,
+        currency: payment.currency,
+        status: payment.status,
+      });
     }
 
     return json({ error: "Not found" }, 404);
