@@ -107,7 +107,7 @@ fun CustomerProfileEntryScreen(
                     onValueChange = onNameChange,
                     modifier = Modifier.fillMaxWidth().testTag("entry_customer_name"),
                     singleLine = true,
-                    label = { Text("तुमचे नाव") },
+                    label = { Text(stringResource(R.string.profile_name)) },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     isError = formState.nameErrorMarathi != null,
                     supportingText = { formState.nameErrorMarathi?.let { Text(it) } },
@@ -119,7 +119,7 @@ fun CustomerProfileEntryScreen(
                     onValueChange = onMobileChange,
                     modifier = Modifier.fillMaxWidth().testTag("entry_customer_mobile"),
                     singleLine = true,
-                    label = { Text("मोबाईल नंबर") },
+                    label = { Text(stringResource(R.string.profile_mobile)) },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                     isError = formState.mobileErrorMarathi != null,
                     supportingText = { formState.mobileErrorMarathi?.let { Text(it) } },
@@ -131,7 +131,7 @@ fun CustomerProfileEntryScreen(
                     onValueChange = onAddressChange,
                     modifier = Modifier.fillMaxWidth().testTag("entry_customer_address"),
                     minLines = 3,
-                    label = { Text("पूर्ण घरचा पत्ता") },
+                    label = { Text(stringResource(R.string.profile_address)) },
                     leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
                     isError = formState.addressErrorMarathi != null,
                     supportingText = { formState.addressErrorMarathi?.let { Text(it) } }
@@ -151,7 +151,7 @@ fun CustomerProfileEntryScreen(
                     if (formState.isSubmitting) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.height(22.dp))
                     } else {
-                        Text("पुढे जा", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.profile_continue), fontWeight = FontWeight.Bold)
                     }
                 }
             }
