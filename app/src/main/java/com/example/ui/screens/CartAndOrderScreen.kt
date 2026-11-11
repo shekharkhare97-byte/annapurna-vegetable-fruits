@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.local.OrderEntity
 import com.example.data.repository.CartLineItem
+import com.example.data.payment.RazorpayPaymentGateway
 import com.example.data.model.WeightPricing
 import com.example.ui.viewmodel.CustomerFormState
 import com.example.util.MarathiFormatters
@@ -91,6 +92,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import kotlin.math.roundToLong
+import org.json.JSONObject
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -126,6 +129,8 @@ fun CartAndOrderScreen(
     var deliveryMessage by rememberSaveable { mutableStateOf("डिलिव्हरी चार्ज आपोआप मोजत आहे...") }
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var paymentMethod by rememberSaveable { mutableStateOf("COD") }
+    var paymentInProgress by remember { mutableStateOf(false) }
+    var paymentError by remember { mutableStateOf<String?>(null) }
     var deliveryTipOption by rememberSaveable { mutableStateOf("0") }
     var customTipText by rememberSaveable { mutableStateOf("") }
     val fusedLocationClient = remember(context) { LocationServices.getFusedLocationProviderClient(context) }
@@ -236,6 +241,78 @@ fun CartAndOrderScreen(
         else -> 0
     }
     val grandTotal = itemsTotal + (deliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
+
+    fun startRazorpayPayment() {
+        val activity = context as? com.example.MainActivity
+        if (activity == null) {
+            paymentError = "पेमेंट सुरू करण्यासाठी अॅप पुन्हा उघडा."
+            return
+        }
+        if (formState.customerName.trim().length < 2 ||
+            !MarathiFormatters.isValidIndianMobile(formState.mobileNumber) ||
+            formState.deliveryAddress.trim().length < 8 ||
+            deliveryLatitude == null || deliveryLongitude == null ||
+            deliveryCharge == null || deliveryDistanceKm == null
+        ) {
+            paymentError = "कृपया नाव, योग्य मोबाईल नंबर आणि पूर्ण पत्ता भरा."
+            return
+        }
+        paymentError = null
+        paymentInProgress = true
+        coroutineScope.launch {
+            try {
+                val amountPaise = (grandTotal * 100.0).roundToLong()
+                val created = RazorpayPaymentGateway.createOrder(amountPaise)
+                val options = JSONObject()
+                    .put("key", created.keyId)
+                    .put("order_id", created.orderId)
+                    .put("amount", created.amountPaise)
+                    .put("currency", created.currency)
+                    .put("name", "Annapurna Vegetables and Fruits")
+                    .put("description", "Fresh vegetables and fruits order")
+                    .put("prefill", JSONObject()
+                        .put("name", formState.customerName.trim())
+                        .put("contact", MarathiFormatters.normalizePhoneDigits(formState.mobileNumber)))
+                    .put("retry", JSONObject().put("enabled", true).put("max_count", 3))
+                    .put("config", JSONObject().put("display", JSONObject().put("language", "mar")))
+                activity.startRazorpayCheckout(options) { paymentId, returnedOrderId, signature, error ->
+                    if (error != null) {
+                        paymentInProgress = false
+                        paymentError = error
+                    } else if (paymentId.isNullOrBlank() || signature.isNullOrBlank() || returnedOrderId != created.orderId) {
+                        paymentInProgress = false
+                        paymentError = "पेमेंटची माहिती पडताळता आली नाही. पुन्हा प्रयत्न करा."
+                    } else {
+                        coroutineScope.launch {
+                            try {
+                                val verified = RazorpayPaymentGateway.verifyPayment(
+                                    orderId = created.orderId,
+                                    paymentId = paymentId,
+                                    signature = signature,
+                                    amountPaise = amountPaise
+                                )
+                                paymentInProgress = false
+                                if (verified) {
+                                    onSubmitOrder(
+                                        deliveryLatitude, deliveryLongitude, deliveryCharge!!,
+                                        deliveryDistanceKm, "RAZORPAY", paymentId, deliveryTipAmount
+                                    )
+                                } else {
+                                    paymentError = "पेमेंटची सर्व्हरवर पडताळणी झाली नाही. ऑर्डर नोंदवलेली नाही."
+                                }
+                            } catch (verificationError: Exception) {
+                                paymentInProgress = false
+                                paymentError = "पेमेंट पडताळणी अयशस्वी झाली. ऑर्डर नोंदवलेली नाही; कृपया मदतीसाठी संपर्क करा."
+                            }
+                        }
+                    }
+                }
+            } catch (error: Exception) {
+                paymentInProgress = false
+                paymentError = error.message ?: "पेमेंट सुरू करता आले नाही. पुन्हा प्रयत्न करा."
+            }
+        }
+    }
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -352,7 +429,15 @@ fun CartAndOrderScreen(
                 onTipOptionChange = { deliveryTipOption = it },
                 customTipText = customTipText,
                 onCustomTipChange = { customTipText = it.filter(Char::isDigit).take(5) },
-                onSubmitOrder = { if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount) }
+                paymentError = paymentError,
+                paymentInProgress = paymentInProgress,
+                onSubmitOrder = {
+                    if (paymentMethod == "RAZORPAY") {
+                        startRazorpayPayment()
+                    } else if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) {
+                        onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount)
+                    }
+                }
             )
         }
 
@@ -799,6 +884,8 @@ private fun CustomerOrderFormCard(
     grandTotal: Double,
     deliveryCharge: Int?,
     deliveryMessage: String,
+    paymentError: String?,
+    paymentInProgress: Boolean,
     isCartEmpty: Boolean,
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
@@ -961,6 +1048,10 @@ private fun CustomerOrderFormCard(
                 Text("Cash on Delivery")
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = paymentMethod == "RAZORPAY", onClick = { onPaymentMethodChange("RAZORPAY") })
+                Text("Online Payment (Razorpay)")
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "UPI", onClick = { onPaymentMethodChange("UPI") })
                 Text("UPI")
             }
@@ -976,7 +1067,14 @@ private fun CustomerOrderFormCard(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
-            Text(stringResource(R.string.payment_gateway_pending), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                if (paymentMethod == "RAZORPAY") "UPI, कार्ड आणि नेट बँकिंगसह Razorpay सुरक्षित पेमेंट" else stringResource(R.string.payment_gateway_pending),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (paymentError != null) {
+                Text(paymentError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
             if (paymentMethod == "UPI") {
                 val context = LocalContext.current
                 Text("UPI ID: paytm.s3wcxb1@pty", fontWeight = FontWeight.SemiBold)
@@ -1000,7 +1098,7 @@ private fun CustomerOrderFormCard(
 
             Button(
                 onClick = onSubmitOrder,
-                enabled = !isCartEmpty && !formState.isSubmitting && deliveryCharge != null && (tipOption != "CUSTOM" || (customTipText.toIntOrNull() ?: -1) >= 0),
+                enabled = !isCartEmpty && !formState.isSubmitting && !paymentInProgress && deliveryCharge != null && (tipOption != "CUSTOM" || (customTipText.toIntOrNull() ?: -1) >= 0),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
