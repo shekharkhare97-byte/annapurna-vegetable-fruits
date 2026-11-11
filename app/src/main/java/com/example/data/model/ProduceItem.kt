@@ -17,7 +17,7 @@ data class ProduceItem(
     val marathiName: String,
     val englishKeywords: String,
     val category: ProduceCategory,
-    val priceRupees: Int,
+    val priceRupees: Double,
     val unitMarathi: String,
     val badgeMarathi: String,
     val descriptionMarathi: String,
