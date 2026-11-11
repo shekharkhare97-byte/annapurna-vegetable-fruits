@@ -5,7 +5,7 @@ This Cloudflare Worker keeps the Razorpay Key Secret off the Android app.
 ## Endpoints
 - `GET /health` — service health check.
 - `POST /create-order` — creates an INR order. Send `{"amount": 12500, "receipt": "ann-order-123"}`; amount is in paise.
-- `POST /verify-payment` — verifies the checkout signature. Send `{"order_id":"order_...","razorpay_payment_id":"pay_...","razorpay_signature":"..."}`.
+- `POST /verify-payment` — verifies the checkout signature and confirms with Razorpay that the payment belongs to the supplied order, matches the expected amount in paise, is INR, and is captured. Send `{"order_id":"order_...","razorpay_payment_id":"pay_...","razorpay_signature":"...","amount":12500}`.
 
 ## Deploy
 1. Create a Cloudflare account and open **Workers & Pages**.
