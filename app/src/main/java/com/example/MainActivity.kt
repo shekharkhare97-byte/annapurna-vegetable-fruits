@@ -428,6 +428,7 @@ fun AnnapurnaRootApp() {
                                 onReorder = { pastOrder ->
                                     storeViewModel.reorderPastOrder(pastOrder)
                                 },
+                                onSubmitDeliveryReview = storeViewModel::submitDeliveryReview,
                                 onBackToBazaar = { currentTab = AnnapurnaTab.BAZAAR },
                                 modifier = contentModifier
                             )
