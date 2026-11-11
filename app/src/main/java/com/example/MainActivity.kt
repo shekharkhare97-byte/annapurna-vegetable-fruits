@@ -116,7 +116,10 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     ) {
         paymentResultCallback = callback
         try {
-            Checkout().open(this, options)
+            val checkout = Checkout()
+            // Set the server-provided public Key ID explicitly before opening checkout.
+            checkout.setKeyID(options.getString("key"))
+            checkout.open(this, options)
         } catch (error: Exception) {
             paymentResultCallback = null
             callback(null, null, null, error.message ?: "पेमेंट सुरू करता आले नाही.")
@@ -153,6 +156,8 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Preload Razorpay checkout resources before the customer starts payment.
+        Checkout.preload(applicationContext)
         enableEdgeToEdge()
         setContent {
             AnnapurnaTheme {
