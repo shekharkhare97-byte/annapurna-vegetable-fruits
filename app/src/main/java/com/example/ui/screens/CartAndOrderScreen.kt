@@ -126,7 +126,7 @@ fun CartAndOrderScreen(
     var deliveryDistanceKm by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
-    var deliveryMessage by rememberSaveable { mutableStateOf("डिलिव्हरी चार्ज आपोआप मोजत आहे...") }
+    var deliveryMessage by rememberSaveable { mutableStateOf(context.getString(R.string.delivery_auto_calculating)) }
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var paymentMethod by rememberSaveable { mutableStateOf("COD") }
     var paymentInProgress by remember { mutableStateOf(false) }
@@ -137,7 +137,7 @@ fun CartAndOrderScreen(
 
     fun calculateDeliveryFromLocation(location: Location) {
         deliveryLatitude = location.latitude; deliveryLongitude = location.longitude
-        deliveryCharge = null; deliveryDistanceKm = null; deliveryMessage = "डिलिव्हरी अंतर मोजत आहे..."
+        deliveryCharge = null; deliveryDistanceKm = null; deliveryMessage = context.getString(R.string.delivery_calculating_distance)
         coroutineScope.launch {
             val shop = withContext(Dispatchers.IO) { runCatching {
                 if (!Geocoder.isPresent()) null else {
@@ -145,19 +145,19 @@ fun CartAndOrderScreen(
                     Geocoder(context, Locale("en", "IN")).getFromLocationName("Surya co op HSG society, road boargad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India", 1)?.firstOrNull()
                 }
             }.getOrNull() }
-            if (shop == null) { deliveryMessage = "दुकानाचे लोकेशन सापडले नाही. इंटरनेट सुरू करून पुन्हा प्रयत्न करा."; return@launch }
+            if (shop == null) { deliveryMessage = context.getString(R.string.delivery_shop_location_missing); return@launch }
             val meters = FloatArray(1)
             Location.distanceBetween(shop.latitude, shop.longitude, location.latitude, location.longitude, meters)
             val km = meters[0] / 1000.0; deliveryDistanceKm = km
             val chargeableKm = kotlin.math.ceil(km).toInt().coerceAtLeast(1)
             deliveryCharge = chargeableKm * 10
-            deliveryMessage = "डिलिव्हरी चार्ज बिलात आपोआप जोडला आहे."
+            deliveryMessage = context.getString(R.string.delivery_charge_added)
         }
     }
     fun fetchGpsForDelivery() {
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
-            .addOnSuccessListener { loc -> if (loc != null) calculateDeliveryFromLocation(loc) else deliveryMessage = "लोकेशन मिळाले नाही. GPS सुरू करून पुन्हा प्रयत्न करा." }
-            .addOnFailureListener { deliveryMessage = "लोकेशन मिळवता आले नाही. पुन्हा प्रयत्न करा." }
+            .addOnSuccessListener { loc -> if (loc != null) calculateDeliveryFromLocation(loc) else deliveryMessage = context.getString(R.string.delivery_location_missing) }
+            .addOnFailureListener { deliveryMessage = context.getString(R.string.delivery_location_failed) }
     }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -165,7 +165,7 @@ fun CartAndOrderScreen(
     ) { permissions ->
         val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (granted) fetchGpsForDelivery() else deliveryMessage = "डिलिव्हरी चार्ज मोजण्यासाठी GPS परवानगी आवश्यक आहे."
+        if (granted) fetchGpsForDelivery() else deliveryMessage = context.getString(R.string.gps_enable_message)
     }
 
     fun requestDeliveryLocation() {
@@ -182,7 +182,7 @@ fun CartAndOrderScreen(
         if (typedAddress.length >= 5) {
             deliveryCharge = null
             deliveryDistanceKm = null
-            deliveryMessage = "पत्ता तपासून डिलिव्हरी चार्ज मोजत आहे..."
+            deliveryMessage = context.getString(R.string.delivery_address_checking)
             kotlinx.coroutines.delay(900)
             val destination = withContext(Dispatchers.IO) {
                 runCatching {
@@ -195,7 +195,7 @@ fun CartAndOrderScreen(
                 }.getOrNull()
             }
             if (destination == null) {
-                deliveryMessage = "हा पत्ता सापडला नाही. पूर्ण पत्ता व Satpur, Nashik लिहा."
+                deliveryMessage = context.getString(R.string.delivery_address_not_found)
                 deliveryLatitude = null
                 deliveryLongitude = null
             } else {
@@ -211,7 +211,7 @@ fun CartAndOrderScreen(
                     }.getOrNull()
                 }
                 if (shop == null) {
-                    deliveryMessage = "दुकानाचे लोकेशन सापडले नाही. कृपया पुन्हा प्रयत्न करा."
+                    deliveryMessage = context.getString(R.string.delivery_shop_retry)
                     deliveryLatitude = null
                     deliveryLongitude = null
                 } else {
@@ -228,7 +228,7 @@ fun CartAndOrderScreen(
             deliveryDistanceKm = null
             deliveryLatitude = null
             deliveryLongitude = null
-            deliveryMessage = "पूर्ण डिलिव्हरी पत्ता लिहा; त्यानंतर चार्ज आपोआप मोजला जाईल."
+            deliveryMessage = context.getString(R.string.delivery_enter_full_address)
         }
     }
 
@@ -245,7 +245,7 @@ fun CartAndOrderScreen(
     fun startRazorpayPayment() {
         val activity = context as? com.example.MainActivity
         if (activity == null) {
-            paymentError = "पेमेंट सुरू करण्यासाठी अॅप पुन्हा उघडा."
+            paymentError = context.getString(R.string.payment_reopen_app)
             return
         }
         if (formState.customerName.trim().length < 2 ||
@@ -254,7 +254,7 @@ fun CartAndOrderScreen(
             deliveryLatitude == null || deliveryLongitude == null ||
             deliveryCharge == null || deliveryDistanceKm == null
         ) {
-            paymentError = "कृपया नाव, योग्य मोबाईल नंबर आणि पूर्ण पत्ता भरा."
+            paymentError = context.getString(R.string.payment_fill_customer_details)
             return
         }
         paymentError = null
@@ -281,7 +281,7 @@ fun CartAndOrderScreen(
                         paymentError = error
                     } else if (paymentId.isNullOrBlank() || signature.isNullOrBlank() || returnedOrderId != created.orderId) {
                         paymentInProgress = false
-                        paymentError = "पेमेंटची माहिती पडताळता आली नाही. पुन्हा प्रयत्न करा."
+                        paymentError = context.getString(R.string.payment_details_invalid)
                     } else {
                         coroutineScope.launch {
                             try {
@@ -298,18 +298,18 @@ fun CartAndOrderScreen(
                                         deliveryDistanceKm, "RAZORPAY", paymentId, deliveryTipAmount
                                     )
                                 } else {
-                                    paymentError = "पेमेंटची सर्व्हरवर पडताळणी झाली नाही. ऑर्डर नोंदवलेली नाही."
+                                    paymentError = context.getString(R.string.payment_server_verification_failed)
                                 }
                             } catch (verificationError: Exception) {
                                 paymentInProgress = false
-                                paymentError = "पेमेंट पडताळणी अयशस्वी झाली. ऑर्डर नोंदवलेली नाही; कृपया मदतीसाठी संपर्क करा."
+                                paymentError = context.getString(R.string.payment_verification_failed)
                             }
                         }
                     }
                 }
             } catch (error: Exception) {
                 paymentInProgress = false
-                paymentError = error.message ?: "पेमेंट सुरू करता आले नाही. पुन्हा प्रयत्न करा."
+                paymentError = error.message ?: context.getString(R.string.payment_start_failed)
             }
         }
     }
@@ -357,7 +357,7 @@ fun CartAndOrderScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "तुमच्या आवडीचा ताजा शेतमाल",
+                            text = stringResource(R.string.cart_fresh_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -444,14 +444,14 @@ fun CartAndOrderScreen(
         if (trackingStatus.isNotBlank()) {
             item {
                 val statusLabel = when (trackingStatus) {
-                    "new" -> "ऑर्डर मिळाली • दुकानाकडून पुष्टी बाकी"
-                    "accepted" -> "ऑर्डर स्वीकारली • दुकानाने पुष्टी केली"
-                    "preparing" -> "तुमची ऑर्डर पॅक केली जात आहे"
-                    "out_for_delivery" -> "डिलिव्हरीसाठी निघाली आहे"
-                    "completed" -> "ऑर्डर तुमच्यापर्यंत पोहोचली"
-                    "cancelled" -> "ऑर्डर रद्द झाली"
-                    "unavailable" -> "ऑर्डरची स्थिती मिळवता आली नाही"
-                    else -> "ऑर्डरची स्थिती अपडेट होत आहे"
+                    "new" -> stringResource(R.string.status_new_long)
+                    "accepted" -> stringResource(R.string.status_accepted_long)
+                    "preparing" -> stringResource(R.string.status_preparing_long)
+                    "out_for_delivery" -> stringResource(R.string.status_out_long)
+                    "completed" -> stringResource(R.string.status_completed_long)
+                    "cancelled" -> stringResource(R.string.status_cancelled_long)
+                    "unavailable" -> stringResource(R.string.status_unavailable_long)
+                    else -> stringResource(R.string.status_updating_long)
                 }
                 Card(
                     shape = MaterialTheme.shapes.extraLarge,
@@ -477,13 +477,13 @@ fun CartAndOrderScreen(
                             ) {
                                 Text(
                                     text = when (trackingStatus) {
-                                        "new" -> "मिळाली"
-                                        "accepted" -> "स्वीकारली"
-                                        "preparing" -> "पॅकिंग"
-                                        "out_for_delivery" -> "निघाली"
-                                        "completed" -> "पोहोचली"
-                                        "cancelled" -> "रद्द"
-                                        else -> "अपडेट"
+                                        "new" -> stringResource(R.string.status_new_short)
+                                        "accepted" -> stringResource(R.string.status_accepted_short)
+                                        "preparing" -> stringResource(R.string.status_preparing_short)
+                                        "out_for_delivery" -> stringResource(R.string.status_out_short)
+                                        "completed" -> stringResource(R.string.status_completed_short)
+                                        "cancelled" -> stringResource(R.string.status_cancelled_short)
+                                        else -> stringResource(R.string.status_updating_short)
                                     },
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.SemiBold,
@@ -829,7 +829,7 @@ private fun BillSummaryCard(itemsTotal: Double, deliveryCharge: Int?, deliveryTi
             ) {
                 Text(stringResource(R.string.bill_delivery_label), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
-                    text = deliveryCharge?.let { "₹${MarathiFormatters.toMarathiNumber(it)}" } ?: "पत्ता टाकल्यानंतर मोजला जाईल",
+                    text = deliveryCharge?.let { "₹${MarathiFormatters.toMarathiNumber(it)}" } ?: stringResource(R.string.bill_address_calculating),
                     color = if (deliveryCharge == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -861,7 +861,7 @@ private fun BillSummaryCard(itemsTotal: Double, deliveryCharge: Int?, deliveryTi
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (deliveryCharge == null) "चार्ज मोजल्यावर" else "₹${MarathiFormatters.formatRupees(grandTotal)}",
+                        text = if (deliveryCharge == null) stringResource(R.string.bill_waiting_charge) else "₹${MarathiFormatters.formatRupees(grandTotal)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
@@ -1053,7 +1053,7 @@ private fun CustomerOrderFormCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = paymentMethod == "UPI", onClick = { onPaymentMethodChange("UPI") })
-                Text("UPI")
+                Text(stringResource(R.string.payment_upi))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = false, onClick = {}, enabled = false)
@@ -1084,7 +1084,7 @@ private fun CustomerOrderFormCard(
                     enabled = deliveryCharge != null,
                     onClick = {
                         val uri = Uri.parse("upi://pay?pa=paytm.s3wcxb1@pty&pn=Annapurna%20Vegetables%20and%20Fruits&am=$grandTotal&cu=INR")
-                        runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), "UPI पेमेंट करा")) }
+                        runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), context.getString(R.string.upi_open_title))) }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(stringResource(R.string.open_upi_app)) }
