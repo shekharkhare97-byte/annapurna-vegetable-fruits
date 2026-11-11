@@ -17,13 +17,17 @@ object WeightPricing {
 
     fun isValidCustomWeight(grams: Int): Boolean = grams in 1..100_000
 
-    fun priceInPaiseForGrams(pricePerKgRupees: Int, grams: Int): Long {
-        require(pricePerKgRupees >= 0) { "Price cannot be negative" }
+    fun priceInPaiseForGrams(pricePerKgRupees: Double, grams: Int): Long {
+        require(pricePerKgRupees >= 0.0) { "Price cannot be negative" }
         require(grams > 0) { "Weight must be positive" }
-        return (pricePerKgRupees.toLong() * 100L * grams + 500L) / 1000L
+        val pricePaisePerKg = java.math.BigDecimal.valueOf(pricePerKgRupees)
+            .movePointRight(2)
+        return pricePaisePerKg.multiply(java.math.BigDecimal.valueOf(grams.toLong()))
+            .divide(java.math.BigDecimal.valueOf(1000L), 0, java.math.RoundingMode.HALF_UP)
+            .longValueExact()
     }
 
-    fun priceForGrams(pricePerKgRupees: Int, grams: Int): Double =
+    fun priceForGrams(pricePerKgRupees: Double, grams: Int): Double =
         priceInPaiseForGrams(pricePerKgRupees, grams) / 100.0
 
     fun formatWeightMarathi(grams: Int): String {
