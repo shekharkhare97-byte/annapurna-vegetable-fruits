@@ -113,5 +113,5 @@
     <string name="action_cancel">रद्द करें</string>
     <string name="studio_idea_number">आइडिया</string>
     <string name="studio_result_placeholder">आपकी बनाई गई 1K / 2K / 4K तस्वीर यहाँ दिखेगी</string>
-    <string name="studio_prompt_hint">ऊपर से कोई आइडिया चुनें या अपना विवरण लिखें और 'उच्च गुणवत्ता वाली तस्वीर बनाएँ' दबाएँ।</string>
+    <string name="studio_prompt_hint">ऊपर से कोई आइडिया चुनें या अपना विवरण लिखें और तस्वीर बनाएँ।</string>
 </resources>
