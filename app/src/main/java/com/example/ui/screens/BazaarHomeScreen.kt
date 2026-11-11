@@ -65,6 +65,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateListOf
+import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -139,6 +142,10 @@ fun BazaarHomeScreen(
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 HeroMarketBanner()
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                CustomerOffersStrip()
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -963,6 +970,42 @@ private fun ProduceDetailSheetContent(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = stringResource(R.string.cd_increase_qty)
                             )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun CustomerOffersStrip() {
+    val offers = remember { mutableStateListOf<Map<String, Any>>() }
+    DisposableEffect(Unit) {
+        val registration = FirebaseFirestore.getInstance()
+            .collection("customerOffers")
+            .whereEqualTo("active", true)
+            .addSnapshotListener { snapshot, error ->
+                if (error == null && snapshot != null) {
+                    offers.clear()
+                    offers.addAll(snapshot.documents.map { it.data ?: emptyMap() })
+                }
+            }
+        onDispose { registration.remove() }
+    }
+    if (offers.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Text("आजच्या खास Offers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(offers) { offer ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                        modifier = Modifier.width(250.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text((offer["title"] ?: "Annapurna Offer").toString(), fontWeight = FontWeight.Bold)
+                            Text((offer["description"] ?: "").toString(), style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
