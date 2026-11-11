@@ -45,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,7 +63,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.model.ProduceCategory
 import com.example.ui.screens.BazaarHomeScreen
+import com.example.ui.screens.CustomerWelcomeFlow
 import com.example.ui.screens.CartAndOrderScreen
 import com.example.ui.screens.ImageStudioScreen
 import com.example.ui.screens.MarathiChatScreen
@@ -161,7 +164,9 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         enableEdgeToEdge()
         setContent {
             AnnapurnaTheme {
-                AnnapurnaRootApp()
+                CustomerWelcomeFlow {
+                    AnnapurnaRootApp()
+                }
             }
         }
     }
@@ -175,6 +180,15 @@ fun AnnapurnaRootApp() {
         factory = StoreViewModel.provideFactory(context)
     )
     val aiViewModel: AiFeaturesViewModel = viewModel()
+
+    LaunchedEffect(Unit) {
+        val entryPrefs = context.getSharedPreferences("annapurna_customer_entry", android.content.Context.MODE_PRIVATE)
+        entryPrefs.getString("customer_mobile", null)?.let(storeViewModel::updateMobileNumber)
+        when (entryPrefs.getString("selected_category", "")) {
+            "vegetables" -> storeViewModel.selectCategory(ProduceCategory.VEGETABLE)
+            "fruits" -> storeViewModel.selectCategory(ProduceCategory.FRUIT)
+        }
+    }
 
     var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
 
