@@ -58,6 +58,9 @@
     <string name="error_empty_cart">ऑर्डर देण्यापूर्वी कृपया पिशवीत किमान एक भाजी किंवा फळ टाका.</string>
     <string name="error_invalid_name">कृपया ग्राहकाचे पूर्ण नाव प्रविष्ट करा.</string>
     <string name="error_invalid_mobile">कृपया वैध १० अंकी मोबाईल नंबर प्रविष्ट करा.</string>
+    <string name="error_invalid_address">कृपया पूर्ण डिलिव्हरी पत्ता लिहा.</string>
+    <string name="profile_save_failed">माहिती सेव्ह झाली नाही. पुन्हा प्रयत्न करा.</string>
+    <string name="order_save_failed">ऑर्डर Firebase मध्ये सेव्ह झाली नाही. इंटरनेट तपासा आणि पुन्हा प्रयत्न करा.</string>
 
     <!-- Order Success & History -->
     <string name="order_success_title">तुमची ऑर्डर यशस्वीरित्या नोंदवली गेली!</string>
