@@ -46,4 +46,21 @@
     <string name="total_bill_label">कुल बिल</string>
     <string name="status_order_accepted">ऑर्डर स्वीकार किया गया</string>
     <string name="status_out_for_delivery">डिलीवरी के लिए निकल गया</string>
+    <string name="use_current_location">मेरी वर्तमान लोकेशन इस्तेमाल करें</string>
+    <string name="tracking_live_location_available">डिलीवरी पार्टनर की लाइव लोकेशन उपलब्ध है।</string>
+    <string name="tracking_open_google_maps">Google Maps पर लाइव लोकेशन देखें</string>
+    <string name="gps_location_off">GPS लोकेशन बंद है</string>
+    <string name="gps_enable_message">डिलीवरी शुल्क की गणना के लिए कृपया GPS / लोकेशन चालू करें।</string>
+    <string name="gps_enable_action">लोकेशन चालू करें</string>
+    <string name="action_ok">ठीक है</string>
+    <string name="delivery_tip_question">क्या आप डिलीवरी पार्टनर को टिप देना चाहेंगे?</string>
+    <string name="tip_none">नहीं</string>
+    <string name="tip_custom_amount">अपनी राशि</string>
+    <string name="tip_amount_label">आपकी टिप (₹)</string>
+    <string name="tip_amount_example">जैसे 40</string>
+    <string name="payment_cod">कैश ऑन डिलीवरी</string>
+    <string name="payment_razorpay">ऑनलाइन भुगतान (Razorpay)</string>
+    <string name="payment_secure_hint">UPI, कार्ड और नेट बैंकिंग के साथ सुरक्षित Razorpay भुगतान</string>
+    <string name="customer_name_prefix">ग्राहक:</string>
+    <string name="mobile_prefix">मोबाइल:</string>
 </resources>
