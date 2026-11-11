@@ -432,7 +432,7 @@ fun CartAndOrderScreen(
                 paymentError = paymentError,
                 paymentInProgress = paymentInProgress,
                 onSubmitOrder = {
-                    if (paymentMethod == "RAZORPAY") {
+                    if (paymentMethod == "RAZORPAY" || paymentMethod == "UPI") {
                         startRazorpayPayment()
                     } else if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) {
                         onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount)
@@ -1068,26 +1068,12 @@ private fun CustomerOrderFormCard(
                 Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
             Text(
-                if (paymentMethod == "RAZORPAY") stringResource(R.string.payment_secure_hint) else stringResource(R.string.payment_gateway_pending),
+                if (paymentMethod == "RAZORPAY" || paymentMethod == "UPI") stringResource(R.string.payment_secure_hint) else stringResource(R.string.payment_gateway_pending),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (paymentError != null) {
                 Text(paymentError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
-            if (paymentMethod == "UPI") {
-                val context = LocalContext.current
-                Text("UPI ID: paytm.s3wcxb1@pty", fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.upi_payment_instruction),
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedButton(
-                    enabled = deliveryCharge != null,
-                    onClick = {
-                        val uri = Uri.parse("upi://pay?pa=paytm.s3wcxb1@pty&pn=Annapurna%20Vegetables%20and%20Fruits&am=$grandTotal&cu=INR")
-                        runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), context.getString(R.string.upi_open_title))) }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.open_upi_app)) }
             }
 
             val orderButtonLabel = if (!isCartEmpty && grandTotal > 0) {
