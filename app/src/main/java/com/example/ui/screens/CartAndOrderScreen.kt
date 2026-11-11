@@ -115,12 +115,17 @@ fun CartAndOrderScreen(
     onDismissReceipt: () -> Unit,
     onContinueShopping: () -> Unit,
     onReorder: (OrderEntity) -> Unit,
+    onSubmitDeliveryReview: (Int, String, (Boolean) -> Unit) -> Unit,
     onBackToBazaar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBackToBazaar)
 
     val context = LocalContext.current
+    var deliveryRating by rememberSaveable { mutableStateOf(5) }
+    var deliveryReview by rememberSaveable { mutableStateOf("") }
+    var reviewSent by rememberSaveable { mutableStateOf(false) }
+    var reviewMessage by remember { mutableStateOf<String?>(null) }
     var showGpsOffDialog by remember { mutableStateOf(false) }
     var deliveryCharge by rememberSaveable { mutableStateOf<Int?>(null) }
     var deliveryDistanceKm by rememberSaveable { mutableStateOf<Double?>(null) }
@@ -551,6 +556,24 @@ fun CartAndOrderScreen(
                         }
                         Text(statusLabel, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                         Text(stringResource(R.string.status_admin_update), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (trackingStatus == "completed") {
+                            HorizontalDivider()
+                            Text("Delivery Boy ला Rating द्या", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            if (!reviewSent) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    (1..5).forEach { star ->
+                                        TextButton(onClick = { deliveryRating = star }) {
+                                            Text(if (star <= deliveryRating) "★" else "☆", color = if (star <= deliveryRating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.headlineSmall)
+                                        }
+                                    }
+                                }
+                                OutlinedTextField(value = deliveryReview, onValueChange = { deliveryReview = it.take(500) }, modifier = Modifier.fillMaxWidth(), label = { Text("तुमचा अनुभव लिहा (ऐच्छिक)") }, minLines = 2, maxLines = 4)
+                                Button(onClick = { onSubmitDeliveryReview(deliveryRating, deliveryReview) { success -> reviewSent = success; reviewMessage = if (success) "धन्यवाद! तुमचा अभिप्राय नोंदवला." else "अभिप्राय पाठवता आला नाही. पुन्हा प्रयत्न करा." } }, modifier = Modifier.fillMaxWidth()) { Text("Rating आणि Review पाठवा") }
+                            } else {
+                                Text(reviewMessage ?: "धन्यवाद! तुमचा अभिप्राय नोंदवला.", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                            }
+                            reviewMessage?.takeIf { !reviewSent }?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                        }
                     }
                 }
             }
