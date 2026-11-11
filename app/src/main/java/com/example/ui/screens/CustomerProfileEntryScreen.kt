@@ -78,25 +78,25 @@ fun CustomerProfileEntryScreen(
                 )
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    text = "अन्नपूर्णा",
+                    text = stringResource(R.string.profile_brand_name),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF176B3A)
                 )
                 Text(
-                    text = "ताजी भाजीपाला आणि फळे",
+                    text = stringResource(R.string.profile_tagline),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(22.dp))
                 Text(
-                    text = "पुढे जाण्यासाठी माहिती भरा",
+                    text = stringResource(R.string.profile_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "माहिती तपासून पुढे जा. पुढच्या वेळी ती आधीच भरलेली दिसेल.",
+                    text = stringResource(R.string.profile_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
