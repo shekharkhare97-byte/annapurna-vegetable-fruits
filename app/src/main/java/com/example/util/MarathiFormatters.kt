@@ -18,6 +18,12 @@ object MarathiFormatters {
      */
     fun toMarathiNumber(value: Int): String = toMarathiDigits(value.toString())
 
+    /** Formats rupee values without dropping fractional paise. */
+    fun formatRupees(value: Double): String {
+        val rounded = java.math.BigDecimal.valueOf(value).setScale(2, java.math.RoundingMode.HALF_UP).stripTrailingZeros()
+        return toMarathiDigits(rounded.toPlainString())
+    }
+
     fun toMarathiDigits(input: String): String {
         val sb = StringBuilder(input.length)
         for (ch in input) {
