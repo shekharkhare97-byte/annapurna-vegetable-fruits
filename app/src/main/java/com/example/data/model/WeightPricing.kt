@@ -27,6 +27,12 @@ object WeightPricing {
             .longValueExact()
     }
 
+    fun priceInPaiseForGrams(pricePerKgRupees: Int, grams: Int): Long =
+        priceInPaiseForGrams(pricePerKgRupees.toDouble(), grams)
+
+    fun priceForGrams(pricePerKgRupees: Int, grams: Int): Double =
+        priceForGrams(pricePerKgRupees.toDouble(), grams)
+
     fun priceForGrams(pricePerKgRupees: Double, grams: Int): Double =
         priceInPaiseForGrams(pricePerKgRupees, grams) / 100.0
 
