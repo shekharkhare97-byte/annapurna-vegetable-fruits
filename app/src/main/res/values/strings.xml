@@ -124,4 +124,21 @@
     <string name="continue_shopping">आणखी खरेदी करा</string>
     <string name="line_total_label">एकूण किंमत</string>
     <string name="total_bill_label">एकूण बिल</string>
+    <string name="use_current_location">माझे सध्याचे लोकेशन वापरा</string>
+    <string name="tracking_live_location_available">डिलिव्हरी पार्टनरचे Live Location उपलब्ध आहे.</string>
+    <string name="tracking_open_google_maps">Google Maps वर Live Location पाहा</string>
+    <string name="gps_location_off">GPS Location बंद आहे</string>
+    <string name="gps_enable_message">डिलिव्हरी चार्ज मोजण्यासाठी कृपया GPS / Location सुरू करा.</string>
+    <string name="gps_enable_action">Location सुरू करा</string>
+    <string name="action_ok">ठीक आहे</string>
+    <string name="delivery_tip_question">डिलिव्हरी पार्टनरला टिप द्यायची आहे का?</string>
+    <string name="tip_none">नको</string>
+    <string name="tip_custom_amount">Custom रक्कम</string>
+    <string name="tip_amount_label">तुमची टिप (₹)</string>
+    <string name="tip_amount_example">उदा. 40</string>
+    <string name="payment_cod">Cash on Delivery</string>
+    <string name="payment_razorpay">Online Payment (Razorpay)</string>
+    <string name="payment_secure_hint">UPI, कार्ड आणि नेट बँकिंगसह Razorpay सुरक्षित पेमेंट</string>
+    <string name="customer_name_prefix">ग्राहक:</string>
+    <string name="mobile_prefix">मोबाईल:</string>
 </resources>
