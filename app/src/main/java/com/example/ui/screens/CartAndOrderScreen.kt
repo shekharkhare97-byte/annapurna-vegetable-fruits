@@ -274,7 +274,7 @@ fun CartAndOrderScreen(
                         .put("name", formState.customerName.trim())
                         .put("contact", MarathiFormatters.normalizePhoneDigits(formState.mobileNumber)))
                     .put("retry", JSONObject().put("enabled", true).put("max_count", 3))
-                    .put("config", JSONObject().put("display", JSONObject().put("language", "en")))
+                    .put("config", JSONObject().put("("display", JSONObject().put("language", when (context.resources.configuration.locales[0].language) { "hi" -> "hi"; "en" -> "en"; else -> "mar" })))
                 activity.startRazorpayCheckout(options) { paymentId, returnedOrderId, signature, error ->
                     if (error != null) {
                         paymentInProgress = false
