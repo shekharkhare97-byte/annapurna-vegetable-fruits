@@ -142,7 +142,7 @@ class StoreViewModel(
                         marathiName = name,
                         englishKeywords = name.lowercase(),
                         category = category,
-                        priceRupees = rate.toInt(),
+                        priceRupees = rate,
                         unitMarathi = when {
                             isBundleBased -> "१ जुडी"
                             isPieceBased -> "१ नग"
