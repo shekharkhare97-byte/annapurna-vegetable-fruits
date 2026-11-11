@@ -177,4 +177,19 @@
     <string name="bill_waiting_charge">चार्ज मोजल्यावर</string>
     <string name="upi_open_title">UPI पेमेंट करा</string>
     <string name="payment_upi">UPI</string>
+    <string name="profile_brand_name">अन्नपूर्णा</string>
+    <string name="profile_tagline">ताजी भाजीपाला आणि फळे</string>
+    <string name="profile_title">पुढे जाण्यासाठी माहिती भरा</string>
+    <string name="profile_subtitle">माहिती तपासून पुढे जा. पुढच्या वेळी ती आधीच भरलेली दिसेल.</string>
+    <string name="profile_name">तुमचे नाव</string>
+    <string name="profile_mobile">मोबाईल नंबर</string>
+    <string name="profile_address">पूर्ण घरचा पत्ता</string>
+    <string name="profile_continue">पुढे जा</string>
+    <string name="weight_enter_kg">वजन किलोमध्ये लिहा</string>
+    <string name="weight_example">उदा. ०.३५० किंवा १.५</string>
+    <string name="weight_add_cart">पिशवीत टाका</string>
+    <string name="action_cancel">रद्द करा</string>
+    <string name="studio_idea_number">कल्पना</string>
+    <string name="studio_result_placeholder">तुमचा तयार केलेला १K / २K / ४K फोटो येथे दिसेल</string>
+    <string name="studio_prompt_hint">वरीलपैकी कोणतीही मराठी कल्पना निवडा किंवा स्वतःचे वर्णन लिहून 'उच्च दर्जाचा फोटो तयार करा' दाबा.</string>
 </resources>
