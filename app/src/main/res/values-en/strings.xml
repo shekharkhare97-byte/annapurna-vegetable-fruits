@@ -113,5 +113,5 @@
     <string name="action_cancel">Cancel</string>
     <string name="studio_idea_number">Idea</string>
     <string name="studio_result_placeholder">Your generated 1K / 2K / 4K image will appear here</string>
-    <string name="studio_prompt_hint">Choose an idea above or write your own prompt, then tap 'Generate high-quality image'.</string>
+    <string name="studio_prompt_hint">Choose an idea above or write your own description, then create the photo.</string>
 </resources>
