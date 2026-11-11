@@ -46,4 +46,21 @@
     <string name="continue_shopping">Continue Shopping</string>
     <string name="line_total_label">Line Total</string>
     <string name="total_bill_label">Total Bill</string>
+    <string name="use_current_location">Use my current location</string>
+    <string name="tracking_live_location_available">Delivery partner live location is available.</string>
+    <string name="tracking_open_google_maps">View live location on Google Maps</string>
+    <string name="gps_location_off">GPS location is off</string>
+    <string name="gps_enable_message">Please turn on GPS / Location to calculate the delivery fee.</string>
+    <string name="gps_enable_action">Turn on Location</string>
+    <string name="action_ok">OK</string>
+    <string name="delivery_tip_question">Would you like to tip the delivery partner?</string>
+    <string name="tip_none">No thanks</string>
+    <string name="tip_custom_amount">Custom amount</string>
+    <string name="tip_amount_label">Your tip (₹)</string>
+    <string name="tip_amount_example">e.g. 40</string>
+    <string name="payment_cod">Cash on Delivery</string>
+    <string name="payment_razorpay">Online Payment (Razorpay)</string>
+    <string name="payment_secure_hint">Secure Razorpay payment with UPI, cards and net banking</string>
+    <string name="customer_name_prefix">Customer:</string>
+    <string name="mobile_prefix">Mobile:</string>
 </resources>
