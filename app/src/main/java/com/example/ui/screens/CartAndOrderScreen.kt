@@ -622,7 +622,7 @@ private fun CartLineCard(
                         text = if (line.produce.isPieceBased)
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
                         else
-                            "₹${MarathiFormatters.toMarathiNumber(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
+                            "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -993,7 +993,7 @@ private fun CustomerOrderFormCard(
             }
 
             val orderButtonLabel = if (!isCartEmpty && grandTotal > 0) {
-                "${stringResource(R.string.btn_place_order)} • ₹${MarathiFormatters.toMarathiNumber(grandTotal)}"
+                "${stringResource(R.string.btn_place_order)} • ₹${MarathiFormatters.formatRupees(grandTotal)}"
             } else {
                 stringResource(R.string.btn_place_order)
             }
