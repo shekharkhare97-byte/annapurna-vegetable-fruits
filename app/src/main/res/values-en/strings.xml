@@ -99,4 +99,19 @@
     <string name="bill_waiting_charge">After fee calculation</string>
     <string name="upi_open_title">Pay with UPI</string>
     <string name="payment_upi">UPI</string>
+    <string name="profile_brand_name">Annapurna</string>
+    <string name="profile_tagline">Fresh vegetables and fruits</string>
+    <string name="profile_title">Enter your details to continue</string>
+    <string name="profile_subtitle">Review your details and continue. They will be pre-filled next time.</string>
+    <string name="profile_name">Your name</string>
+    <string name="profile_mobile">Mobile number</string>
+    <string name="profile_address">Full delivery address</string>
+    <string name="profile_continue">Continue</string>
+    <string name="weight_enter_kg">Enter weight in kilograms</string>
+    <string name="weight_example">e.g. 0.350 or 1.5</string>
+    <string name="weight_add_cart">Add to cart</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="studio_idea_number">Idea</string>
+    <string name="studio_result_placeholder">Your generated 1K / 2K / 4K image will appear here</string>
+    <string name="studio_prompt_hint">Choose an idea above or write your own prompt, then tap 'Generate high-quality image'.</string>
 </resources>
