@@ -880,7 +880,7 @@ private fun ProduceDetailSheetContent(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)
                 ) {
                     Text(
-                        text = "₹${MarathiFormatters.toMarathiNumber(item.priceRupees)}",
+                        text = "₹${MarathiFormatters.formatRupees(item.priceRupees)}",
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
