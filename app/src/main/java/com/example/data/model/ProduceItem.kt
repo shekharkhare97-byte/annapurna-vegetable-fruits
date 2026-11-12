@@ -23,8 +23,40 @@ data class ProduceItem(
     val descriptionMarathi: String,
     @DrawableRes val imageRes: Int,
     val imageUrl: String? = null,
-    val isPieceBased: Boolean = false
-)
+    val isPieceBased: Boolean = false,
+    val hindiName: String = "",
+    val englishName: String = "",
+    val hindiDescription: String = "",
+    val englishDescription: String = ""
+) {
+    private fun languageCode(): String = java.util.Locale.getDefault().language
+
+    fun displayName(): String = when (languageCode()) {
+        "hi" -> hindiName.ifBlank { marathiName }
+        "en" -> englishName.ifBlank { englishKeywords.ifBlank { marathiName } }
+        else -> marathiName
+    }
+
+    fun displayDescription(): String = when (languageCode()) {
+        "hi" -> hindiDescription.ifBlank { descriptionMarathi }
+        "en" -> englishDescription.ifBlank { englishName.ifBlank { descriptionMarathi } }
+        else -> descriptionMarathi
+    }
+
+    fun displayUnit(): String {
+        val isBunch = unitMarathi.contains("जुडी") || unitMarathi.contains("जोडी") || unitMarathi.contains("गड्डी")
+        return when (languageCode()) {
+            "hi" -> when { isBunch -> "1 गुच्छा"; isPieceBased -> "1 नग"; else -> "1 किलो" }
+            "en" -> when { isBunch -> "1 bunch"; isPieceBased -> "1 piece"; else -> "1 kg" }
+            else -> unitMarathi
+        }
+    }
+
+    fun displayBadge(): String = when (languageCode()) {
+        "hi" -> "ताज़ा"
+        "en" -> "Fresh"
+        else -> badgeMarathi
+    }
 
 object ProduceCatalog {
     @Volatile
