@@ -1,6 +1,6 @@
 import test, { afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { generateKeyPairSync } from "node:crypto";
+import { generateKeyPairSync, createHmac } from "node:crypto";
 import worker from "../src/index.js";
 
 const originalFetch = globalThis.fetch;
@@ -105,4 +105,102 @@ test("COD rejects an out-of-stock product and does not commit an order", async (
   const response = await postOrder(env, order, tracking);
   assert.equal(response.status, 409);
   assert.match((await response.json()).error, /out of stock/i);
+});
+
+function paidFixture(clientTotal = 70) {
+  const { env, order, tracking } = fixture();
+  env.RAZORPAY_KEY_ID = "rzp_test_key";
+  env.RAZORPAY_KEY_SECRET = "test-secret";
+  order.orderId = "test-paid-order-0002";
+  order.trackingToken = "223e4567-e89b-42d3-a456-426614174001";
+  order.totalAmountRupees = clientTotal;
+  order.paymentMethod = "Razorpay";
+  order.paymentStatus = "paid";
+  order.transactionId = "pay_test_0002";
+  tracking.orderId = order.orderId;
+  tracking.createdAtMillis = order.createdAtMillis;
+  const razorpayOrderId = "order_test_0002";
+  const amount = Math.round(clientTotal * 100);
+  const signature = createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+    .update(razorpayOrderId + "|" + order.transactionId)
+    .digest("hex");
+  return {
+    env,
+    order,
+    tracking,
+    body: {
+      order,
+      tracking,
+      order_id: razorpayOrderId,
+      razorpay_payment_id: order.transactionId,
+      razorpay_signature: signature,
+      amount,
+    },
+  };
+}
+
+async function postPaidOrder(env, body) {
+  return worker.fetch(new Request("https://worker.test/submit-paid-order", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  }), env);
+}
+
+test("paid order is saved only when current catalog prices match the captured payment", async () => {
+  const { env, order, tracking, body } = paidFixture();
+  let committed;
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url.includes("/v1/payments/")) {
+      return Response.json({
+        order_id: body.order_id,
+        amount: body.amount,
+        currency: "INR",
+        status: "captured",
+        captured: true,
+      });
+    }
+    if (url.includes("oauth2.googleapis.com/token")) return Response.json({ access_token: "test-token" });
+    if (url.includes("/products/tomato-1")) return Response.json(firestoreProduct());
+    if (url.endsWith(":commit")) {
+      committed = JSON.parse(init.body);
+      return Response.json({ writeResults: [{}, {}] });
+    }
+    throw new Error("Unexpected URL: " + url);
+  };
+  const response = await postPaidOrder(env, body);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.saved, true);
+  assert.equal(committed.writes[0].update.fields.totalAmountRupees.integerValue, "70");
+  assert.equal(committed.writes[0].update.fields.items[0].mapValue.fields.lineTotalRupees.integerValue, "50");
+});
+
+test("paid order is rejected when the client total differs from current catalog pricing", async () => {
+  const { env, body } = paidFixture(60);
+  let committed = false;
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url.includes("/v1/payments/")) {
+      return Response.json({
+        order_id: body.order_id,
+        amount: body.amount,
+        currency: "INR",
+        status: "captured",
+        captured: true,
+      });
+    }
+    if (url.includes("oauth2.googleapis.com/token")) return Response.json({ access_token: "test-token" });
+    if (url.includes("/products/tomato-1")) return Response.json(firestoreProduct());
+    if (url.endsWith(":commit")) {
+      committed = true;
+      return Response.json({ writeResults: [{}, {}] });
+    }
+    throw new Error("Unexpected URL: " + url);
+  };
+  const response = await postPaidOrder(env, body);
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /current product prices/i);
+  assert.equal(committed, false);
 });
