@@ -150,7 +150,10 @@ class StoreRepository(private val storeDao: StoreDao) {
         val remoteItems = items.map { line ->
             mapOf(
                 "productId" to line.produce.id,
-                "name" to line.produce.marathiName,
+                "name" to line.produce.displayName(),
+                "nameMr" to line.produce.marathiName,
+                "nameHi" to line.produce.hindiName,
+                "nameEn" to line.produce.englishName,
                 "weightGrams" to line.weightGrams,
                 "quantity" to line.quantity,
                 "pricePerKgRupees" to line.produce.priceRupees,
