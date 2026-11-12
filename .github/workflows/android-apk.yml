@@ -97,3 +97,5 @@ jobs:
           node-version: '22'
       - name: Validate Cloudflare Worker JavaScript syntax
         run: node --input-type=module --check < razorpay-worker/src/index.js
+      - name: Run Cloudflare Worker tests
+        run: node --test razorpay-worker/test/*.test.js
