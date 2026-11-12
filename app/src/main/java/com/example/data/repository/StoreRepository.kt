@@ -9,16 +9,12 @@ import com.example.data.model.ProduceItem
 import com.example.data.model.WeightPricing
 import com.example.data.payment.RazorpayPaymentGateway
 import com.example.util.MarathiFormatters
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 data class CartLineItem(
     val produce: ProduceItem,
