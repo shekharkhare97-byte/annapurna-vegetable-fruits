@@ -511,7 +511,7 @@ fun CartAndOrderScreen(
                         val progress = when (trackingStatus) {
                             "new" -> 0
                             "accepted" -> 1
-                            "picked_up" -> 2
+                            "picked_up" -> 3
                             "preparing" -> 2
                             "out_for_delivery" -> 3
                             "completed" -> 4
