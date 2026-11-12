@@ -377,7 +377,7 @@ async function submitCodOrder(env, body) {
   ).join("\n");
   const serverOrder = {
     orderId, trackingToken: token, customerName: name, mobileNumber: mobile, deliveryAddress: address,
-    items: verifiedItems, itemsSummaryMarathi: summary + "\\n• डिलिव्हरी चार्ज = ₹" + deliveryCharge + (deliveryTip ? "\\n• डिलिव्हरी पार्टनर टिप = ₹" + deliveryTip : ""),
+    items: verifiedItems, itemsSummaryMarathi: summary + "\n• डिलिव्हरी चार्ज = ₹" + deliveryCharge + (deliveryTip ? "\\n• डिलिव्हरी पार्टनर टिप = ₹" + deliveryTip : ""),
     totalItemsCount: verifiedItems.reduce((sum, item) => sum + item.quantity, 0),
     itemsTotalRupees: itemsTotal, deliveryChargeRupees: deliveryCharge, deliveryTipRupees: deliveryTip,
     deliveryDistanceKm: distance, totalAmountRupees: total, status: "new", paymentMethod: "COD",
