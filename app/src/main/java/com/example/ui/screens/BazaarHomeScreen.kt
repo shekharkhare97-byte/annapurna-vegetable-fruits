@@ -583,14 +583,14 @@ private fun ProduceGridCard(
                 if (item.imageUrl.isNullOrBlank()) {
                     Image(
                         painter = painterResource(id = item.imageRes),
-                        contentDescription = item.marathiName,
+                        contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
                     AsyncImage(
                         model = item.imageUrl,
-                        contentDescription = item.marathiName,
+                        contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -602,7 +602,7 @@ private fun ProduceGridCard(
                     modifier = Modifier.align(Alignment.TopStart)
                 ) {
                     Text(
-                        text = item.badgeMarathi,
+                        text = item.displayBadge(),
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -613,14 +613,14 @@ private fun ProduceGridCard(
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 11.dp)
             ) {
                 Text(
-                    text = item.marathiName,
+                    text = item.displayName(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = item.unitMarathi,
+                    text = item.displayUnit(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -848,14 +848,14 @@ private fun ProduceDetailSheetContent(
         if (item.imageUrl.isNullOrBlank()) {
             Image(
                 painter = painterResource(id = item.imageRes),
-                contentDescription = item.marathiName,
+                contentDescription = item.displayName(),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
             )
         } else {
             AsyncImage(
                 model = item.imageUrl,
-                contentDescription = item.marathiName,
+                contentDescription = item.displayName(),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
             )
@@ -868,11 +868,11 @@ private fun ProduceDetailSheetContent(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.marathiName,
+                    text = item.displayName(),
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    text = item.unitMarathi,
+                    text = item.displayUnit(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -902,7 +902,7 @@ private fun ProduceDetailSheetContent(
         }
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = item.descriptionMarathi,
+            text = item.displayDescription(),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
