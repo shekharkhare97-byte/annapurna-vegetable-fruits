@@ -707,14 +707,14 @@ private fun CartLineCard(
                 if (line.produce.imageUrl.isNullOrBlank()) {
                     Image(
                         painter = painterResource(id = line.produce.imageRes),
-                        contentDescription = line.produce.marathiName,
+                        contentDescription = line.produce.displayName(),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.size(76.dp).clip(MaterialTheme.shapes.medium)
                     )
                 } else {
                     AsyncImage(
                         model = line.produce.imageUrl,
-                        contentDescription = line.produce.marathiName,
+                        contentDescription = line.produce.displayName(),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.size(76.dp).clip(MaterialTheme.shapes.medium)
                     )
@@ -722,13 +722,13 @@ private fun CartLineCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = line.produce.marathiName,
+                        text = line.produce.displayName(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (line.produce.isPieceBased)
-                            "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.unitMarathi.removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
+                            "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.displayUnit().removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.displayUnit().removePrefix("१ ")}"
                         else
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
                         style = MaterialTheme.typography.bodySmall,
