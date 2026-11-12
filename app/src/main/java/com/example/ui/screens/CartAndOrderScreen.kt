@@ -440,7 +440,7 @@ fun CartAndOrderScreen(
                     if (paymentMethod != "COD") {
                         startRazorpayPayment()
                     } else if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) {
-                        onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount)
+                        onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
                     }
                 }
             )
