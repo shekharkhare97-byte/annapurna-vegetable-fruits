@@ -111,7 +111,7 @@ fun CartAndOrderScreen(
     onCustomerNameChange: (String) -> Unit,
     onMobileNumberChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
-    onSubmitOrder: (Double?, Double?, Int, Double?, String, String, Int) -> Unit,
+    onSubmitOrder: (Double?, Double?, Int, Double?, String, String, Int, String, String) -> Unit,
     onDismissReceipt: () -> Unit,
     onContinueShopping: () -> Unit,
     onReorder: (OrderEntity) -> Unit,
@@ -300,7 +300,7 @@ fun CartAndOrderScreen(
                                 if (verified) {
                                     onSubmitOrder(
                                         deliveryLatitude, deliveryLongitude, deliveryCharge!!,
-                                        deliveryDistanceKm, paymentMethod, paymentId, deliveryTipAmount
+                                        deliveryDistanceKm, paymentMethod, paymentId, deliveryTipAmount, created.orderId, signature
                                     )
                                 } else {
                                     paymentError = context.getString(R.string.payment_server_verification_failed)
