@@ -138,7 +138,7 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     override fun onPaymentError(errorCode: Int, response: String?, paymentData: PaymentData?) {
         val callback = paymentResultCallback
         paymentResultCallback = null
-        callback?.invoke(null, null, null, response ?: "पेमेंट रद्द झाले किंवा अयशस्वी झाले.")
+        callback?.invoke(null, null, null, "Razorpay error code: $errorCode. " + (response ?: "पेमेंट रद्द झाले किंवा अयशस्वी झाले."))
     }
 
     override fun attachBaseContext(newBase: android.content.Context) {
