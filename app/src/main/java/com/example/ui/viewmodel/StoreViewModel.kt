@@ -124,7 +124,7 @@ class StoreViewModel(
                     val normalizedUnit = unitText.trim().lowercase()
                     val isBundleBased = normalizedUnit.contains("bunch") ||
                         normalizedUnit.contains("bundle") || unitText.contains("जुडी") ||
-                        unitText.contains("जुडी") || unitText.contains("गड्डी")
+                        unitText.contains("जोडी") || unitText.contains("गड्डी")
                     val isPieceBased = isBundleBased ||
                         normalizedUnit.contains("nos") || normalizedUnit.contains("piece") ||
                         normalizedUnit.contains("pcs") || unitText.contains("नग") || unitText.contains("पिस")
