@@ -72,8 +72,12 @@ class StoreViewModel(
             val matchesCategory = category == ProduceCategory.ALL || item.category == category
             val matchesQuery = query.isEmpty() ||
                 item.marathiName.lowercase().contains(query) ||
+                item.hindiName.lowercase().contains(query) ||
+                item.englishName.lowercase().contains(query) ||
                 item.englishKeywords.lowercase().contains(query) ||
-                item.descriptionMarathi.lowercase().contains(query)
+                item.descriptionMarathi.lowercase().contains(query) ||
+                item.hindiDescription.lowercase().contains(query) ||
+                item.englishDescription.lowercase().contains(query)
             matchesCategory && matchesQuery
         }
     }.stateIn(
@@ -136,12 +140,21 @@ class StoreViewModel(
                         doc.getDouble("pricePerKg") ?: doc.getLong("pricePerKg")?.toDouble()
                             ?: doc.getDouble("price") ?: doc.getLong("price")?.toDouble()
                     } ?: return@mapNotNull null
-                    val name = doc.getString("name")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                    val name = sequenceOf("nameMr", "marathiName", "name")
+                        .mapNotNull { doc.getString(it) }
+                        .firstOrNull { it.isNotBlank() } ?: return@mapNotNull null
+                    val hindiName = sequenceOf("nameHi", "hindiName")
+                        .mapNotNull { doc.getString(it) }.firstOrNull { it.isNotBlank() }.orEmpty()
+                    val englishName = sequenceOf("nameEn", "englishName")
+                        .mapNotNull { doc.getString(it) }.firstOrNull { it.isNotBlank() }.orEmpty()
+                    val descriptionMr = doc.getString("descriptionMr")?.takeIf { it.isNotBlank() } ?: name
+                    val descriptionHi = doc.getString("descriptionHi")?.takeIf { it.isNotBlank() }.orEmpty()
+                    val descriptionEn = doc.getString("descriptionEn")?.takeIf { it.isNotBlank() }.orEmpty()
                     val category = if (doc.getString("category") == "fruit") ProduceCategory.FRUIT else ProduceCategory.VEGETABLE
                     ProduceItem(
                         id = doc.id,
                         marathiName = name,
-                        englishKeywords = name.lowercase(),
+                        englishKeywords = listOf(name, hindiName, englishName).joinToString(" ").lowercase(),
                         category = category,
                         priceRupees = rate,
                         unitMarathi = when {
@@ -150,10 +163,14 @@ class StoreViewModel(
                             else -> "१ किलो"
                         },
                         badgeMarathi = "ताजा माल",
-                        descriptionMarathi = name,
+                        descriptionMarathi = descriptionMr,
                         imageRes = if (category == ProduceCategory.FRUIT) R.drawable.img_prod_mango else R.drawable.img_prod_tomato,
                         imageUrl = imageUrl,
-                        isPieceBased = isPieceBased
+                        isPieceBased = isPieceBased,
+                        hindiName = hindiName,
+                        englishName = englishName,
+                        hindiDescription = descriptionHi,
+                        englishDescription = descriptionEn
                     )
                 }
                 ProduceCatalog.replaceFromAdmin(products)
