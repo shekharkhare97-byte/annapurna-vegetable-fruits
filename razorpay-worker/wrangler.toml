@@ -7,3 +7,4 @@ enabled = true
 
 [ vars ]
 # Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET as Worker Secrets in Cloudflare.
+# Add FIREBASE_SERVICE_ACCOUNT_JSON as a Worker Secret for secure COD order writes.
