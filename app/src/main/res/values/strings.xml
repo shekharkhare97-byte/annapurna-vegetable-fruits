@@ -164,6 +164,7 @@
     <string name="cart_fresh_subtitle">तुमच्या आवडीचा ताजा शेतमाल</string>
     <string name="status_new_long">ऑर्डर मिळाली • दुकानाकडून पुष्टी बाकी</string>
     <string name="status_accepted_long">ऑर्डर स्वीकारली • दुकानाने पुष्टी केली</string>
+    <string name="status_picked_up_long">डिलिव्हरी पार्टनरने दुकानातून माल घेतला</string>
     <string name="status_preparing_long">तुमची ऑर्डर पॅक केली जात आहे</string>
     <string name="status_out_long">डिलिव्हरीसाठी निघाली आहे</string>
     <string name="status_completed_long">ऑर्डर तुमच्यापर्यंत पोहोचली</string>
@@ -172,6 +173,7 @@
     <string name="status_updating_long">ऑर्डरची स्थिती अपडेट होत आहे</string>
     <string name="status_new_short">मिळाली</string>
     <string name="status_accepted_short">स्वीकारली</string>
+    <string name="status_picked_up_short">माल घेतला</string>
     <string name="status_preparing_short">पॅकिंग</string>
     <string name="status_out_short">निघाली</string>
     <string name="status_completed_short">पोहोचली</string>
