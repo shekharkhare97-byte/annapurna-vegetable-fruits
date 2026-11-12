@@ -320,7 +320,6 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, service: "annapurna-razorpay" });
     }
-    if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) return json({ error: "Payment service is not configured" }, 503);
     if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
     let body;
@@ -337,6 +336,7 @@ export default {
     }
 
     if (url.pathname === "/create-order") {
+      if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) return json({ error: "Payment service is not configured" }, 503);
       const amount = Number(body.amount);
       if (!Number.isSafeInteger(amount) || amount < 100 || amount > 50000000) return json({ error: "Amount must be between 100 and 50000000 paise" }, 400);
       const receipt = typeof body.receipt === "string" ? body.receipt.slice(0, 40) : "ann-" + Date.now();
@@ -352,6 +352,7 @@ export default {
     }
 
     if (url.pathname === "/verify-payment" || url.pathname === "/submit-paid-order") {
+      if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) return json({ error: "Payment service is not configured" }, 503);
       try {
         const verified = await verifyCapturedPayment(env, body);
         if (!verified.ok) return json({ verified: false, error: verified.error }, verified.status);
