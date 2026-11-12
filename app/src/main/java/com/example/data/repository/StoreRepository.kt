@@ -7,6 +7,7 @@ import com.example.data.local.StoreDao
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceItem
 import com.example.data.model.WeightPricing
+import com.example.data.payment.RazorpayPaymentGateway
 import com.example.util.MarathiFormatters
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -108,6 +109,8 @@ class StoreRepository(private val storeDao: StoreDao) {
         longitude: Double? = null,
         paymentMethod: String = "COD",
         transactionId: String = "",
+        paymentOrderId: String = "",
+        paymentSignature: String = "",
         deliveryChargeRupees: Int = 0,
         deliveryDistanceKm: Double? = null,
         deliveryTipRupees: Int = 0
@@ -183,23 +186,36 @@ class StoreRepository(private val storeDao: StoreDao) {
             remoteOrderData["longitude"] = longitude
             remoteOrderData["locationSource"] = "customer_address_geocoded"
         }
-        val batch = firestore.batch()
-        batch.set(remoteOrder, remoteOrderData)
-        batch.set(firestore.collection("orderTracking").document(trackingToken), mapOf(
+        val trackingData = mapOf(
             "status" to "new",
             "createdAtMillis" to now,
             "orderId" to remoteOrder.id
-        ))
-        // Wait until Firestore confirms that both order and tracking records were accepted.
-        // Firestore can queue this write while offline; failures are surfaced to the customer.
-        suspendCancellableCoroutine<Unit> { continuation ->
-            batch.commit()
-                .addOnSuccessListener {
-                    if (continuation.isActive) continuation.resume(Unit)
-                }
-                .addOnFailureListener { error ->
-                    if (continuation.isActive) continuation.resumeWithException(error)
-                }
+        )
+        if (paymentMethod == "COD") {
+            val batch = firestore.batch()
+            batch.set(remoteOrder, remoteOrderData)
+            batch.set(firestore.collection("orderTracking").document(trackingToken), trackingData)
+            // COD remains a customer-created pending order.
+            suspendCancellableCoroutine<Unit> { continuation ->
+                batch.commit()
+                    .addOnSuccessListener { if (continuation.isActive) continuation.resume(Unit) }
+                    .addOnFailureListener { error -> if (continuation.isActive) continuation.resumeWithException(error) }
+            }
+        } else {
+            require(paymentOrderId.isNotBlank() && paymentSignature.isNotBlank() && transactionId.isNotBlank()) {
+                "Verified Razorpay payment details are missing."
+            }
+            // Paid orders are written only by the trusted Worker after Razorpay capture verification.
+            remoteOrderData.remove("createdAt")
+            val saved = RazorpayPaymentGateway.submitPaidOrder(
+                orderId = paymentOrderId,
+                paymentId = transactionId,
+                signature = paymentSignature,
+                amountPaise = (grandTotal * 100.0).roundToInt().toLong(),
+                order = remoteOrderData,
+                tracking = trackingData
+            )
+            check(saved) { "Verified payment order could not be saved." }
         }
 
         val generatedId = storeDao.insertOrder(draftOrder)
