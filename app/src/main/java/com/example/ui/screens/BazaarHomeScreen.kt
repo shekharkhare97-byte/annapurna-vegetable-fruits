@@ -991,8 +991,12 @@ private fun CustomerOffersStrip() {
                     offers.clear()
                     offers.addAll(
                         snapshot.documents
-                            .mapNotNull { document -> document.data }
-                            .sortedByDescending { it["createdAt"]?.toString().orEmpty() }
+                            .mapNotNull { document ->
+                                document.data?.let { data -> mapOf("offerId" to document.id) + data }
+                            }
+                            .sortedByDescending { offer ->
+                                (offer["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
+                            }
                     )
                 }
             }
