@@ -174,7 +174,7 @@ test("paid order is saved only when current catalog prices match the captured pa
   assert.equal(response.status, 200);
   assert.equal(result.saved, true);
   assert.equal(committed.writes[0].update.fields.totalAmountRupees.integerValue, "70");
-  assert.equal(committed.writes[0].update.fields.items[0].mapValue.fields.lineTotalRupees.integerValue, "50");
+  assert.equal(committed.writes[0].update.fields.items.arrayValue.values[0].mapValue.fields.lineTotalRupees.integerValue, "50");
 });
 
 test("paid order is rejected when the client total differs from current catalog pricing", async () => {
