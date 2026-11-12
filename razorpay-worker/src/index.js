@@ -200,7 +200,7 @@ async function submitCodOrder(env, body) {
   const address = typeof order.deliveryAddress === "string" ? order.deliveryAddress.trim() : "";
   if (typeof orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(orderId) ||
       typeof token !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token) ||
-      name.length < 2 || name.length > 100 || !/^\\d{10}$/.test(mobile) ||
+      name.length < 2 || name.length > 100 || !/^\d{10}$/.test(mobile) ||
       address.length < 8 || address.length > 500 ||
       !Array.isArray(order.items) || order.items.length < 1 || order.items.length > 50 ||
       tracking.status !== "new" || tracking.orderId !== orderId ||
@@ -276,7 +276,7 @@ async function submitCodOrder(env, body) {
   const total = Math.round((itemsTotal + deliveryCharge + deliveryTip) * 100) / 100;
   const summary = verifiedItems.map((item) =>
     "• " + item.nameMr + " (" + (item.isPieceBased ? item.quantity + " " + item.unit : item.weightGrams * item.quantity + " g") + ") = ₹" + item.lineTotalRupees.toFixed(2)
-  ).join("\\n");
+  ).join("\n");
   const serverOrder = {
     orderId, trackingToken: token, customerName: name, mobileNumber: mobile, deliveryAddress: address,
     items: verifiedItems, itemsSummaryMarathi: summary + "\\n• डिलिव्हरी चार्ज = ₹" + deliveryCharge + (deliveryTip ? "\\n• डिलिव्हरी पार्टनर टिप = ₹" + deliveryTip : ""),
