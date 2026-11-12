@@ -57,6 +57,7 @@ data class ProduceItem(
         "en" -> "Fresh"
         else -> badgeMarathi
     }
+}
 
 object ProduceCatalog {
     @Volatile
