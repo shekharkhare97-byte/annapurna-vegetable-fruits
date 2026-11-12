@@ -989,23 +989,129 @@ private fun CustomerOffersStrip() {
             .addSnapshotListener { snapshot, error ->
                 if (error == null && snapshot != null) {
                     offers.clear()
-                    offers.addAll(snapshot.documents.map { it.data ?: emptyMap() })
+                    offers.addAll(
+                        snapshot.documents
+                            .mapNotNull { document -> document.data }
+                            .sortedByDescending { it["createdAt"]?.toString().orEmpty() }
+                    )
                 }
             }
         onDispose { registration.remove() }
     }
+
     if (offers.isNotEmpty()) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Text("आजच्या खास Offers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(offers) { offer ->
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                        modifier = Modifier.width(250.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        "आजच्या खास Offers",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "तुमच्यासाठी खास बचत आणि ताज्या ऑफर्स",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Surface(
+                    color = Color(0xFFE8F5E9),
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Text(
+                        "SPECIAL",
+                        color = Color(0xFF16843B),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(
+                    items = offers,
+                    key = { offer ->
+                        offer["offerId"]?.toString()
+                            ?: offer["title"]?.toString().orEmpty()
+                    }
+                ) { offer ->
+                    val imageUrl = offer["imageUrl"]?.toString().orEmpty()
+                    val offerTitle = offer["title"]?.toString().orEmpty()
+                    val offerDescription = offer["description"]?.toString().orEmpty()
+
+                    Box(
+                        modifier = Modifier
+                            .width(300.dp)
+                            .height(176.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))
+                                )
+                            )
                     ) {
-                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Text((offer["title"] ?: "Annapurna Offer").toString(), fontWeight = FontWeight.Bold)
-                            Text((offer["description"] ?: "").toString(), style = MaterialTheme.typography.bodyMedium)
+                        if (imageUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = offerTitle,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color(0x99000000),
+                                            Color(0xE6000000)
+                                        )
+                                    )
+                                )
+                        )
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(15.dp),
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Surface(
+                                color = Color(0xFFFFD54F),
+                                shape = RoundedCornerShape(50)
+                            ) {
+                                Text(
+                                    "आजची खास ऑफर",
+                                    color = Color(0xFF3E2723),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                )
+                            }
+                            Text(
+                                offerTitle,
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                offerDescription,
+                                color = Color.White.copy(alpha = 0.94f),
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
