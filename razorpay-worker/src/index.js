@@ -140,7 +140,7 @@ async function savePaidOrder(env, body, verified) {
   if (typeof orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(orderId) ||
       typeof token !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token) ||
       typeof order.customerName !== "string" || order.customerName.trim().length < 2 ||
-      typeof mobile !== "string" || !/^\\d{10}$/.test(mobile.trim()) ||
+      typeof mobile !== "string" || !/^\d{10}$/.test(mobile.trim()) ||
       typeof order.deliveryAddress !== "string" || order.deliveryAddress.trim().length < 8 ||
       !Array.isArray(order.items) || order.items.length < 1 || order.items.length > 50 ||
       !Number.isFinite(clientTotal) || Math.round(clientTotal * 100) !== verified.amount ||
@@ -173,8 +173,8 @@ async function savePaidOrder(env, body, verified) {
     deliveryAddress: order.deliveryAddress.trim(),
     items: validated.items,
     itemsTotalRupees: validated.itemsTotalRupees,
-    itemsSummaryMarathi: validated.summary + "\\n• डिलिव्हरी चार्ज = ₹" + deliveryCharge +
-      (deliveryTip ? "\\n• डिलिव्हरी पार्टनर टिप = ₹" + deliveryTip : ""),
+    itemsSummaryMarathi: validated.summary + "\n• डिलिव्हरी चार्ज = ₹" + deliveryCharge +
+      (deliveryTip ? "\n• डिलिव्हरी पार्टनर टिप = ₹" + deliveryTip : ""),
     totalItemsCount: validated.items.reduce((sum, item) => sum + item.quantity, 0),
     deliveryChargeRupees: deliveryCharge,
     deliveryTipRupees: deliveryTip,
@@ -281,7 +281,7 @@ async function loadVerifiedItems(base, accessToken, rawItems) {
   itemsTotalRupees = Math.round(itemsTotalRupees * 100) / 100;
   const summary = items.map((item) =>
     "• " + item.nameMr + " (" + (item.isPieceBased ? item.quantity + " " + item.unit : item.weightGrams * item.quantity + " g") + ") = ₹" + item.lineTotalRupees.toFixed(2)
-  ).join("\\n");
+  ).join("\n");
   return { ok: true, items, itemsTotalRupees, summary };
 }
 
