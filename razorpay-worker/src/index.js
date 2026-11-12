@@ -177,6 +177,142 @@ async function savePaidOrder(env, body, verified) {
   return { ok: true };
 }
 
+
+function readFirestoreScalar(field) {
+  if (!field || typeof field !== "object") return null;
+  if ("stringValue" in field) return field.stringValue;
+  if ("integerValue" in field) return Number(field.integerValue);
+  if ("doubleValue" in field) return Number(field.doubleValue);
+  if ("booleanValue" in field) return field.booleanValue;
+  return null;
+}
+
+async function submitCodOrder(env, body) {
+  const order = body.order;
+  const tracking = body.tracking;
+  if (!order || typeof order !== "object" || !tracking || typeof tracking !== "object") {
+    return { ok: false, status: 400, error: "Order and tracking data are required" };
+  }
+  const orderId = order.orderId;
+  const token = order.trackingToken;
+  const mobile = typeof order.mobileNumber === "string" ? order.mobileNumber.trim() : "";
+  const name = typeof order.customerName === "string" ? order.customerName.trim() : "";
+  const address = typeof order.deliveryAddress === "string" ? order.deliveryAddress.trim() : "";
+  if (typeof orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(orderId) ||
+      typeof token !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token) ||
+      name.length < 2 || name.length > 100 || !/^\\d{10}$/.test(mobile) ||
+      address.length < 8 || address.length > 500 ||
+      !Array.isArray(order.items) || order.items.length < 1 || order.items.length > 50 ||
+      tracking.status !== "new" || tracking.orderId !== orderId ||
+      !Number.isSafeInteger(Number(order.createdAtMillis)) || Number(order.createdAtMillis) <= 0) {
+    return { ok: false, status: 400, error: "Customer or order details are invalid" };
+  }
+
+  const deliveryCharge = Number(order.deliveryChargeRupees ?? 0);
+  const deliveryTip = Number(order.deliveryTipRupees ?? 0);
+  const distance = Number(order.deliveryDistanceKm ?? 0);
+  if (!Number.isSafeInteger(deliveryCharge) || deliveryCharge < 0 || deliveryCharge > 2000 ||
+      !Number.isSafeInteger(deliveryTip) || deliveryTip < 0 || deliveryTip > 5000 ||
+      !Number.isFinite(distance) || distance < 0 || distance > 100) {
+    return { ok: false, status: 400, error: "Delivery charge, tip or distance is invalid" };
+  }
+
+  const { token: accessToken, projectId } = await getFirebaseAccessToken(env);
+  const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
+  const verifiedItems = [];
+  let itemsTotal = 0;
+  for (const raw of order.items) {
+    if (!raw || typeof raw !== "object") return { ok: false, status: 400, error: "An order item is invalid" };
+    const productId = typeof raw.productId === "string" ? raw.productId : "";
+    const quantity = Number(raw.quantity);
+    const weightGrams = Number(raw.weightGrams ?? 1000);
+    if (!/^[A-Za-z0-9_-]{1,150}$/.test(productId) ||
+        !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100 ||
+        !Number.isSafeInteger(weightGrams) || weightGrams < 125 || weightGrams > 10000) {
+      return { ok: false, status: 400, error: "Product quantity or weight is invalid" };
+    }
+    const productResponse = await fetch(base + "/products/" + encodeURIComponent(productId), {
+      headers: { Authorization: "Bearer " + accessToken },
+    });
+    const productDoc = await productResponse.json().catch(() => ({}));
+    if (!productResponse.ok) return { ok: false, status: 409, error: "A selected product is no longer available" };
+    const fields = productDoc.fields || {};
+    const value = (key) => readFirestoreScalar(fields[key]);
+    if (value("isVisible") !== true || Number(value("stock") ?? 0) <= 0) {
+      return { ok: false, status: 409, error: "A selected product is out of stock" };
+    }
+    const rawUnit = String(value("unit") ?? "kg").trim().toLowerCase();
+    const isBunch = rawUnit === "bunch" || rawUnit === "bunches" || rawUnit.includes("जुडी") || rawUnit.includes("जोडी");
+    const isPiece = isBunch || ["piece", "pieces", "nos", "pcs", "नग"].includes(rawUnit);
+    const price = Number(value(isPiece ? "pricePerPiece" : "pricePerKg") ?? value("price"));
+    if (!Number.isFinite(price) || price < 0 || price > 100000) {
+      return { ok: false, status: 409, error: "A product price is not configured correctly" };
+    }
+    const stockNeeded = isPiece ? quantity : (weightGrams * quantity) / 1000;
+    const stock = Number(value("stock") ?? 0);
+    if (stockNeeded > stock + 0.000001) {
+      return { ok: false, status: 409, error: "Insufficient stock for " + String(value("name") ?? "a selected product") };
+    }
+    const lineTotal = isPiece ? price * quantity : price * weightGrams * quantity / 1000;
+    const productName = String(value("nameMr") ?? value("marathiName") ?? value("name") ?? "प्रॉडक्ट");
+    const line = {
+      productId,
+      name: String(value("name") ?? productName),
+      nameMr: productName,
+      nameHi: String(value("nameHi") ?? value("hindiName") ?? ""),
+      nameEn: String(value("nameEn") ?? value("englishName") ?? ""),
+      weightGrams,
+      quantity,
+      pricePerKgRupees: isPiece ? 0 : price,
+      pricePerPieceRupees: isPiece ? price : 0,
+      unit: rawUnit,
+      isPieceBased: isPiece,
+      lineTotalRupees: Math.round(lineTotal * 100) / 100,
+    };
+    itemsTotal += line.lineTotalRupees;
+    verifiedItems.push(line);
+  }
+  itemsTotal = Math.round(itemsTotal * 100) / 100;
+  const total = Math.round((itemsTotal + deliveryCharge + deliveryTip) * 100) / 100;
+  const summary = verifiedItems.map((item) =>
+    "• " + item.nameMr + " (" + (item.isPieceBased ? item.quantity + " " + item.unit : item.weightGrams * item.quantity + " g") + ") = ₹" + item.lineTotalRupees.toFixed(2)
+  ).join("\\n");
+  const serverOrder = {
+    orderId, trackingToken: token, customerName: name, mobileNumber: mobile, deliveryAddress: address,
+    items: verifiedItems, itemsSummaryMarathi: summary + "\\n• डिलिव्हरी चार्ज = ₹" + deliveryCharge + (deliveryTip ? "\\n• डिलिव्हरी पार्टनर टिप = ₹" + deliveryTip : ""),
+    totalItemsCount: verifiedItems.reduce((sum, item) => sum + item.quantity, 0),
+    itemsTotalRupees: itemsTotal, deliveryChargeRupees: deliveryCharge, deliveryTipRupees: deliveryTip,
+    deliveryDistanceKm: distance, totalAmountRupees: total, status: "new", paymentMethod: "COD",
+    transactionId: "", paymentStatus: "pending", paymentGateway: "cash_on_delivery",
+    createdAtMillis: Number(order.createdAtMillis),
+  };
+  if (Number.isFinite(Number(order.latitude)) && Number.isFinite(Number(order.longitude))) {
+    serverOrder.latitude = Number(order.latitude);
+    serverOrder.longitude = Number(order.longitude);
+    serverOrder.locationSource = "customer_address_geocoded";
+  }
+  const now = new Date().toISOString();
+  const orderDocFields = firestoreFields(serverOrder);
+  orderDocFields.createdAt = { timestampValue: now };
+  const trackingFields = firestoreFields({ status: "new", createdAtMillis: serverOrder.createdAtMillis, orderId });
+  const commitResponse = await fetch(base + ":commit", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+    body: JSON.stringify({ writes: [
+      { update: { name: base + "/orders/" + orderId, fields: orderDocFields }, currentDocument: { exists: false } },
+      { update: { name: base + "/orderTracking/" + token, fields: trackingFields }, currentDocument: { exists: false } },
+    ] }),
+  });
+  const result = await commitResponse.json().catch(() => ({}));
+  if (!commitResponse.ok) {
+    if (commitResponse.status === 409 || result.error?.status === "ALREADY_EXISTS") {
+      return { ok: false, status: 409, error: "This order was already submitted" };
+    }
+    return { ok: false, status: 502, error: "Firebase could not save the COD order" };
+  }
+  return { ok: true, totalAmountRupees: total };
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -189,6 +325,16 @@ export default {
 
     let body;
     try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+
+    if (url.pathname === "/submit-cod-order") {
+      try {
+        const saved = await submitCodOrder(env, body);
+        if (!saved.ok) return json({ saved: false, error: saved.error }, saved.status);
+        return json({ saved: true, totalAmountRupees: saved.totalAmountRupees });
+      } catch (error) {
+        return json({ saved: false, error: error?.message || "COD order processing failed" }, 500);
+      }
+    }
 
     if (url.pathname === "/create-order") {
       const amount = Number(body.amount);
