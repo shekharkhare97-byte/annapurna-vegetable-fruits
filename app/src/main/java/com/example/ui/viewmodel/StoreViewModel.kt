@@ -311,6 +311,8 @@ class StoreViewModel(
                     longitude = longitude,
                     paymentMethod = paymentMethod,
                     transactionId = transactionId.trim(),
+                    paymentOrderId = paymentOrderId.trim(),
+                    paymentSignature = paymentSignature.trim(),
                     deliveryChargeRupees = deliveryChargeRupees,
                     deliveryDistanceKm = deliveryDistanceKm,
                     deliveryTipRupees = deliveryTipRupees
