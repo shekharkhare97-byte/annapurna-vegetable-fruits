@@ -451,6 +451,7 @@ fun CartAndOrderScreen(
                 val statusLabel = when (trackingStatus) {
                     "new" -> stringResource(R.string.status_new_long)
                     "accepted" -> stringResource(R.string.status_accepted_long)
+                    "picked_up" -> stringResource(R.string.status_picked_up_long)
                     "preparing" -> stringResource(R.string.status_preparing_long)
                     "out_for_delivery" -> stringResource(R.string.status_out_long)
                     "completed" -> stringResource(R.string.status_completed_long)
@@ -484,6 +485,7 @@ fun CartAndOrderScreen(
                                     text = when (trackingStatus) {
                                         "new" -> stringResource(R.string.status_new_short)
                                         "accepted" -> stringResource(R.string.status_accepted_short)
+                                        "picked_up" -> stringResource(R.string.status_picked_up_short)
                                         "preparing" -> stringResource(R.string.status_preparing_short)
                                         "out_for_delivery" -> stringResource(R.string.status_out_short)
                                         "completed" -> stringResource(R.string.status_completed_short)
@@ -509,6 +511,7 @@ fun CartAndOrderScreen(
                         val progress = when (trackingStatus) {
                             "new" -> 0
                             "accepted" -> 1
+                            "picked_up" -> 2
                             "preparing" -> 2
                             "out_for_delivery" -> 3
                             "completed" -> 4
