@@ -1066,15 +1066,10 @@ private fun CustomerOrderFormCard(
             }
 
             Text(stringResource(R.string.payment_method_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            // Standard Razorpay Checkout presents supported UPI apps (including PhonePe/Paytm when available on the device), cards and net banking inside its own payment screen. Do not imply that selecting a separate local radio option launches a specific PSP app.
             val paymentOptions = listOf(
                 "COD" to "Cash on Delivery",
-                "RAZORPAY" to "Razorpay",
-                "NETBANKING" to "Net Banking",
-                "CREDIT_CARD" to "Credit Card",
-                "DEBIT_CARD" to "Debit Card",
-                "UPI" to "UPI",
-                "PHONEPE" to "PhonePe",
-                "PAYTM" to "Paytm"
+                "RAZORPAY" to "Online Payment (UPI / PhonePe / Paytm / Cards / Net Banking)"
             )
             paymentOptions.forEach { (code, label) ->
                 Row(
