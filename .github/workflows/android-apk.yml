@@ -5,6 +5,16 @@ on:
   push:
     paths:
       - 'app/**'
+      - 'razorpay-worker/**'
+      - 'gradle/**'
+      - 'gradle/libs.versions.toml'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
+      - '.github/workflows/android-apk.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'razorpay-worker/**'
       - 'gradle/**'
       - 'gradle/libs.versions.toml'
       - 'settings.gradle.kts'
@@ -75,3 +85,15 @@ jobs:
           name: annapurna-customer-release-apk
           path: app/build/outputs/apk/release/app-release.apk
           retention-days: 14
+
+  worker-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Cloudflare Worker JavaScript syntax
+        run: node --check razorpay-worker/src/index.js
