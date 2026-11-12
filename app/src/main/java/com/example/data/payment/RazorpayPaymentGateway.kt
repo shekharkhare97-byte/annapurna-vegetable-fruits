@@ -87,6 +87,31 @@ object RazorpayPaymentGateway {
             data.optBoolean("verified", false)
         }
     }
+    /** Sends COD orders to the trusted Worker, which reloads current product prices and validates stock. */
+    suspend fun submitCodOrder(
+        order: Map<String, Any>,
+        tracking: Map<String, Any>
+    ): Boolean = withContext(Dispatchers.IO) {
+        val payload = JSONObject()
+            .put("order", JSONObject(order))
+            .put("tracking", JSONObject(tracking))
+        val request = Request.Builder()
+            .url("$BASE_URL/submit-cod-order")
+            .post(payload.toString().toRequestBody(jsonMediaType))
+            .build()
+        val response = client.newCall(request).execute()
+        response.use {
+            val body = it.body?.string().orEmpty()
+            val data = runCatching { JSONObject(body) }.getOrElse {
+                throw IOException("Order server returned an invalid response.")
+            }
+            if (!it.isSuccessful || !data.optBoolean("saved", false)) {
+                throw IOException(data.optString("error").ifBlank { "COD order could not be saved." })
+            }
+            data.optBoolean("saved", false)
+        }
+    }
+
     /** Verifies a captured Razorpay payment and atomically saves its order + public tracking record. */
     suspend fun submitPaidOrder(
         orderId: String,
