@@ -11,14 +11,17 @@ interface StoreDao {
     @Query("SELECT * FROM cart_items ORDER BY addedAtMillis ASC")
     fun observeCartItems(): Flow<List<CartItemEntity>>
 
-    @Query("SELECT * FROM cart_items WHERE produceId = :produceId LIMIT 1")
-    suspend fun getCartItem(produceId: String): CartItemEntity?
+    @Query("SELECT * FROM cart_items WHERE cartLineId = :cartLineId LIMIT 1")
+    suspend fun getCartItem(cartLineId: String): CartItemEntity?
+
+    @Query("SELECT * FROM cart_items WHERE produceId = :produceId ORDER BY addedAtMillis DESC LIMIT 1")
+    suspend fun getLatestCartItemForProduce(produceId: String): CartItemEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertCartItem(item: CartItemEntity)
 
-    @Query("DELETE FROM cart_items WHERE produceId = :produceId")
-    suspend fun deleteCartItem(produceId: String)
+    @Query("DELETE FROM cart_items WHERE cartLineId = :cartLineId")
+    suspend fun deleteCartItem(cartLineId: String)
 
     @Query("DELETE FROM cart_items")
     suspend fun clearCart()
