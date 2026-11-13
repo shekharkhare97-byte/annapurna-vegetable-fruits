@@ -1,5 +1,7 @@
 name: Deploy Annapurna Razorpay Worker
 
+# Trigger deployment after Cloudflare credentials are configured in repository secrets.
+
 on:
   workflow_dispatch:
   push:
