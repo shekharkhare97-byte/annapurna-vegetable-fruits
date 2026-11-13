@@ -356,10 +356,13 @@ class StoreViewModel(
                 _confirmedOrder.value = savedOrder
             } catch (error: Exception) {
                 if (error is kotlinx.coroutines.CancellationException) throw error
+                // Keep the user informed when payment is already captured but the
+                // trusted order-save step fails; do not silently replace it with a generic error.
+                val detail = error.message?.takeIf { it.isNotBlank() }
                 _formState.update {
                     it.copy(
                         isSubmitting = false,
-                        cartErrorMarathi = appContext.getString(R.string.order_save_failed)
+                        cartErrorMarathi = detail ?: appContext.getString(R.string.order_save_failed)
                     )
                 }
             }
