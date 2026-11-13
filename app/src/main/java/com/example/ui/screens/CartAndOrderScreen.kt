@@ -307,7 +307,14 @@ fun CartAndOrderScreen(
                                 }
                             } catch (verificationError: Exception) {
                                 paymentInProgress = false
-                                paymentError = context.getString(R.string.payment_verification_failed)
+                                // Keep the trusted server's diagnostic visible. This is especially
+                                // important when Razorpay has captured money but order saving fails.
+                                val detail = verificationError.message?.takeIf { it.isNotBlank() }
+                                paymentError = if (detail != null) {
+                                    context.getString(R.string.payment_verification_failed) + "\n" + detail
+                                } else {
+                                    context.getString(R.string.payment_verification_failed)
+                                }
                             }
                         }
                     }
