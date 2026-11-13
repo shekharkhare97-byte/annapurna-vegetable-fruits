@@ -117,7 +117,7 @@ class StoreViewModel(
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
                 val products = snapshot.documents.mapNotNull { doc ->
-                    val imageUrl = doc.getString("imageUrl")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                    val imageUrl = doc.getString("imageUrl")?.takeIf { it.isNotBlank() }
                     if (doc.getBoolean("isVisible") != true) return@mapNotNull null
                     val stock = doc.getDouble("stock") ?: (doc.getLong("stock")?.toDouble() ?: 0.0)
                     if (stock <= 0.0) return@mapNotNull null
