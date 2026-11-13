@@ -115,11 +115,46 @@ async function verifyCapturedPayment(env, body) {
     method: "GET",
     headers: { Authorization: "Basic " + auth },
   });
-  const payment = await paymentResponse.json().catch(() => ({}));
+  let payment = await paymentResponse.json().catch(() => ({}));
   if (!paymentResponse.ok) return { ok: false, status: 502, error: "Could not confirm payment with Razorpay" };
-  if (payment.order_id !== orderId || payment.amount !== amount || payment.currency !== "INR" ||
-      payment.status !== "captured" || payment.captured !== true) {
-    return { ok: false, status: 400, error: "Payment is not captured for this order and amount" };
+
+  // Never capture until the signed callback and exact order/amount/currency have been verified.
+  if (payment.order_id !== orderId || payment.amount !== amount || payment.currency !== "INR") {
+    return { ok: false, status: 400, error: "Payment does not match this order and amount" };
+  }
+
+  // Explicitly capture an authorized payment. This also covers accounts configured for
+  // manual capture and delayed/late authorizations; already-captured payments are untouched.
+  if (payment.status === "authorized" && payment.captured !== true) {
+    const captureResponse = await fetch("https://api.razorpay.com/v1/payments/" + encodeURIComponent(paymentId) + "/capture", {
+      method: "POST",
+      headers: { Authorization: "Basic " + auth, "Content-Type": "application/json" },
+      body: JSON.stringify({ amount, currency: "INR" }),
+    });
+    const captureResult = await captureResponse.json().catch(() => ({}));
+    if (captureResponse.ok) {
+      payment = captureResult;
+    } else {
+      // A concurrent auto-capture may win the race. Re-fetch before treating capture as failed.
+      const retryResponse = await fetch("https://api.razorpay.com/v1/payments/" + encodeURIComponent(paymentId), {
+        headers: { Authorization: "Basic " + auth },
+      });
+      const retryPayment = await retryResponse.json().catch(() => ({}));
+      if (retryResponse.ok && retryPayment.status === "captured" && retryPayment.captured === true) {
+        payment = retryPayment;
+      } else {
+        console.error("razorpay-capture-failed", {
+          httpStatus: captureResponse.status,
+          code: captureResult.error?.code || "unknown",
+          description: captureResult.error?.description || "No capture error description returned",
+        });
+        return { ok: false, status: 502, error: "Razorpay authorized the payment but could not capture it. Please contact support; do not pay again." };
+      }
+    }
+  }
+
+  if (payment.status !== "captured" || payment.captured !== true) {
+    return { ok: false, status: 409, error: "Payment is not captured yet. Please do not pay again; contact support to check the payment." };
   }
   return { ok: true, payment, orderId, paymentId, amount };
 }
@@ -220,7 +255,12 @@ export default {
       const response = await fetch("https://api.razorpay.com/v1/orders", {
         method: "POST",
         headers: { Authorization: "Basic " + auth, "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, currency: "INR", receipt }),
+        body: JSON.stringify({
+          amount,
+          currency: "INR",
+          receipt,
+          payment: { capture: "automatic" },
+        }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) return json({ error: "Razorpay could not create the order", details: result.error?.description || "Please try again" }, 502);
