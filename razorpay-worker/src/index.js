@@ -183,6 +183,8 @@ async function savePaidOrder(env, body, verified) {
     status: "new",
     paymentStatus: "paid",
     transactionId: verified.paymentId,
+    stockReservedByServer: true,
+    stockReservationVersion: 1,
   };
   const orderDocFields = firestoreFields(serverOrder);
   orderDocFields.createdAt = { timestampValue: now };
@@ -368,6 +370,7 @@ async function submitCodOrder(env, body) {
     itemsTotalRupees: itemsTotal, deliveryChargeRupees: deliveryCharge, deliveryTipRupees: deliveryTip,
     deliveryDistanceKm: distance, totalAmountRupees: total, status: "new", paymentMethod: "COD",
     transactionId: "", paymentStatus: "pending", paymentGateway: "cash_on_delivery",
+    stockReservedByServer: true, stockReservationVersion: 1,
     createdAtMillis: Number(order.createdAtMillis),
   };
   if (Number.isFinite(Number(order.latitude)) && Number.isFinite(Number(order.longitude))) {
