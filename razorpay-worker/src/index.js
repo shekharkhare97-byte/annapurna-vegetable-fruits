@@ -157,6 +157,23 @@ async function savePaidOrder(env, body, verified) {
   orderDocFields.createdAt = { timestampValue: now };
   const trackingFields = firestoreFields(tracking);
   const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
+  // Make a repeated submit safe after a network timeout: accept only the same paid transaction.
+  const existingResponse = await fetch(base + "/orders/" + encodeURIComponent(orderId), {
+    headers: { Authorization: "Bearer " + accessToken },
+  });
+  if (existingResponse.ok) {
+    const existing = await existingResponse.json().catch(() => ({}));
+    const fields = existing.fields || {};
+    if (fields.paymentStatus?.stringValue === "paid" &&
+        fields.transactionId?.stringValue === verified.paymentId) {
+      return { ok: true, alreadySaved: true };
+    }
+    return { ok: false, status: 409, error: "An order with this ID already exists with different payment details" };
+  }
+  if (existingResponse.status !== 404) {
+    console.error("paid-order-existing-check-failed", existingResponse.status);
+    return { ok: false, status: 502, error: "Firebase could not check the paid order" };
+  }
   const commitResponse = await fetch(base + ":commit", {
     method: "POST",
     headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
@@ -172,7 +189,12 @@ async function savePaidOrder(env, body, verified) {
     if (commitResponse.status === 409 || result.error?.status === "ALREADY_EXISTS") {
       return { ok: false, status: 409, error: "This order was already submitted" };
     }
-    return { ok: false, status: 502, error: "Firebase could not save the paid order" };
+    console.error("paid-order-firestore-write-failed", {
+      httpStatus: commitResponse.status,
+      firestoreStatus: result.error?.status || "unknown",
+      firestoreMessage: result.error?.message || "No Firestore error message returned",
+    });
+    return { ok: false, status: 502, error: "Firebase could not save the paid order (" + (result.error?.status || commitResponse.status) + ")" };
   }
   return { ok: true };
 }
