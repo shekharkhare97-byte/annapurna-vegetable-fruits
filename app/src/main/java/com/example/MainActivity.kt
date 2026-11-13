@@ -390,7 +390,7 @@ fun AnnapurnaRootApp() {
                                 onSelectCategory = storeViewModel::selectCategory,
                                 onSearchQueryChange = storeViewModel::updateSearchQuery,
                                 onAddToCart = { id, grams -> storeViewModel.addToCart(id, grams) },
-                                onDecreaseQty = storeViewModel::decreaseQuantity,
+                                onDecreaseQty = storeViewModel::decreaseProductQuantity,
                                 onOpenDetail = storeViewModel::openProduceDetail,
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
                                 onAskRecipeInChat = { produce ->
