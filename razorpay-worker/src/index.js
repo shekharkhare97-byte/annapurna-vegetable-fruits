@@ -393,6 +393,9 @@ async function submitCodOrder(env, body) {
   });
   const result = await commitResponse.json().catch(() => ({}));
   if (!commitResponse.ok) {
+    if (result.error?.status === "FAILED_PRECONDITION") {
+      return { ok: false, status: 409, error: "Product stock changed during checkout; please retry your order" };
+    }
     if (commitResponse.status === 409 || result.error?.status === "ALREADY_EXISTS") {
       return { ok: false, status: 409, error: "This order was already submitted" };
     }
