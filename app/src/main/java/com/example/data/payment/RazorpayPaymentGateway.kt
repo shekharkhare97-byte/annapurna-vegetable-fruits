@@ -1,6 +1,7 @@
 package com.example.data.payment
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -71,21 +72,35 @@ object RazorpayPaymentGateway {
             .put("razorpay_payment_id", paymentId)
             .put("razorpay_signature", signature)
             .put("amount", amountPaise)
-        val request = Request.Builder()
-            .url("$BASE_URL/verify-payment")
-            .post(payload.toString().toRequestBody(jsonMediaType))
-            .build()
-        val response = client.newCall(request).execute()
-        response.use {
-            val body = it.body?.string().orEmpty()
-            val data = runCatching { JSONObject(body) }.getOrElse {
-                throw IOException("Payment verification returned an invalid response.")
+        var lastError: IOException? = null
+        // Razorpay may briefly report an authorization before capture completes.
+        // Retry only that transient state; never retry an invalid signature or amount.
+        repeat(5) { attempt ->
+            val request = Request.Builder()
+                .url("$BASE_URL/verify-payment")
+                .post(payload.toString().toRequestBody(jsonMediaType))
+                .build()
+            val response = client.newCall(request).execute()
+            val retryCapture = response.use {
+                val body = it.body?.string().orEmpty()
+                val data = runCatching { JSONObject(body) }.getOrElse {
+                    throw IOException("Payment verification returned an invalid response.")
+                }
+                if (!it.isSuccessful) {
+                    val message = data.optString("error").ifBlank { "Payment verification failed." }
+                    if (message.contains("not captured", ignoreCase = true) && attempt < 4) {
+                        lastError = IOException(message)
+                        true
+                    } else {
+                        throw IOException(message)
+                    }
+                } else {
+                    return@withContext data.optBoolean("verified", false)
+                }
             }
-            if (!it.isSuccessful) {
-                throw IOException(data.optString("error").ifBlank { "Payment verification failed." })
-            }
-            data.optBoolean("verified", false)
+            if (retryCapture) delay(1500)
         }
+        throw lastError ?: IOException("Payment capture could not be confirmed. Please check the payment status before retrying.")
     }
     /** Verifies a captured Razorpay payment and atomically saves its order + public tracking record. */
     suspend fun submitPaidOrder(
