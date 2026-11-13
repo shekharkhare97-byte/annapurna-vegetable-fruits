@@ -90,6 +90,51 @@ test("COD accepts a valid 10-digit mobile and saves a server-priced order", asyn
   assert.equal(committed.writes[2].currentDocument.updateTime, "2026-11-13T00:00:00.000000Z");
 });
 
+test("COD aggregates repeated product lines into one atomic stock reservation", async () => {
+  const { env, order, tracking } = fixture();
+  order.items = [
+    { productId: "tomato-1", quantity: 1, weightGrams: 500 },
+    { productId: "tomato-1", quantity: 1, weightGrams: 500 },
+  ];
+  let committed;
+  let productReads = 0;
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url.includes("oauth2.googleapis.com/token")) return Response.json({ access_token: "test-token" });
+    if (url.includes("/products/tomato-1")) {
+      productReads++;
+      return Response.json(firestoreProduct(10));
+    }
+    if (url.endsWith(":commit")) {
+      committed = JSON.parse(init.body);
+      return Response.json({ writeResults: [{}, {}, {}] });
+    }
+    throw new Error("Unexpected URL: " + url);
+  };
+  const response = await postOrder(env, order, tracking);
+  assert.equal(response.status, 200);
+  assert.equal(productReads, 1);
+  assert.equal(committed.writes.length, 3);
+  assert.equal(committed.writes[2].update.fields.stock.doubleValue, 9);
+});
+
+test("COD reports a retry when Firestore detects a concurrent stock update", async () => {
+  const { env, order, tracking } = fixture();
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("oauth2.googleapis.com/token")) return Response.json({ access_token: "test-token" });
+    if (url.includes("/products/tomato-1")) return Response.json(firestoreProduct(10));
+    if (url.endsWith(":commit")) {
+      return Response.json({ error: { status: "FAILED_PRECONDITION" } }, { status: 409 });
+    }
+    throw new Error("Unexpected URL: " + url);
+  };
+  const response = await postOrder(env, order, tracking);
+  const result = await response.json();
+  assert.equal(response.status, 409);
+  assert.match(result.error, /stock changed/i);
+});
+
 test("COD rejects an invalid mobile before contacting Firebase", async () => {
   const { env, order, tracking } = fixture();
   order.mobileNumber = "12345";
