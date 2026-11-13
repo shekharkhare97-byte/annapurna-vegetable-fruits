@@ -358,9 +358,6 @@ async function submitCodOrder(env, body) {
   const itemsTotal = validated.itemsTotalRupees;
   const summary = validated.summary;
   const total = Math.round((itemsTotal + deliveryCharge + deliveryTip) * 100) / 100;
-  const summary = verifiedItems.map((item) =>
-    "• " + item.nameMr + " (" + (item.isPieceBased ? item.quantity + " " + item.unit : item.weightGrams * item.quantity + " g") + ") = ₹" + item.lineTotalRupees.toFixed(2)
-  ).join("\n");
   const serverOrder = {
     orderId, trackingToken: token, customerName: name, mobileNumber: mobile, deliveryAddress: address,
     items: verifiedItems, itemsSummaryMarathi: summary + "\n• डिलिव्हरी चार्ज = ₹" + deliveryCharge + (deliveryTip ? "\n• डिलिव्हरी पार्टनर टिप = ₹" + deliveryTip : ""),
