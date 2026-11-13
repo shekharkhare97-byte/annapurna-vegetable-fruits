@@ -34,9 +34,9 @@ jobs:
           workingDirectory: razorpay-worker
           command: deploy
           secrets: |
-            RAZORPAY_KEY_ID
-            RAZORPAY_KEY_SECRET
-            FIREBASE_SERVICE_ACCOUNT_JSON
+            RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}
+            RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}
+            FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         env:
           RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
           RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
