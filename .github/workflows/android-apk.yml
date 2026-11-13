@@ -1,10 +1,21 @@
 name: Build Annapurna Android APK
+# Run worker validation and Android packaging for every stock reservation update
 
 on:
   workflow_dispatch:
   push:
     paths:
       - 'app/**'
+      - 'razorpay-worker/**'
+      - 'gradle/**'
+      - 'gradle/libs.versions.toml'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
+      - '.github/workflows/android-apk.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'razorpay-worker/**'
       - 'gradle/**'
       - 'gradle/libs.versions.toml'
       - 'settings.gradle.kts'
@@ -13,6 +24,7 @@ on:
 
 jobs:
   build:
+    needs: worker-check
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -75,3 +87,17 @@ jobs:
           name: annapurna-customer-release-apk
           path: app/build/outputs/apk/release/app-release.apk
           retention-days: 14
+
+  worker-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Cloudflare Worker JavaScript syntax
+        run: node --input-type=module --check < razorpay-worker/src/index.js
+      - name: Run Cloudflare Worker tests
+        run: node --test razorpay-worker/test/*.test.js

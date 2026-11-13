@@ -9,16 +9,13 @@ import com.example.data.model.ProduceItem
 import com.example.data.model.WeightPricing
 import com.example.data.payment.RazorpayPaymentGateway
 import com.example.util.MarathiFormatters
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
 import java.util.UUID
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 data class CartLineItem(
     val produce: ProduceItem,
@@ -195,15 +192,14 @@ class StoreRepository(private val storeDao: StoreDao) {
             "orderId" to remoteOrder.id
         )
         if (paymentMethod == "COD") {
-            val batch = firestore.batch()
-            batch.set(remoteOrder, remoteOrderData)
-            batch.set(firestore.collection("orderTracking").document(trackingToken), trackingData)
-            // COD remains a customer-created pending order.
-            suspendCancellableCoroutine<Unit> { continuation ->
-                batch.commit()
-                    .addOnSuccessListener { if (continuation.isActive) continuation.resume(Unit) }
-                    .addOnFailureListener { error -> if (continuation.isActive) continuation.resumeWithException(error) }
-            }
+            // The trusted Worker reloads product prices and checks current stock before
+            // atomically writing the order and tracking record. Never trust client totals.
+            remoteOrderData.remove("createdAt")
+            val saved = RazorpayPaymentGateway.submitCodOrder(
+                order = remoteOrderData,
+                tracking = trackingData
+            )
+            check(saved) { "COD order could not be securely saved." }
         } else {
             require(paymentOrderId.isNotBlank() && paymentSignature.isNotBlank() && transactionId.isNotBlank()) {
                 "Verified Razorpay payment details are missing."

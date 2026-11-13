@@ -83,6 +83,7 @@
     <string name="cart_fresh_subtitle">Fresh produce picked for you</string>
     <string name="status_new_long">Order received • Waiting for shop confirmation</string>
     <string name="status_accepted_long">Order accepted • Confirmed by the shop</string>
+    <string name="status_picked_up_long">Delivery partner picked up your order</string>
     <string name="status_preparing_long">Your order is being packed</string>
     <string name="status_out_long">Out for delivery</string>
     <string name="status_completed_long">Your order has been delivered</string>
@@ -91,6 +92,7 @@
     <string name="status_updating_long">Order status is updating</string>
     <string name="status_new_short">Received</string>
     <string name="status_accepted_short">Accepted</string>
+    <string name="status_picked_up_short">Picked up</string>
     <string name="status_preparing_short">Packing</string>
     <string name="status_out_short">On the way</string>
     <string name="status_completed_short">Delivered</string>
