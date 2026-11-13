@@ -18,6 +18,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify Cloudflare API token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          code=$(curl -sS -o /tmp/cf-token-check.json -w "%{http_code}" https://api.cloudflare.com/client/v4/user/tokens/verify -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
+          if [ "$code" = "200" ] && grep -q '"success":true' /tmp/cf-token-check.json; then
+            echo "Cloudflare API token is VALID."
+          else
+            echo "Cloudflare API token verification failed (HTTP $code)."
+            cat /tmp/cf-token-check.json
+            exit 1
+          fi
+
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
