@@ -387,12 +387,12 @@ fun CartAndOrderScreen(
                 EmptyCartCard(onBrowseBazaar = onBackToBazaar)
             }
         } else {
-            items(cartItems, key = { it.produce.id }) { line ->
+            items(cartItems, key = { it.cartLineId }) { line ->
                 CartLineCard(
                     line = line,
-                    onIncrease = { onIncreaseQty(line.produce.id) },
-                    onDecrease = { onDecreaseQty(line.produce.id) },
-                    onRemove = { onRemoveItem(line.produce.id) }
+                    onIncrease = { onIncreaseQty(line.cartLineId) },
+                    onDecrease = { onDecreaseQty(line.cartLineId) },
+                    onRemove = { onRemoveItem(line.cartLineId) }
                 )
             }
 
@@ -697,7 +697,7 @@ private fun CartLineCard(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = Modifier.fillMaxWidth().testTag("cart_line_${line.produce.id}")
+        modifier = Modifier.fillMaxWidth().testTag("cart_line_${line.cartLineId}")
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(14.dp),
@@ -737,7 +737,7 @@ private fun CartLineCard(
                 }
                 IconButton(
                     onClick = onRemove,
-                    modifier = Modifier.testTag("cart_remove_${line.produce.id}")
+                    modifier = Modifier.testTag("cart_remove_${line.cartLineId}")
                 ) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
@@ -767,7 +767,7 @@ private fun CartLineCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
                             onClick = onDecrease,
-                            modifier = Modifier.size(38.dp).testTag("cart_minus_${line.produce.id}")
+                            modifier = Modifier.size(38.dp).testTag("cart_minus_${line.cartLineId}")
                         ) {
                             Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.cd_decrease_qty), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
@@ -779,7 +779,7 @@ private fun CartLineCard(
                         )
                         IconButton(
                             onClick = onIncrease,
-                            modifier = Modifier.size(38.dp).testTag("cart_plus_${line.produce.id}")
+                            modifier = Modifier.size(38.dp).testTag("cart_plus_${line.cartLineId}")
                         ) {
                             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_increase_qty), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
