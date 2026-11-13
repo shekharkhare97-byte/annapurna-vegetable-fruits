@@ -225,15 +225,21 @@ class StoreViewModel(
         viewModelScope.launch { repository.incrementQuantity(produceId) }
     }
 
-    fun decreaseQuantity(produceId: String) {
+    fun decreaseQuantity(cartLineId: String) {
         viewModelScope.launch {
-            repository.decrementItem(produceId)
+            repository.decrementItem(cartLineId)
         }
     }
 
-    fun removeFromCart(produceId: String) {
+    fun decreaseProductQuantity(produceId: String) {
         viewModelScope.launch {
-            repository.removeItem(produceId)
+            repository.decrementLatestItemForProduce(produceId)
+        }
+    }
+
+    fun removeFromCart(cartLineId: String) {
+        viewModelScope.launch {
+            repository.removeItem(cartLineId)
         }
     }
 
