@@ -25,6 +25,7 @@ data class CartLineItem(
     val quantity: Int,
     val weightGrams: Int
 ) {
+    val cartLineId: String get() = "${produce.id}-${weightGrams}"
     val lineTotalRupees: Double get() = if (produce.isPieceBased) produce.priceRupees * quantity else (WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity) / 100.0
 }
 
@@ -54,10 +55,12 @@ class StoreRepository(private val storeDao: StoreDao) {
     val recentOrders: Flow<List<OrderEntity>> = storeDao.observeAllOrders()
 
     suspend fun incrementItem(produceId: String, weightGrams: Int = 1000) {
-        val current = storeDao.getCartItem(produceId)
+        val cartLineId = "$produceId-$weightGrams"
+        val current = storeDao.getCartItem(cartLineId)
         val nextQty = (current?.quantity ?: 0) + 1
         storeDao.upsertCartItem(
             CartItemEntity(
+                cartLineId = cartLineId,
                 produceId = produceId,
                 quantity = nextQty,
                 weightGrams = weightGrams,
@@ -66,23 +69,28 @@ class StoreRepository(private val storeDao: StoreDao) {
         )
     }
 
-    suspend fun incrementQuantity(produceId: String) {
-        val current = storeDao.getCartItem(produceId) ?: return
+    suspend fun incrementQuantity(cartLineId: String) {
+        val current = storeDao.getCartItem(cartLineId) ?: return
         storeDao.upsertCartItem(current.copy(quantity = current.quantity + 1))
     }
 
-    suspend fun decrementItem(produceId: String) {
-        val current = storeDao.getCartItem(produceId) ?: return
+    suspend fun decrementItem(cartLineId: String) {
+        val current = storeDao.getCartItem(cartLineId) ?: return
         val nextQty = current.quantity - 1
         if (nextQty <= 0) {
-            storeDao.deleteCartItem(produceId)
+            storeDao.deleteCartItem(cartLineId)
         } else {
             storeDao.upsertCartItem(current.copy(quantity = nextQty))
         }
     }
 
-    suspend fun removeItem(produceId: String) {
-        storeDao.deleteCartItem(produceId)
+    suspend fun decrementLatestItemForProduce(produceId: String) {
+        val current = storeDao.getLatestCartItemForProduce(produceId) ?: return
+        decrementItem(current.cartLineId)
+    }
+
+    suspend fun removeItem(cartLineId: String) {
+        storeDao.deleteCartItem(cartLineId)
     }
 
     suspend fun clearCart() {
@@ -237,12 +245,14 @@ class StoreRepository(private val storeDao: StoreDao) {
                 val qty = parts[1].toIntOrNull() ?: 0
                 val grams = parts.getOrNull(2)?.toIntOrNull() ?: 1000
                 if (ProduceCatalog.findById(id) != null && qty > 0) {
-                    val existing = storeDao.getCartItem(id)
+                    val cartLineId = "$id-$grams"
+                    val existing = storeDao.getCartItem(cartLineId)
                     storeDao.upsertCartItem(
                         CartItemEntity(
+                            cartLineId = cartLineId,
                             produceId = id,
                             quantity = (existing?.quantity ?: 0) + qty,
-                            weightGrams = existing?.weightGrams ?: grams,
+                            weightGrams = grams,
                             addedAtMillis = existing?.addedAtMillis ?: System.currentTimeMillis()
                         )
                     )
