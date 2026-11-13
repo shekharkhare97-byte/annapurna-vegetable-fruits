@@ -115,7 +115,8 @@ test("COD aggregates repeated product lines into one atomic stock reservation", 
   assert.equal(response.status, 200);
   assert.equal(productReads, 1);
   assert.equal(committed.writes.length, 3);
-  assert.equal(committed.writes[2].update.fields.stock.doubleValue, 9);
+  const remainingStock = committed.writes[2].update.fields.stock;
+  assert.equal(Number(remainingStock.integerValue ?? remainingStock.doubleValue), 9);
 });
 
 test("COD reports a retry when Firestore detects a concurrent stock update", async () => {
