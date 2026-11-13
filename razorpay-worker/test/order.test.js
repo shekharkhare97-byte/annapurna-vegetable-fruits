@@ -37,6 +37,7 @@ function fixture() {
 
 function firestoreProduct(stock = 10) {
   return {
+    updateTime: "2026-11-13T00:00:00.000000Z",
     fields: {
       isVisible: { booleanValue: true },
       stock: { integerValue: String(stock) },
