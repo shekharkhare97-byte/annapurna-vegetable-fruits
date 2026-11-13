@@ -1,4 +1,5 @@
 name: Build Annapurna Android APK
+# Run worker validation and Android packaging for every stock reservation update
 
 on:
   workflow_dispatch:
