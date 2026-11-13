@@ -198,6 +198,7 @@ async function savePaidOrder(env, body, verified) {
       writes: [
         { update: { name: base + "/orders/" + orderId, fields: orderDocFields }, currentDocument: { exists: false } },
         { update: { name: base + "/orderTracking/" + token, fields: trackingFields }, currentDocument: { exists: false } },
+        ...stockUpdateWrites(validated.stockUpdates),
       ],
     }),
   });
@@ -227,6 +228,8 @@ async function loadVerifiedItems(base, accessToken, rawItems) {
     return { ok: false, status: 400, error: "Order items are invalid" };
   }
   const items = [];
+  const products = new Map();
+  const stockNeededByProduct = new Map();
   let itemsTotalRupees = 0;
   for (const raw of rawItems) {
     if (!raw || typeof raw !== "object") return { ok: false, status: 400, error: "An order item is invalid" };
@@ -238,14 +241,22 @@ async function loadVerifiedItems(base, accessToken, rawItems) {
         !Number.isSafeInteger(weightGrams) || weightGrams < 125 || weightGrams > 10000) {
       return { ok: false, status: 400, error: "Product quantity or weight is invalid" };
     }
-    const productResponse = await fetch(base + "/products/" + encodeURIComponent(productId), {
-      headers: { Authorization: "Bearer " + accessToken },
-    });
-    const productDoc = await productResponse.json().catch(() => ({}));
-    if (!productResponse.ok) return { ok: false, status: 409, error: "A selected product is no longer available" };
+    let productDoc = products.get(productId);
+    if (!productDoc) {
+      const productResponse = await fetch(base + "/products/" + encodeURIComponent(productId), {
+        headers: { Authorization: "Bearer " + accessToken },
+      });
+      productDoc = await productResponse.json().catch(() => ({}));
+      if (!productResponse.ok) return { ok: false, status: 409, error: "A selected product is no longer available" };
+      if (typeof productDoc.updateTime !== "string" || !productDoc.updateTime) {
+        return { ok: false, status: 409, error: "Product stock changed; please retry your order" };
+      }
+      products.set(productId, productDoc);
+    }
     const fields = productDoc.fields || {};
     const value = (key) => readFirestoreScalar(fields[key]);
-    if (value("isVisible") !== true || Number(value("stock") ?? 0) <= 0) {
+    const stock = Number(value("stock") ?? 0);
+    if (value("isVisible") !== true || stock <= 0) {
       return { ok: false, status: 409, error: "A selected product is out of stock" };
     }
     const rawUnit = String(value("unit") ?? "kg").trim().toLowerCase();
@@ -256,10 +267,7 @@ async function loadVerifiedItems(base, accessToken, rawItems) {
       return { ok: false, status: 409, error: "A product price is not configured correctly" };
     }
     const stockNeeded = isPiece ? quantity : (weightGrams * quantity) / 1000;
-    const stock = Number(value("stock") ?? 0);
-    if (stockNeeded > stock + 0.000001) {
-      return { ok: false, status: 409, error: "Insufficient stock for " + String(value("name") ?? "a selected product") };
-    }
+    stockNeededByProduct.set(productId, (stockNeededByProduct.get(productId) || 0) + stockNeeded);
     const lineTotal = isPiece ? price * quantity : price * weightGrams * quantity / 1000;
     const productName = String(value("nameMr") ?? value("marathiName") ?? value("name") ?? "प्रॉडक्ट");
     items.push({
@@ -278,11 +286,38 @@ async function loadVerifiedItems(base, accessToken, rawItems) {
     });
     itemsTotalRupees += Math.round(lineTotal * 100) / 100;
   }
+  const stockUpdates = [];
+  for (const [productId, stockNeeded] of stockNeededByProduct) {
+    const doc = products.get(productId);
+    const stockField = doc.fields.stock;
+    const stock = Number(readFirestoreScalar(stockField) ?? 0);
+    if (stockNeeded > stock + 0.000001) {
+      const productName = readFirestoreScalar(doc.fields.name) || "a selected product";
+      return { ok: false, status: 409, error: "Insufficient stock for " + productName };
+    }
+    const remaining = Math.max(0, stock - stockNeeded);
+    const stockValue = stockField && "integerValue" in stockField && Number.isInteger(remaining)
+      ? { integerValue: String(remaining) }
+      : { doubleValue: remaining };
+    stockUpdates.push({
+      name: base + "/products/" + productId,
+      updateTime: doc.updateTime,
+      stockValue,
+    });
+  }
   itemsTotalRupees = Math.round(itemsTotalRupees * 100) / 100;
   const summary = items.map((item) =>
     "• " + item.nameMr + " (" + (item.isPieceBased ? item.quantity + " " + item.unit : item.weightGrams * item.quantity + " g") + ") = ₹" + item.lineTotalRupees.toFixed(2)
   ).join("\n");
-  return { ok: true, items, itemsTotalRupees, summary };
+  return { ok: true, items, itemsTotalRupees, summary, stockUpdates };
+}
+
+function stockUpdateWrites(stockUpdates) {
+  return stockUpdates.map((item) => ({
+    update: { name: item.name, fields: { stock: item.stockValue } },
+    updateMask: { fieldPaths: ["stock"] },
+    currentDocument: { updateTime: item.updateTime },
+  }));
 }
 
 async function submitCodOrder(env, body) {
@@ -317,60 +352,11 @@ async function submitCodOrder(env, body) {
 
   const { token: accessToken, projectId } = await getFirebaseAccessToken(env);
   const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
-  const verifiedItems = [];
-  let itemsTotal = 0;
-  for (const raw of order.items) {
-    if (!raw || typeof raw !== "object") return { ok: false, status: 400, error: "An order item is invalid" };
-    const productId = typeof raw.productId === "string" ? raw.productId : "";
-    const quantity = Number(raw.quantity);
-    const weightGrams = Number(raw.weightGrams ?? 1000);
-    if (!/^[A-Za-z0-9_-]{1,150}$/.test(productId) ||
-        !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100 ||
-        !Number.isSafeInteger(weightGrams) || weightGrams < 125 || weightGrams > 10000) {
-      return { ok: false, status: 400, error: "Product quantity or weight is invalid" };
-    }
-    const productResponse = await fetch(base + "/products/" + encodeURIComponent(productId), {
-      headers: { Authorization: "Bearer " + accessToken },
-    });
-    const productDoc = await productResponse.json().catch(() => ({}));
-    if (!productResponse.ok) return { ok: false, status: 409, error: "A selected product is no longer available" };
-    const fields = productDoc.fields || {};
-    const value = (key) => readFirestoreScalar(fields[key]);
-    if (value("isVisible") !== true || Number(value("stock") ?? 0) <= 0) {
-      return { ok: false, status: 409, error: "A selected product is out of stock" };
-    }
-    const rawUnit = String(value("unit") ?? "kg").trim().toLowerCase();
-    const isBunch = rawUnit === "bunch" || rawUnit === "bunches" || rawUnit.includes("जुडी") || rawUnit.includes("जोडी");
-    const isPiece = isBunch || ["piece", "pieces", "nos", "pcs", "नग"].includes(rawUnit);
-    const price = Number(value(isPiece ? "pricePerPiece" : "pricePerKg") ?? value("price"));
-    if (!Number.isFinite(price) || price < 0 || price > 100000) {
-      return { ok: false, status: 409, error: "A product price is not configured correctly" };
-    }
-    const stockNeeded = isPiece ? quantity : (weightGrams * quantity) / 1000;
-    const stock = Number(value("stock") ?? 0);
-    if (stockNeeded > stock + 0.000001) {
-      return { ok: false, status: 409, error: "Insufficient stock for " + String(value("name") ?? "a selected product") };
-    }
-    const lineTotal = isPiece ? price * quantity : price * weightGrams * quantity / 1000;
-    const productName = String(value("nameMr") ?? value("marathiName") ?? value("name") ?? "प्रॉडक्ट");
-    const line = {
-      productId,
-      name: String(value("name") ?? productName),
-      nameMr: productName,
-      nameHi: String(value("nameHi") ?? value("hindiName") ?? ""),
-      nameEn: String(value("nameEn") ?? value("englishName") ?? ""),
-      weightGrams,
-      quantity,
-      pricePerKgRupees: isPiece ? 0 : price,
-      pricePerPieceRupees: isPiece ? price : 0,
-      unit: rawUnit,
-      isPieceBased: isPiece,
-      lineTotalRupees: Math.round(lineTotal * 100) / 100,
-    };
-    itemsTotal += line.lineTotalRupees;
-    verifiedItems.push(line);
-  }
-  itemsTotal = Math.round(itemsTotal * 100) / 100;
+  const validated = await loadVerifiedItems(base, accessToken, order.items);
+  if (!validated.ok) return validated;
+  const verifiedItems = validated.items;
+  const itemsTotal = validated.itemsTotalRupees;
+  const summary = validated.summary;
   const total = Math.round((itemsTotal + deliveryCharge + deliveryTip) * 100) / 100;
   const summary = verifiedItems.map((item) =>
     "• " + item.nameMr + " (" + (item.isPieceBased ? item.quantity + " " + item.unit : item.weightGrams * item.quantity + " g") + ") = ₹" + item.lineTotalRupees.toFixed(2)
@@ -399,6 +385,7 @@ async function submitCodOrder(env, body) {
     body: JSON.stringify({ writes: [
       { update: { name: base + "/orders/" + orderId, fields: orderDocFields }, currentDocument: { exists: false } },
       { update: { name: base + "/orderTracking/" + token, fields: trackingFields }, currentDocument: { exists: false } },
+      ...stockUpdateWrites(validated.stockUpdates),
     ] }),
   });
   const result = await commitResponse.json().catch(() => ({}));
