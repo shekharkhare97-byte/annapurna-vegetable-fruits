@@ -84,6 +84,10 @@ test("COD accepts a valid 10-digit mobile and saves a server-priced order", asyn
   assert.equal(saved.totalAmountRupees.integerValue, "70");
   assert.match(saved.itemsSummaryMarathi.stringValue, /टोमॅटो/);
   assert.ok(saved.itemsSummaryMarathi.stringValue.includes("\n"));
+  assert.equal(committed.writes.length, 3);
+  assert.equal(committed.writes[2].update.name, "https://firestore.googleapis.com/v1/projects/annapurna-vegetables-and-78cef/databases/(default)/documents/products/tomato-1");
+  assert.equal(committed.writes[2].update.fields.stock.doubleValue, 9.5);
+  assert.equal(committed.writes[2].currentDocument.updateTime, "2026-11-13T00:00:00.000000Z");
 });
 
 test("COD rejects an invalid mobile before contacting Firebase", async () => {
@@ -176,6 +180,9 @@ test("paid order is saved only when current catalog prices match the captured pa
   assert.equal(result.saved, true);
   assert.equal(committed.writes[0].update.fields.totalAmountRupees.integerValue, "70");
   assert.equal(committed.writes[0].update.fields.items.arrayValue.values[0].mapValue.fields.lineTotalRupees.integerValue, "50");
+  assert.equal(committed.writes.length, 3);
+  assert.equal(committed.writes[2].update.fields.stock.doubleValue, 9.5);
+  assert.equal(committed.writes[2].currentDocument.updateTime, "2026-11-13T00:00:00.000000Z");
 });
 
 test("paid order is rejected when the client total differs from current catalog pricing", async () => {
