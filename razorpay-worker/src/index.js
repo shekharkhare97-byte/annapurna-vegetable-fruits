@@ -204,7 +204,7 @@ async function savePaidOrder(env, body, verified) {
   });
   const result = await commitResponse.json().catch(() => ({}));
   if (!commitResponse.ok) {
-    if (commitResponse.status === 409 || result.error?.status === "ALREADY_EXISTS") {
+    if (commitResponse.status === 409 || result.error?.status === "ALREADY_EXISTS" || result.error?.status === "FAILED_PRECONDITION") {
       return { ok: false, status: 409, error: "This order was already submitted" };
     }
     return { ok: false, status: 502, error: "Firebase could not save the paid order" };
