@@ -106,7 +106,7 @@ fun BazaarHomeScreen(
     modifier: Modifier = Modifier
 ) {
     val qtyMap = remember(cartItems) {
-        cartItems.associate { it.produce.id to it.quantity }
+        cartItems.groupBy { it.produce.id }.mapValues { (_, lines) -> lines.sumOf { it.quantity } }
     }
     val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
