@@ -118,21 +118,43 @@ object RazorpayPaymentGateway {
             .put("amount", amountPaise)
             .put("order", JSONObject(order))
             .put("tracking", JSONObject(tracking))
-        val request = Request.Builder()
-            .url("$BASE_URL/submit-paid-order")
-            .post(payload.toString().toRequestBody(jsonMediaType))
-            .build()
-        val response = client.newCall(request).execute()
-        response.use {
-            val body = it.body?.string().orEmpty()
-            val data = runCatching { JSONObject(body) }.getOrElse {
-                throw IOException("Order server returned an invalid response.")
+
+        var lastError: IOException? = null
+        // The Worker makes duplicate submissions idempotent for the same captured payment.
+        // Retry only transient network/server failures; never retry validation or payment errors.
+        repeat(3) { attempt ->
+            try {
+                val request = Request.Builder()
+                    .url("$BASE_URL/submit-paid-order")
+                    .post(payload.toString().toRequestBody(jsonMediaType))
+                    .build()
+                val response = client.newCall(request).execute()
+                response.use {
+                    val body = it.body?.string().orEmpty()
+                    val data = runCatching { JSONObject(body) }.getOrElse {
+                        throw IOException("Order server returned an invalid response.")
+                    }
+                    if (!it.isSuccessful) {
+                        val message = data.optString("error").ifBlank { "Verified payment order could not be saved." }
+                        if ((it.code >= 500 || it.code == 408 || it.code == 429) && attempt < 2) {
+                            lastError = IOException(message)
+                        } else {
+                            throw IOException(message)
+                        }
+                    } else {
+                        if (!data.optBoolean("verified", false) || !data.optBoolean("saved", false)) {
+                            throw IOException(data.optString("error").ifBlank { "Verified payment order could not be saved." })
+                        }
+                        return@withContext true
+                    }
+                }
+            } catch (error: IOException) {
+                if (attempt >= 2) throw error
+                lastError = error
             }
-            if (!it.isSuccessful || !data.optBoolean("saved", false)) {
-                throw IOException(data.optString("error").ifBlank { "Verified payment order could not be saved." })
-            }
-            data.optBoolean("verified", false)
+            delay(1500L * (attempt + 1))
         }
+        throw lastError ?: IOException("Order could not be saved. Please contact support before making another payment.")
     }
 
 }
