@@ -18,6 +18,18 @@ This Cloudflare Worker keeps the Razorpay Key Secret off the Android app.
    - `FIREBASE_SERVICE_ACCOUNT_JSON` — the full Firebase service-account JSON contents for project `annapurna-vegetables-and-78cef`, stored as a Worker Secret. Never commit or share this file.
 4. Deploy the Worker and test `/health`. Save the Worker URL for the Android app configuration.
 
+### GitHub Actions deployment (manual)
+
+A manual workflow is available at **Actions → Deploy Annapurna Razorpay Worker → Run workflow**. Before running it, add these repository Actions secrets under **Settings → Secrets and variables → Actions**:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN` (with permission to edit/deploy Workers)
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `FIREBASE_SERVICE_ACCOUNT_JSON` (the complete service-account JSON for project `annapurna-vegetables-and-78cef`)
+
+The workflow is manual-only; it will not deploy on every code push. Never paste secret values into chat, source files, or commits.
+
 ## Important
 - Use Razorpay Test Mode first, complete a full payment and signature-verification test, then configure Live keys.
 - The app must only mark an online order as paid after `/verify-payment` returns `verified: true`.
