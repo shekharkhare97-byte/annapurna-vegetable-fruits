@@ -234,6 +234,98 @@ async function savePaidOrder(env, body, verified) {
   return { ok: true };
 }
 
+
+/**
+ * One-time, read-only support check for the two payment IDs reported by the
+ * store owner. It returns payment state and whether the matching Firestore
+ * order/tracking documents exist; it never returns customer information.
+ */
+async function checkReportedPayments(env) {
+  const paymentIds = [
+    "pay_TzkM606OnSK9LH",
+    "pay_TzhjzEgaeXhOzU",
+  ];
+  const auth = btoa(env.RAZORPAY_KEY_ID + ":" + env.RAZORPAY_KEY_SECRET);
+  const { token, projectId } = await getFirebaseAccessToken(env);
+  const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
+  const results = [];
+
+  for (const paymentId of paymentIds) {
+    const paymentResponse = await fetch("https://api.razorpay.com/v1/payments/" + encodeURIComponent(paymentId), {
+      headers: { Authorization: "Basic " + auth },
+    });
+    const payment = await paymentResponse.json().catch(() => ({}));
+    if (!paymentResponse.ok) {
+      results.push({ paymentId, razorpayFound: false, razorpayHttpStatus: paymentResponse.status });
+      continue;
+    }
+
+    const queryResponse = await fetch(base + ":runQuery", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "orders" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "transactionId" },
+              op: "EQUAL",
+              value: { stringValue: paymentId },
+            },
+          },
+          limit: 2,
+        },
+      }),
+    });
+    const queryResult = await queryResponse.json().catch(() => ({}));
+    if (!queryResponse.ok) {
+      results.push({
+        paymentId,
+        razorpayFound: true,
+        paymentStatus: payment.status || "unknown",
+        captured: payment.captured === true,
+        amountPaise: payment.amount ?? null,
+        currency: payment.currency ?? null,
+        firestoreCheck: false,
+        firestoreHttpStatus: queryResponse.status,
+      });
+      continue;
+    }
+
+    const orderDoc = Array.isArray(queryResult)
+      ? queryResult.find((entry) => entry.document)?.document
+      : null;
+    let trackingSaved = false;
+    let orderId = null;
+    if (orderDoc) {
+      const fields = orderDoc.fields || {};
+      orderId = fields.orderId?.stringValue || orderDoc.name?.split("/").pop() || null;
+      const trackingToken = fields.trackingToken?.stringValue;
+      if (trackingToken) {
+        const trackingResponse = await fetch(base + "/orderTracking/" + encodeURIComponent(trackingToken), {
+          headers: { Authorization: "Bearer " + token },
+        });
+        trackingSaved = trackingResponse.ok;
+      }
+    }
+
+    results.push({
+      paymentId,
+      razorpayFound: true,
+      paymentStatus: payment.status || "unknown",
+      captured: payment.captured === true,
+      amountPaise: payment.amount ?? null,
+      currency: payment.currency ?? null,
+      razorpayOrderId: payment.order_id ?? null,
+      firestoreCheck: true,
+      orderSaved: !!orderDoc,
+      orderId,
+      trackingSaved,
+    });
+  }
+  return results;
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -242,6 +334,17 @@ export default {
       return json({ ok: true, service: "annapurna-razorpay" });
     }
     if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) return json({ error: "Payment service is not configured" }, 503);
+
+    if (request.method === "GET" && url.pathname === "/support/payment-check") {
+      try {
+        const results = await checkReportedPayments(env);
+        return json({ ok: true, readOnly: true, results });
+      } catch (error) {
+        console.error("support-payment-check-failed", error?.message || "unknown");
+        return json({ ok: false, error: "Payment/Firebase diagnostic failed. Check Worker runtime secrets and Firebase service-account permissions." }, 502);
+      }
+    }
+
     if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
     let body;
