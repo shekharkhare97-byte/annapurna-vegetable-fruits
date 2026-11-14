@@ -371,17 +371,36 @@ export default {
     }
 
     if (url.pathname === "/verify-payment" || url.pathname === "/submit-paid-order") {
+      const requestId = crypto.randomUUID();
+      let stage = "request_received";
+      console.log("payment-request-received", { requestId, route: url.pathname });
       try {
+        stage = "razorpay_verification";
         const verified = await verifyCapturedPayment(env, body);
-        if (!verified.ok) return json({ verified: false, error: verified.error }, verified.status);
+        if (!verified.ok) {
+          console.warn("payment-request-rejected", { requestId, stage, status: verified.status, reason: verified.error });
+          return json({ verified: false, error: verified.error, request_id: requestId }, verified.status);
+        }
         if (url.pathname === "/verify-payment") {
+          console.log("payment-verification-succeeded", { requestId });
           return json({ verified: true, order_id: verified.orderId, payment_id: verified.paymentId, amount: verified.amount, currency: "INR", status: "captured" });
         }
+        stage = "firestore_order_save";
         const saved = await savePaidOrder(env, body, verified);
-        if (!saved.ok) return json({ verified: false, error: saved.error }, saved.status);
-        return json({ verified: true, saved: true, order_id: body.order.orderId, payment_id: verified.paymentId });
+        if (!saved.ok) {
+          console.warn("paid-order-save-rejected", { requestId, stage, status: saved.status, reason: saved.error });
+          return json({ verified: false, error: saved.error, request_id: requestId }, saved.status);
+        }
+        console.log("paid-order-save-succeeded", { requestId, alreadySaved: saved.alreadySaved === true });
+        return json({ verified: true, saved: true, order_id: body.order.orderId, payment_id: verified.paymentId, request_id: requestId });
       } catch (error) {
-        return json({ verified: false, error: error?.message || "Payment processing failed" }, 500);
+        console.error("payment-request-failed", {
+          requestId,
+          stage,
+          errorName: error?.name || "Error",
+          errorMessage: String(error?.message || "Payment processing failed").slice(0, 240),
+        });
+        return json({ verified: false, error: "Payment processing failed. Contact support before retrying.", request_id: requestId }, 500);
       }
     }
     return json({ error: "Not found" }, 404);
