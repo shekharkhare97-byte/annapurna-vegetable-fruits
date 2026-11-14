@@ -290,26 +290,19 @@ fun CartAndOrderScreen(
                     } else {
                         coroutineScope.launch {
                             try {
-                                val verified = RazorpayPaymentGateway.verifyPayment(
-                                    orderId = created.orderId,
-                                    paymentId = paymentId,
-                                    signature = signature,
-                                    amountPaise = amountPaise
+                                // Submit once to the trusted Worker. /submit-paid-order verifies the
+                                // Razorpay signature, confirms/captures the payment, and saves the
+                                // order + tracking record together. A separate /verify-payment call
+                                // could capture money and then leave no order if the app closes
+                                // before the second request.
+                                onSubmitOrder(
+                                    deliveryLatitude, deliveryLongitude, deliveryCharge!!,
+                                    deliveryDistanceKm, paymentMethod, paymentId, deliveryTipAmount, created.orderId, signature
                                 )
                                 paymentInProgress = false
-                                if (verified) {
-                                    onSubmitOrder(
-                                        deliveryLatitude, deliveryLongitude, deliveryCharge!!,
-                                        deliveryDistanceKm, paymentMethod, paymentId, deliveryTipAmount, created.orderId, signature
-                                    )
-                                } else {
-                                    paymentError = context.getString(R.string.payment_server_verification_failed)
-                                }
-                            } catch (verificationError: Exception) {
+                            } catch (submissionError: Exception) {
                                 paymentInProgress = false
-                                // Keep the trusted server's diagnostic visible. This is especially
-                                // important when Razorpay has captured money but order saving fails.
-                                val detail = verificationError.message?.takeIf { it.isNotBlank() }
+                                val detail = submissionError.message?.takeIf { it.isNotBlank() }
                                 paymentError = if (detail != null) {
                                     context.getString(R.string.payment_verification_failed) + "\n" + detail
                                 } else {
