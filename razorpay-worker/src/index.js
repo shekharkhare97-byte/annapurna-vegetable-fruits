@@ -333,6 +333,31 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, service: "annapurna-razorpay" });
     }
+    // Read-only diagnostic: validates Razorpay credentials without creating a payment/order.
+    if (request.method === "GET" && url.pathname === "/support/config-check") {
+      if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+        return json({ ok: false, configured: false, error: "Razorpay credentials are missing" }, 503);
+      }
+      const keyId = String(env.RAZORPAY_KEY_ID);
+      const mode = keyId.startsWith("rzp_test_") ? "test" : keyId.startsWith("rzp_live_") ? "live" : "unknown";
+      try {
+        const auth = btoa(keyId + ":" + env.RAZORPAY_KEY_SECRET);
+        const check = await fetch("https://api.razorpay.com/v1/orders?count=1", {
+          headers: { Authorization: "Basic " + auth },
+        });
+        const payload = await check.json().catch(() => ({}));
+        return json({
+          ok: check.ok,
+          configured: true,
+          mode,
+          keyPrefix: keyId.slice(0, 12),
+          credentialsAccepted: check.ok,
+          error: check.ok ? null : (payload.error?.description || "Razorpay rejected the configured credentials"),
+        }, check.ok ? 200 : 502);
+      } catch (error) {
+        return json({ ok: false, configured: true, mode, keyPrefix: keyId.slice(0, 12), error: "Could not reach Razorpay API" }, 502);
+      }
+    }
     if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) return json({ error: "Payment service is not configured" }, 503);
 
     if (request.method === "GET" && url.pathname === "/support/payment-check") {
@@ -355,19 +380,22 @@ export default {
       if (!Number.isSafeInteger(amount) || amount < 100 || amount > 50000000) return json({ error: "Amount must be between 100 and 50000000 paise" }, 400);
       const receipt = typeof body.receipt === "string" ? body.receipt.slice(0, 40) : "ann-" + Date.now();
       const auth = btoa(env.RAZORPAY_KEY_ID + ":" + env.RAZORPAY_KEY_SECRET);
-      const response = await fetch("https://api.razorpay.com/v1/orders", {
-        method: "POST",
-        headers: { Authorization: "Basic " + auth, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount,
-          currency: "INR",
-          receipt,
-          payment: { capture: "automatic" },
-        }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) return json({ error: "Razorpay could not create the order", details: result.error?.description || "Please try again" }, 502);
-      return json({ order_id: result.id, amount: result.amount, currency: result.currency, key_id: env.RAZORPAY_KEY_ID });
+      try {
+        const response = await fetch("https://api.razorpay.com/v1/orders", {
+          method: "POST",
+          headers: { Authorization: "Basic " + auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ amount, currency: "INR", receipt }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          console.error("razorpay-create-order-rejected", { status: response.status, code: result.error?.code, description: result.error?.description });
+          return json({ error: "Razorpay could not create the order", details: result.error?.description || "Please try again", code: result.error?.code || null }, 502);
+        }
+        return json({ order_id: result.id, amount: result.amount, currency: result.currency, key_id: env.RAZORPAY_KEY_ID });
+      } catch (error) {
+        console.error("razorpay-create-order-network-error", String(error?.message || error));
+        return json({ error: "Could not connect to Razorpay. Please try again.", details: "Razorpay API network request failed." }, 502);
+      }
     }
 
     if (url.pathname === "/verify-payment" || url.pathname === "/submit-paid-order") {
