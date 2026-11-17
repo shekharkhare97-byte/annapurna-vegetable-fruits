@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.data.local.OrderEntity
 import com.example.ui.viewmodel.CustomerFormState
@@ -57,6 +61,7 @@ fun CustomerProfileScreen(
     modifier: Modifier = Modifier
 ) {
     var editing by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     LaunchedEffect(formState.customerName, formState.mobileNumber, formState.deliveryAddress) {
         if (formState.customerName.isNotBlank() && formState.mobileNumber.isNotBlank()) editing = false
     }
@@ -118,6 +123,9 @@ fun CustomerProfileScreen(
                         when (trackingStatus) {
                             "new" -> "ऑर्डर मिळाली आहे. दुकानाकडून पुष्टीची प्रतीक्षा आहे."
                             "accepted" -> "दुकानाने ऑर्डर स्वीकारली आहे."
+                            "preparing" -> "तुमची ऑर्डर निवडून पॅक केली जात आहे."
+                            "ready_for_pickup" -> "ऑर्डर तयार आहे. डिलिव्हरी पार्टनर येत आहे."
+                            "claimed_pending_shop_otp" -> "डिलिव्हरी पार्टनरने ऑर्डर घेतली आहे."
                             "out_for_delivery" -> "तुमची ऑर्डर डिलिव्हरीसाठी निघाली आहे."
                             "completed" -> "ऑर्डर यशस्वीपणे पोहोचवली आहे."
                             "cancelled" -> "ही ऑर्डर रद्द झाली आहे."
@@ -126,7 +134,16 @@ fun CustomerProfileScreen(
                         }
                     )
                     if (trackingLocation.isNotBlank()) {
-                        Text("डिलिव्हरी पार्टनरचे लोकेशन: $trackingLocation", fontWeight = FontWeight.SemiBold)
+                        val coordinates = trackingLocation.split(",")
+                        Text("डिलिव्हरी पार्टनरचे Live लोकेशन उपलब्ध आहे.", fontWeight = FontWeight.SemiBold)
+                        if (coordinates.size == 2) {
+                            Button(onClick = {
+                                val mapUri = Uri.parse("geo:" + coordinates[0] + "," + coordinates[1] + "?q=" + coordinates[0] + "," + coordinates[1])
+                                context.startActivity(Intent(Intent.ACTION_VIEW, mapUri))
+                            }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Google Maps वर लोकेशन पहा")
+                            }
+                        }
                     }
                 }
             }
