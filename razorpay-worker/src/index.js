@@ -216,6 +216,20 @@ async function completeDelivery(env, request, body) {
       !["picked_up", "out_for_delivery"].includes(order.deliveryState)) {
     return json({ ok: false, error: "This order is not assigned to your account" }, 403);
   }
+  if (typeof order.trackingToken !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(order.trackingToken)) {
+    return json({ ok: false, error: "Order tracking record is invalid" }, 409);
+  }
+
+  // The Worker uses service-account access, which bypasses Firestore rules.
+  // Re-check the shop pickup OTP here so a direct API call cannot mark an
+  // order delivered before the shop has verified the 8-digit pickup code.
+  const pickupOtpDoc = await firestoreGetDocument(env, "pickupOtps/" + encodeURIComponent(orderId));
+  if (!pickupOtpDoc.exists) return json({ ok: false, error: "Shop pickup OTP has not been verified" }, 409);
+  const pickupOtp = firestoreDocumentData(pickupOtpDoc.data);
+  if (pickupOtp.verified !== true || pickupOtp.partnerUid !== partnerUid) {
+    return json({ ok: false, error: "Shop pickup OTP verification is required before delivery completion" }, 403);
+  }
 
   const { token, projectId } = await getFirebaseAccessToken(env);
   const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
