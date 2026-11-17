@@ -30,6 +30,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +63,9 @@ fun CustomerProfileScreen(
 ) {
     var editing by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val addressPrefs = remember { context.getSharedPreferences("annapurna_saved_addresses", android.content.Context.MODE_PRIVATE) }
+    var savedAddresses by remember { mutableStateOf(addressPrefs.getStringSet("items", emptySet())?.toList().orEmpty()) }
+    var addressDraft by remember { mutableStateOf("") }
     LaunchedEffect(formState.customerName, formState.mobileNumber, formState.deliveryAddress) {
         if (formState.customerName.isNotBlank() && formState.mobileNumber.isNotBlank()) editing = false
     }
@@ -172,13 +176,39 @@ fun CustomerProfileScreen(
         item {
             Card {
                 Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ProfileShortcut(Icons.Outlined.AddLocationAlt, "पत्ते व्यवस्थापन", "डिलिव्हरीसाठी तुमचा मुख्य पत्ता")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.AddLocationAlt, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
+                        Text("  माझे सेव्ह केलेले पत्ते", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                    savedAddresses.forEach { address ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(address, style = MaterialTheme.typography.bodyMedium)
+                                Text("ऑर्डरसाठी हा पत्ता वापरा", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            OutlinedButton(onClick = { onAddressChange(address) }) { Text("निवडा") }
+                        }
+                        HorizontalDivider()
+                    }
+                    OutlinedTextField(value = addressDraft, onValueChange = { addressDraft = it }, label = { Text("नवीन घर / ऑफिस पत्ता") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                    Button(
+                        onClick = {
+                            val value = addressDraft.trim()
+                            if (value.isNotEmpty() && value !in savedAddresses) {
+                                savedAddresses = (savedAddresses + value).takeLast(5)
+                                addressPrefs.edit().putStringSet("items", savedAddresses.toSet()).apply()
+                                addressDraft = ""
+                            }
+                        },
+                        enabled = addressDraft.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("पत्ता सेव्ह करा") }
                     HorizontalDivider()
                     ProfileShortcut(Icons.Outlined.FavoriteBorder, "आवडती उत्पादने", "आवडते पदार्थ लवकर शोधा")
                     HorizontalDivider()
-                    ProfileShortcut(Icons.Outlined.CardGiftcard, "कूपन आणि ऑफर्स", "उपलब्ध सवलती आणि ऑफर्स")
+                    ProfileShortcut(Icons.Outlined.CardGiftcard, "कूपन आणि ऑफर्स", "सध्या उपलब्ध ऑफर्स कार्टमध्ये तपासा")
                     HorizontalDivider()
-                    ProfileShortcut(Icons.Outlined.HelpOutline, "मदत आणि ग्राहक सेवा", "ऑर्डर किंवा पेमेंटसाठी मदत")
+                    ProfileShortcut(Icons.Outlined.HelpOutline, "मदत आणि ग्राहक सेवा", "मदतीसाठी संपर्क पर्याय लवकरच जोडला जाईल")
                 }
             }
         }
