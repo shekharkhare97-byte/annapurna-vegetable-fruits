@@ -96,6 +96,163 @@ function firestoreFields(object) {
   return fields;
 }
 
+
+async function firestoreGetDocument(env, path) {
+  const { token, projectId } = await getFirebaseAccessToken(env);
+  const url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/" + path;
+  const response = await fetch(url, { headers: { Authorization: "Bearer " + token } });
+  if (response.status === 404) return { exists: false };
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("Firestore document read failed");
+  return { exists: true, data, updateTime: data.updateTime, token, projectId };
+}
+
+function fromFirestoreValue(value) {
+  if (!value) return null;
+  if (value.stringValue !== undefined) return value.stringValue;
+  if (value.integerValue !== undefined) return Number(value.integerValue);
+  if (value.doubleValue !== undefined) return Number(value.doubleValue);
+  if (value.booleanValue !== undefined) return value.booleanValue;
+  if (value.timestampValue !== undefined) return value.timestampValue;
+  return null;
+}
+
+function firestoreDocumentData(document) {
+  const result = {};
+  for (const [key, value] of Object.entries(document?.fields || {})) result[key] = fromFirestoreValue(value);
+  return result;
+}
+
+async function writeFirestoreDocument(env, path, fields) {
+  const { token, projectId } = await getFirebaseAccessToken(env);
+  const url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/" + path;
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: firestoreFields(fields) }),
+  });
+  if (!response.ok) throw new Error("Firestore OTP save failed");
+  return response.json();
+}
+
+async function verifyFirebaseIdToken(idToken) {
+  if (typeof idToken !== "string" || idToken.length < 100 || idToken.length > 5000) return null;
+  const response = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken));
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.aud !== "annapurna-vegetables-and-78cef" ||
+      typeof payload.user_id !== "string" || !payload.user_id) return null;
+  return payload.user_id;
+}
+
+async function issueCustomerDeliveryOtp(env, body) {
+  const trackingToken = body?.trackingToken;
+  if (typeof trackingToken !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trackingToken)) {
+    return json({ ok: false, error: "Invalid tracking token" }, 400);
+  }
+  const orderDoc = await firestoreGetDocument(env, "orders/" + encodeURIComponent(body.orderId || ""));
+  if (!orderDoc.exists) return json({ ok: false, error: "Order not found" }, 404);
+  const order = firestoreDocumentData(orderDoc.data);
+  if (order.trackingToken !== trackingToken || !order.deliveryPartnerUid ||
+      !["picked_up", "out_for_delivery"].includes(order.deliveryState)) {
+    return json({ ok: false, error: "Delivery OTP is not available for this order yet" }, 409);
+  }
+  const otp = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  await writeFirestoreDocument(env, "deliveryOtps/" + encodeURIComponent(body.orderId), {
+    otp,
+    partnerUid: order.deliveryPartnerUid,
+    trackingToken,
+    attempts: 0,
+    expiresAt,
+    createdAt: new Date().toISOString(),
+  });
+  return json({ ok: true, otp, expiresAt });
+}
+
+async function verifyDeliveryOtp(env, request, body) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const partnerUid = await verifyFirebaseIdToken(idToken);
+  if (!partnerUid) return json({ ok: false, error: "Delivery partner authentication required" }, 401);
+  const orderId = body?.orderId;
+  const code = body?.otp;
+  if (typeof orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(orderId) ||
+      typeof code !== "string" || !/^\d{6}$/.test(code)) {
+    return json({ ok: false, error: "Order ID and six-digit OTP are required" }, 400);
+  }
+  const orderDoc = await firestoreGetDocument(env, "orders/" + encodeURIComponent(orderId));
+  if (!orderDoc.exists) return json({ ok: false, error: "Order not found" }, 404);
+  const order = firestoreDocumentData(orderDoc.data);
+  if (order.deliveryPartnerUid !== partnerUid ||
+      !["picked_up", "out_for_delivery"].includes(order.deliveryState)) {
+    return json({ ok: false, error: "This order is not assigned to your account" }, 403);
+  }
+  const otpDoc = await firestoreGetDocument(env, "deliveryOtps/" + encodeURIComponent(orderId));
+  if (!otpDoc.exists) return json({ ok: false, error: "Ask the customer to generate a fresh delivery OTP" }, 409);
+  const otpData = firestoreDocumentData(otpDoc.data);
+  if (otpData.partnerUid !== partnerUid || otpData.trackingToken !== order.trackingToken) {
+    return json({ ok: false, error: "OTP does not belong to this delivery" }, 403);
+  }
+  if (!otpData.expiresAt || Date.parse(otpData.expiresAt) <= Date.now()) {
+    return json({ ok: false, error: "Delivery OTP expired. Ask the customer for a new one." }, 410);
+  }
+  if (Number(otpData.attempts || 0) >= 5) return json({ ok: false, error: "Too many attempts. Ask the customer to generate a new OTP." }, 429);
+  if (otpData.otp !== code) {
+    await writeFirestoreDocument(env, "deliveryOtps/" + encodeURIComponent(orderId), {
+      ...otpData, attempts: Number(otpData.attempts || 0) + 1,
+    });
+    return json({ ok: false, error: "Incorrect delivery OTP" }, 400);
+  }
+
+  const { token, projectId } = await getFirebaseAccessToken(env);
+  const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
+  const trackingPath = "orderTracking/" + encodeURIComponent(order.trackingToken);
+  const trackingDoc = await firestoreGetDocument(env, trackingPath);
+  if (!trackingDoc.exists) return json({ ok: false, error: "Tracking record not found" }, 409);
+  const now = new Date().toISOString();
+  const writes = [
+    {
+      update: {
+        name: base + "/orders/" + orderId,
+        fields: firestoreFields({
+          ...order,
+          deliveryState: "delivered",
+          status: "completed",
+          deliveryDeliveredAt: { __firestoreTimestamp: now },
+          deliveryLocationSharing: false,
+        }),
+      },
+      updateMask: { fieldPaths: ["deliveryState", "status", "deliveryDeliveredAt", "deliveryLocationSharing"] },
+      currentDocument: { updateTime: orderDoc.updateTime },
+    },
+    {
+      update: {
+        name: base + "/" + trackingPath,
+        fields: firestoreFields({
+          ...firestoreDocumentData(trackingDoc.data),
+          status: "completed",
+          deliveryLocationSharing: false,
+          updatedAt: { __firestoreTimestamp: now },
+        }),
+      },
+      updateMask: { fieldPaths: ["status", "deliveryLocationSharing", "updatedAt"] },
+      currentDocument: { updateTime: trackingDoc.updateTime },
+    },
+    { delete: base + "/deliveryOtps/" + orderId, currentDocument: { updateTime: otpDoc.updateTime } },
+  ];
+  const commit = await fetch(base + ":commit", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ writes }),
+  });
+  if (!commit.ok) {
+    console.error("delivery-otp-commit-failed", commit.status);
+    return json({ ok: false, error: "Could not complete delivery. Refresh and verify OTP again." }, 409);
+  }
+  return json({ ok: true, delivered: true });
+}
+
 async function verifyCapturedPayment(env, body) {
   const orderId = body.order_id;
   const paymentId = body.razorpay_payment_id;
@@ -374,6 +531,21 @@ export default {
 
     let body;
     try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+
+    if (url.pathname === "/customer-delivery-otp") {
+      try { return await issueCustomerDeliveryOtp(env, body); }
+      catch (error) {
+        console.error("customer-delivery-otp-failed", error?.message || "unknown");
+        return json({ ok: false, error: "Could not create delivery OTP. Please retry." }, 502);
+      }
+    }
+    if (url.pathname === "/verify-delivery-otp") {
+      try { return await verifyDeliveryOtp(env, request, body); }
+      catch (error) {
+        console.error("verify-delivery-otp-failed", error?.message || "unknown");
+        return json({ ok: false, error: "Could not verify delivery OTP. Please retry." }, 502);
+      }
+    }
 
     if (url.pathname === "/create-order") {
       const amount = Number(body.amount);
