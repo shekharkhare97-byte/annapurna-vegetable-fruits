@@ -21,3 +21,5 @@ This Cloudflare Worker keeps the Razorpay Key Secret off the Android app.
 - The app must only mark an online order as paid after `/verify-payment` returns `verified: true`.
 - The app should still allow Cash on Delivery when the Worker is not configured.
 - `POST /submit-paid-order` verifies the captured payment again with Razorpay and writes the order and tracking document together to Firestore using the Firebase service-account Secret. The public Android client cannot create a `paid` order directly; public Firestore order creation is restricted to pending COD orders.
+- `POST /customer-delivery-otp` accepts the customer's secret `trackingToken`, checks that the order is picked up / out for delivery, and returns a 6-digit OTP valid for 15 minutes. Repeated requests return the same active OTP.
+- `POST /verify-delivery-otp` requires a Firebase ID token from the assigned delivery partner plus `orderId` and `otp`. It atomically marks the order delivered and deletes the OTP only after successful verification. Delivery OTP documents are denied to all mobile clients by Firestore Rules.
