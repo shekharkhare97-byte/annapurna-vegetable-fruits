@@ -388,7 +388,8 @@ class StoreViewModel(
                     val latitude = snapshot.getDouble("deliveryLatitude")
                     val longitude = snapshot.getDouble("deliveryLongitude")
                     _trackingLocation.value = if (snapshot.getBoolean("deliveryLocationSharing") == true && latitude != null && longitude != null) "$latitude,$longitude" else ""
-                    _trackingUpdatedAtMillis.value = snapshot.getTimestamp("updatedAt")?.toDate()?.time
+                    _trackingUpdatedAtMillis.value = (snapshot.getTimestamp("deliveryLocationUpdatedAt")
+                        ?: snapshot.getTimestamp("updatedAt"))?.toDate()?.time
                 }
             }
     }
