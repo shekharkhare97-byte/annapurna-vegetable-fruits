@@ -464,6 +464,7 @@ fun AnnapurnaRootApp() {
                             CustomerProfileScreen(
                                 formState = formState,
                                 recentOrders = recentOrders,
+                                produceItems = produceItems,
                                 trackingStatus = trackingStatus,
                                 trackingLocation = trackingLocation,
                                 onNameChange = storeViewModel::updateCustomerName,
