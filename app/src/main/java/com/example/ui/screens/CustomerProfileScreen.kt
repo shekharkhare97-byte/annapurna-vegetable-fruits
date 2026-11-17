@@ -130,6 +130,30 @@ fun CustomerProfileScreen(
                         Icon(Icons.Outlined.LocationOn, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
                         Text("  लाईव्ह ऑर्डर ट्रॅकिंग", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
+                    val trackingProgress = when (trackingStatus) {
+                        "new" -> 0.15f
+                        "accepted" -> 0.30f
+                        "preparing" -> 0.45f
+                        "ready_for_pickup", "claimed_pending_shop_otp" -> 0.60f
+                        "picked_up", "out_for_delivery" -> 0.82f
+                        "completed" -> 1f
+                        else -> 0f
+                    }
+                    if (trackingProgress > 0f && trackingStatus != "cancelled" && trackingStatus != "unavailable") {
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = trackingProgress,
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surface
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("ऑर्डर प्रगती", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                            Text("${(trackingProgress * 100).toInt()}%", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        }
+                    }
                     Text(
                         when (trackingStatus) {
                             "new" -> "ऑर्डर मिळाली आहे. दुकानाकडून पुष्टीची प्रतीक्षा आहे."
