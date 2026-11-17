@@ -14,6 +14,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -62,8 +64,6 @@ jobs:
         run: gradle --no-daemon testDebugUnitTest --tests 'com.example.data.model.*' --tests 'com.example.util.*'
 
       - name: Build signed release APK
-        env:
-          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: gradle --no-daemon assembleRelease
 
       - name: Verify APK signature, package, and print SHA-1
