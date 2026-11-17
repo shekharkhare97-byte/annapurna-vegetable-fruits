@@ -58,6 +58,7 @@ fun CustomerProfileScreen(
     produceItems: List<ProduceItem>,
     trackingStatus: String,
     trackingLocation: String,
+    trackingUpdatedAtMillis: Long?,
     onNameChange: (String) -> Unit,
     onMobileChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
@@ -202,6 +203,10 @@ fun CustomerProfileScreen(
                     if (trackingLocation.isNotBlank()) {
                         val coordinates = trackingLocation.split(",")
                         Text("डिलिव्हरी पार्टनरचे Live लोकेशन उपलब्ध आहे.", fontWeight = FontWeight.SemiBold)
+                        trackingUpdatedAtMillis?.let { updatedAt ->
+                            val timeLabel = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(updatedAt))
+                            Text("शेवटचे लोकेशन अपडेट: $timeLabel", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         if (coordinates.size == 2) {
                             Button(onClick = {
                                 val mapUri = Uri.parse("geo:" + coordinates[0] + "," + coordinates[1] + "?q=" + coordinates[0] + "," + coordinates[1])
