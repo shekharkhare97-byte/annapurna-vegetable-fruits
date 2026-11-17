@@ -104,6 +104,7 @@ fun CartAndOrderScreen(
     confirmedOrder: OrderEntity?,
     trackingStatus: String,
     trackingLocation: String,
+    trackingUpdatedAtMillis: Long?,
     onIncreaseQty: (String) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
@@ -500,6 +501,10 @@ fun CartAndOrderScreen(
                             val parts = trackingLocation.split(",")
                             if (parts.size == 2) {
                                 Text(stringResource(R.string.tracking_live_location_available), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                trackingUpdatedAtMillis?.let { updatedAt ->
+                                    val updatedTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(updatedAt))
+                                    Text("शेवटचे लोकेशन अपडेट: $updatedTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                                 TextButton(onClick = {
                                     val uri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${parts[0]},${parts[1]}")
                                     context.startActivity(Intent(Intent.ACTION_VIEW, uri))
