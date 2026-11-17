@@ -40,6 +40,8 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -111,6 +113,15 @@ fun BazaarHomeScreen(
     val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
     var weightDialogItem by remember { mutableStateOf<ProduceItem?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val favoritePrefs = remember { context.getSharedPreferences("annapurna_favorites", android.content.Context.MODE_PRIVATE) }
+    val favoriteIds = remember { mutableStateListOf<String>().apply {
+        addAll(favoritePrefs.getStringSet("ids", emptySet()) ?: emptySet())
+    } }
+    fun toggleFavorite(id: String) {
+        if (id in favoriteIds) favoriteIds.remove(id) else favoriteIds.add(id)
+        favoritePrefs.edit().putStringSet("ids", favoriteIds.toSet()).apply()
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -226,6 +237,8 @@ fun BazaarHomeScreen(
                         item = item,
                         quantityInCart = qtyMap[item.id] ?: 0,
                         onCardClick = { onOpenDetail(item) },
+                        isFavorite = item.id in favoriteIds,
+                        onToggleFavorite = { toggleFavorite(item.id) },
                         onAdd = { weightDialogItem = item },
                         onDecrease = { onDecreaseQty(item.id) }
                     )
@@ -557,6 +570,8 @@ private fun SearchAndFilterBar(
 private fun ProduceGridCard(
     item: ProduceItem,
     quantityInCart: Int,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     onCardClick: () -> Unit,
     onAdd: () -> Unit,
     onDecrease: () -> Unit
@@ -594,6 +609,19 @@ private fun ProduceGridCard(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
+                }
+                Surface(
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                    shape = CircleShape,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                ) {
+                    IconButton(onClick = onToggleFavorite, modifier = Modifier.size(38.dp)) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite) "आवडीतून काढा" else "आवडीत जोडा",
+                            tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.94f),
