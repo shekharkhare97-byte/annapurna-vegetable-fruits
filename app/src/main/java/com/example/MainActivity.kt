@@ -469,6 +469,7 @@ fun AnnapurnaRootApp() {
                                 trackingStatus = trackingStatus,
                                 trackingLocation = trackingLocation,
                                 trackingUpdatedAtMillis = trackingUpdatedAtMillis,
+                                trackingUpdatedAtMillis = trackingUpdatedAtMillis,
                                 onRequestDeliveryOtp = storeViewModel::requestCustomerDeliveryOtp,
                                 onNameChange = storeViewModel::updateCustomerName,
                                 onMobileChange = storeViewModel::updateMobileNumber,
