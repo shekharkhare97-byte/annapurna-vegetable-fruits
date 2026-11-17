@@ -24,6 +24,8 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -46,12 +48,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.data.local.OrderEntity
+import com.example.data.model.ProduceItem
 import com.example.ui.viewmodel.CustomerFormState
 
 @Composable
 fun CustomerProfileScreen(
     formState: CustomerFormState,
     recentOrders: List<OrderEntity>,
+    produceItems: List<ProduceItem>,
     trackingStatus: String,
     trackingLocation: String,
     onNameChange: (String) -> Unit,
@@ -66,6 +70,9 @@ fun CustomerProfileScreen(
     val addressPrefs = remember { context.getSharedPreferences("annapurna_saved_addresses", android.content.Context.MODE_PRIVATE) }
     var savedAddresses by remember { mutableStateOf(addressPrefs.getStringSet("items", emptySet())?.toList().orEmpty()) }
     var addressDraft by remember { mutableStateOf("") }
+    val favoritePrefs = remember { context.getSharedPreferences("annapurna_favorites", android.content.Context.MODE_PRIVATE) }
+    var favoriteIds by remember { mutableStateOf(favoritePrefs.getStringSet("ids", emptySet())?.toSet().orEmpty()) }
+    var showHelp by remember { mutableStateOf(false) }
     LaunchedEffect(formState.customerName, formState.mobileNumber, formState.deliveryAddress) {
         if (formState.customerName.isNotBlank() && formState.mobileNumber.isNotBlank()) editing = false
     }
@@ -175,6 +182,34 @@ fun CustomerProfileScreen(
         }
         item {
             Card {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.FavoriteBorder, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
+                        Text("  माझी आवडती उत्पादने", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                    val favorites = produceItems.filter { it.id in favoriteIds }
+                    if (favorites.isEmpty()) {
+                        Text("अजून आवडते उत्पादन निवडलेले नाही. बाजारात ❤️ दाबून उत्पादने येथे सेव्ह करा.")
+                    } else {
+                        favorites.forEach { product ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(product.displayName(), fontWeight = FontWeight.SemiBold)
+                                    Text("₹" + product.priceRupees.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                TextButton(onClick = {
+                                    favoriteIds = favoriteIds - product.id
+                                    favoritePrefs.edit().putStringSet("ids", favoriteIds).apply()
+                                }) { Text("काढा") }
+                            }
+                            HorizontalDivider()
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Card {
                 Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.AddLocationAlt, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
@@ -208,11 +243,33 @@ fun CustomerProfileScreen(
                     HorizontalDivider()
                     ProfileShortcut(Icons.Outlined.CardGiftcard, "कूपन आणि ऑफर्स", "सध्या उपलब्ध ऑफर्स कार्टमध्ये तपासा")
                     HorizontalDivider()
-                    ProfileShortcut(Icons.Outlined.HelpOutline, "मदत आणि ग्राहक सेवा", "मदतीसाठी संपर्क पर्याय लवकरच जोडला जाईल")
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Outlined.HelpOutline, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
+                        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                            Text("मदत आणि ग्राहक सेवा", fontWeight = FontWeight.SemiBold)
+                            Text("ऑर्डर, पेमेंट आणि डिलिव्हरीविषयी सामान्य मदत", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        TextButton(onClick = { showHelp = true }) { Text("मदत") }
+                    }
                 }
             }
         }
         item { Spacer(Modifier.height(8.dp)) }
+    }
+    if (showHelp) {
+        AlertDialog(
+            onDismissRequest = { showHelp = false },
+            title = { Text("अन्नपूर्णा ग्राहक मदत") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("ऑर्डरची स्थिती Profile मधील Live Order Tracking मध्ये पहा.")
+                    Text("पेमेंट यशस्वी झाले पण ऑर्डर दिसत नसेल, तर थोडा वेळ थांबा आणि इंटरनेट तपासा.")
+                    Text("डिलिव्हरी पत्ता बदलायचा असल्यास सेव्ह केलेल्या पत्त्यांमधून योग्य पत्ता निवडा.")
+                    Text("तातडीच्या मदतीसाठी दुकानाच्या अधिकृत संपर्क क्रमांकावर संपर्क करा.")
+                }
+            },
+            confirmButton = { TextButton(onClick = { showHelp = false }) { Text("ठीक आहे") } }
+        )
     }
 }
 
