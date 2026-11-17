@@ -59,7 +59,6 @@ fun CustomerProfileScreen(
     trackingStatus: String,
     trackingLocation: String,
     trackingUpdatedAtMillis: Long?,
-    onRequestDeliveryOtp: ((String?) -> Unit) -> Unit,
     onNameChange: (String) -> Unit,
     onMobileChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
@@ -75,8 +74,6 @@ fun CustomerProfileScreen(
     val favoritePrefs = remember { context.getSharedPreferences("annapurna_favorites", android.content.Context.MODE_PRIVATE) }
     var favoriteIds by remember { mutableStateOf(favoritePrefs.getStringSet("ids", emptySet())?.toSet().orEmpty()) }
     var showHelp by remember { mutableStateOf(false) }
-    var deliveryOtp by remember { mutableStateOf<String?>(null) }
-    var requestingDeliveryOtp by remember { mutableStateOf(false) }
     LaunchedEffect(formState.customerName, formState.mobileNumber, formState.deliveryAddress) {
         if (formState.customerName.isNotBlank() && formState.mobileNumber.isNotBlank()) editing = false
     }
@@ -203,21 +200,6 @@ fun CustomerProfileScreen(
                             else -> "ऑर्डर केल्यानंतर तिचे अपडेट येथे दिसतील."
                         }
                     )
-                    if (trackingStatus == "picked_up" || trackingStatus == "out_for_delivery") {
-                        Button(
-                            onClick = {
-                                requestingDeliveryOtp = true
-                                onRequestDeliveryOtp { otp ->
-                                    requestingDeliveryOtp = false
-                                    deliveryOtp = otp
-                                }
-                            },
-                            enabled = !requestingDeliveryOtp,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(if (requestingDeliveryOtp) "OTP मिळवत आहे..." else "डिलिव्हरी OTP पहा")
-                        }
-                    }
                     if (trackingLocation.isNotBlank()) {
                         val coordinates = trackingLocation.split(",")
                         Text("डिलिव्हरी पार्टनरचे Live लोकेशन उपलब्ध आहे.", fontWeight = FontWeight.SemiBold)
@@ -333,19 +315,6 @@ fun CustomerProfileScreen(
             }
         }
         item { Spacer(Modifier.height(8.dp)) }
-    }
-    if (deliveryOtp != null) {
-        AlertDialog(
-            onDismissRequest = { deliveryOtp = null },
-            title = { Text("तुमचा Delivery OTP") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("डिलिव्हरी पार्टनरला हा OTP सांगा. OTP 15 मिनिटांसाठी वैध आहे.")
-                    Text(deliveryOtp!!, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            confirmButton = { TextButton(onClick = { deliveryOtp = null }) { Text("ठीक आहे") } }
-        )
     }
     if (showHelp) {
         AlertDialog(
