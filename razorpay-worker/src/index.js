@@ -251,7 +251,6 @@ async function completeDelivery(env, request, body) {
       updateMask: { fieldPaths: ["status", "deliveryLocationSharing", "updatedAt"] },
       currentDocument: { updateTime: trackingDoc.updateTime },
     },
-    { delete: base + "/deliveryOtps/" + orderId, currentDocument: { updateTime: otpDoc.updateTime } },
   ];
   const commit = await fetch(base + ":commit", {
     method: "POST",
