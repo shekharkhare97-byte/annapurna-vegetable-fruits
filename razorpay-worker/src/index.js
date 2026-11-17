@@ -78,6 +78,7 @@ async function getFirebaseAccessToken(env) {
 
 function firestoreValue(value) {
   if (value === null) return { nullValue: null };
+  if (value && typeof value === "object" && typeof value.__firestoreTimestamp === "string") return { timestampValue: value.__firestoreTimestamp };
   if (typeof value === "string") return { stringValue: value };
   if (typeof value === "boolean") return { booleanValue: value };
   if (typeof value === "number") {
@@ -146,7 +147,8 @@ async function verifyFirebaseIdToken(idToken) {
 
 async function issueCustomerDeliveryOtp(env, body) {
   const trackingToken = body?.trackingToken;
-  if (typeof trackingToken !== "string" ||
+  if (typeof body?.orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(body.orderId) ||
+      typeof trackingToken !== "string" ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trackingToken)) {
     return json({ ok: false, error: "Invalid tracking token" }, 400);
   }
