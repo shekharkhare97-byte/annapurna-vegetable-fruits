@@ -140,6 +140,36 @@ fun CustomerProfileScreen(
                         else -> 0f
                     }
                     if (trackingProgress > 0f && trackingStatus != "cancelled" && trackingStatus != "unavailable") {
+                        val activeStep = when (trackingStatus) {
+                            "new" -> 0
+                            "accepted", "preparing" -> 1
+                            "ready_for_pickup", "claimed_pending_shop_otp", "picked_up" -> 2
+                            "out_for_delivery", "completed" -> 3
+                            else -> -1
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            listOf("ऑर्डर", "तयारी", "Pickup", "डिलिव्हरी").forEachIndexed { index, label ->
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Text(
+                                        if (index <= activeStep) "●" else "○",
+                                        color = if (index <= activeStep) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (index <= activeStep) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = if (index == activeStep) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
                         androidx.compose.material3.LinearProgressIndicator(
                             progress = trackingProgress,
                             modifier = Modifier.fillMaxWidth(),
