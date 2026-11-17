@@ -4,9 +4,9 @@ import androidx.compose.ui.graphics.Color
 
 // Warm Organic Maharashtrian Bazaar Palette
 // Primary: Lush Farm Leaf Green
-val LeafGreenPrimaryLight = Color(0xFF1B5E20)
+val LeafGreenPrimaryLight = Color(0xFF16843B)
 val OnLeafGreenPrimaryLight = Color(0xFFFFFFFF)
-val LeafGreenContainerLight = Color(0xFFD7F5D3)
+val LeafGreenContainerLight = Color(0xFFE1F5E6)
 val OnLeafGreenContainerLight = Color(0xFF072109)
 
 // Secondary: Alphonso Mango Saffron-Amber
@@ -22,17 +22,17 @@ val PomegranateContainerLight = Color(0xFFFFD9E2)
 val OnPomegranateContainerLight = Color(0xFF3E001B)
 
 // Warm Cream Surfaces & Backgrounds
-val CreamBackgroundLight = Color(0xFFFFFBF4)
+val CreamBackgroundLight = Color(0xFFFFFFFF)
 val OnCreamBackgroundLight = Color(0xFF1A1C18)
-val WarmSurfaceLight = Color(0xFFFFFBF4)
+val WarmSurfaceLight = Color(0xFFFFFFFF)
 val OnWarmSurfaceLight = Color(0xFF1A1C18)
-val SurfaceVariantLight = Color(0xFFE7E4D8)
+val SurfaceVariantLight = Color(0xFFF1F5F1)
 val OnSurfaceVariantLight = Color(0xFF44483E)
 val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
-val SurfaceContainerLowLight = Color(0xFFF9F4E8)
-val SurfaceContainerLight = Color(0xFFF3EEE1)
-val SurfaceContainerHighLight = Color(0xFFEDE7DA)
-val SurfaceContainerHighestLight = Color(0xFFE6E1D3)
+val SurfaceContainerLowLight = Color(0xFFF7FAF7)
+val SurfaceContainerLight = Color(0xFFF2F6F2)
+val SurfaceContainerHighLight = Color(0xFFEAF1EB)
+val SurfaceContainerHighestLight = Color(0xFFE2EBE3)
 val OutlineLight = Color(0xFF74796D)
 val OutlineVariantLight = Color(0xFFC4C8BB)
 
