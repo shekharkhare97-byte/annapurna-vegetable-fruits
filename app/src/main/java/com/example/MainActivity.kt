@@ -21,10 +21,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Badge
@@ -69,6 +71,7 @@ import com.example.ui.screens.CustomerWelcomeFlow
 import com.example.ui.screens.CartAndOrderScreen
 import com.example.ui.screens.ImageStudioScreen
 import com.example.ui.screens.MarathiChatScreen
+import com.example.ui.screens.CustomerProfileScreen
 import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
 import com.example.ui.viewmodel.StoreViewModel
@@ -107,6 +110,12 @@ enum class AnnapurnaTab(
         selectedIcon = Icons.Filled.PhotoCamera,
         unselectedIcon = Icons.Outlined.PhotoCamera,
         tag = "nav_tab_studio"
+    ),
+    PROFILE(
+        labelRes = R.string.nav_profile,
+        selectedIcon = Icons.Filled.Person,
+        unselectedIcon = Icons.Outlined.Person,
+        tag = "nav_tab_profile"
     )
 }
 
@@ -447,6 +456,21 @@ fun AnnapurnaRootApp() {
                                 },
                                 onResetChat = aiViewModel::resetConversation,
                                 onBackToBazaar = { currentTab = AnnapurnaTab.BAZAAR },
+                                modifier = contentModifier
+                            )
+                        }
+
+                        AnnapurnaTab.PROFILE -> {
+                            CustomerProfileScreen(
+                                formState = formState,
+                                recentOrders = recentOrders,
+                                trackingStatus = trackingStatus,
+                                trackingLocation = trackingLocation,
+                                onNameChange = storeViewModel::updateCustomerName,
+                                onMobileChange = storeViewModel::updateMobileNumber,
+                                onAddressChange = storeViewModel::updateDeliveryAddress,
+                                onSaveProfile = storeViewModel::saveCustomerProfileForEntry,
+                                onOpenOrders = { currentTab = AnnapurnaTab.CART },
                                 modifier = contentModifier
                             )
                         }
