@@ -236,27 +236,37 @@ async function completeDelivery(env, request, body) {
   const trackingPath = "orderTracking/" + encodeURIComponent(order.trackingToken);
   const trackingDoc = await firestoreGetDocument(env, trackingPath);
   if (!trackingDoc.exists) return json({ ok: false, error: "Tracking record not found" }, 409);
+
+  // Award a fixed ₹50 milestone bonus after every 10th successful delivery.
+  // The partner counter is updated in the same atomic Firestore commit as the order,
+  // with update-time preconditions to prevent duplicate or concurrent awards.
+  const partnerDoc = await firestoreGetDocument(env, "deliveryPartners/" + encodeURIComponent(partnerUid));
+  if (!partnerDoc.exists) return json({ ok: false, error: "Delivery partner profile not found" }, 409);
+  const partner = firestoreDocumentData(partnerDoc.data);
+  const completedCount = Number(partner.completedDeliveryCount || 0) + 1;
+  const milestoneBonus = completedCount % 10 === 0 ? 50 : 0;
+  const totalMilestoneBonus = Number(partner.deliveryMilestoneBonusRupees || 0) + milestoneBonus;
+  const milestoneCount = Number(partner.deliveryMilestoneBonusCount || 0) + (milestoneBonus ? 1 : 0);
   const now = new Date().toISOString();
   const writes = [
     {
       update: {
         name: base + "/orders/" + orderId,
         fields: firestoreFields({
-          ...order,
           deliveryState: "delivered",
           status: "completed",
           deliveryDeliveredAt: { __firestoreTimestamp: now },
           deliveryLocationSharing: false,
+          deliveryMilestoneBonusRupees: milestoneBonus,
         }),
       },
-      updateMask: { fieldPaths: ["deliveryState", "status", "deliveryDeliveredAt", "deliveryLocationSharing"] },
+      updateMask: { fieldPaths: ["deliveryState", "status", "deliveryDeliveredAt", "deliveryLocationSharing", "deliveryMilestoneBonusRupees"] },
       currentDocument: { updateTime: orderDoc.updateTime },
     },
     {
       update: {
         name: base + "/" + trackingPath,
         fields: firestoreFields({
-          ...firestoreDocumentData(trackingDoc.data),
           status: "completed",
           deliveryLocationSharing: false,
           updatedAt: { __firestoreTimestamp: now },
@@ -264,6 +274,19 @@ async function completeDelivery(env, request, body) {
       },
       updateMask: { fieldPaths: ["status", "deliveryLocationSharing", "updatedAt"] },
       currentDocument: { updateTime: trackingDoc.updateTime },
+    },
+    {
+      update: {
+        name: base + "/deliveryPartners/" + encodeURIComponent(partnerUid),
+        fields: firestoreFields({
+          completedDeliveryCount: completedCount,
+          deliveryMilestoneBonusRupees: totalMilestoneBonus,
+          deliveryMilestoneBonusCount: milestoneCount,
+          deliveryMilestoneBonusUpdatedAt: { __firestoreTimestamp: now },
+        }),
+      },
+      updateMask: { fieldPaths: ["completedDeliveryCount", "deliveryMilestoneBonusRupees", "deliveryMilestoneBonusCount", "deliveryMilestoneBonusUpdatedAt"] },
+      currentDocument: { updateTime: partnerDoc.updateTime },
     },
   ];
   const commit = await fetch(base + ":commit", {
