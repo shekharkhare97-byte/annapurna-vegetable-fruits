@@ -1,6 +1,11 @@
 package com.example.ui.viewmodel
 
 import android.content.Context
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.example.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -368,6 +373,36 @@ class StoreViewModel(
                     )
                 }
             }
+        }
+    }
+
+    fun requestCustomerDeliveryOtp(onResult: (String?) -> Unit) {
+        val trackingToken = trackingPrefs.getString("latest_token", null)
+        if (trackingToken.isNullOrBlank()) {
+            onResult(null)
+            return
+        }
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    val connection = (URL("https://annapurna-razorpay.shekharkhare97.workers.dev/customer-delivery-otp").openConnection() as HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        connectTimeout = 15000
+                        readTimeout = 15000
+                        doOutput = true
+                        setRequestProperty("Content-Type", "application/json")
+                    }
+                    connection.outputStream.use { it.write(JSONObject().put("trackingToken", trackingToken).toString().toByteArray(Charsets.UTF_8)) }
+                    val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
+                    val payload = stream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(payload)
+                    if (connection.responseCode in 200..299 && json.optBoolean("ok")) json.optString("otp").takeIf { it.matches(Regex("\\d{6}")) }
+                    else null
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            onResult(result)
         }
     }
 
