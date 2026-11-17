@@ -147,21 +147,49 @@ async function verifyFirebaseIdToken(idToken) {
 
 async function issueCustomerDeliveryOtp(env, body) {
   const trackingToken = body?.trackingToken;
-  if (typeof body?.orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(body.orderId) ||
-      typeof trackingToken !== "string" ||
+  if (typeof trackingToken !== "string" ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trackingToken)) {
     return json({ ok: false, error: "Invalid tracking token" }, 400);
   }
-  const orderDoc = await firestoreGetDocument(env, "orders/" + encodeURIComponent(body.orderId || ""));
-  if (!orderDoc.exists) return json({ ok: false, error: "Order not found" }, 404);
-  const order = firestoreDocumentData(orderDoc.data);
+  const auth = await getFirebaseAccessToken(env);
+  const base = "https://firestore.googleapis.com/v1/projects/" + auth.projectId + "/databases/(default)/documents";
+  const queryResponse = await fetch(base + ":runQuery", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + auth.token, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: "orders" }],
+        where: { fieldFilter: {
+          field: { fieldPath: "trackingToken" },
+          op: "EQUAL",
+          value: { stringValue: trackingToken },
+        }},
+        limit: 1,
+      },
+    }),
+  });
+  const queryResult = await queryResponse.json().catch(() => ({}));
+  if (!queryResponse.ok) throw new Error("Order lookup failed");
+  const orderDocument = Array.isArray(queryResult) ? queryResult.find((entry) => entry.document)?.document : null;
+  if (!orderDocument) return json({ ok: false, error: "Order not found" }, 404);
+  const orderId = orderDocument.name.split("/").pop();
+  const order = firestoreDocumentData(orderDocument);
   if (order.trackingToken !== trackingToken || !order.deliveryPartnerUid ||
       !["picked_up", "out_for_delivery"].includes(order.deliveryState)) {
     return json({ ok: false, error: "Delivery OTP is not available for this order yet" }, 409);
   }
+  const existingOtp = await firestoreGetDocument(env, "deliveryOtps/" + encodeURIComponent(orderId));
+  if (existingOtp.exists) {
+    const current = firestoreDocumentData(existingOtp.data);
+    if (current.partnerUid === order.deliveryPartnerUid && current.trackingToken === trackingToken &&
+        current.expiresAt && Date.parse(current.expiresAt) > Date.now() &&
+        Number(current.attempts || 0) < 5) {
+      return json({ ok: true, otp: current.otp, expiresAt: current.expiresAt });
+    }
+  }
   const otp = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-  await writeFirestoreDocument(env, "deliveryOtps/" + encodeURIComponent(body.orderId), {
+  await writeFirestoreDocument(env, "deliveryOtps/" + encodeURIComponent(orderId), {
     otp,
     partnerUid: order.deliveryPartnerUid,
     trackingToken,
