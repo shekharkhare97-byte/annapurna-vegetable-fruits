@@ -2,7 +2,6 @@ package com.example
 
 import android.os.Bundle
 import com.google.firebase.Firebase
-import com.google.firebase.ai.GenerativeBackend
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.appcheck.appCheck
 import com.google.firebase.initialize
