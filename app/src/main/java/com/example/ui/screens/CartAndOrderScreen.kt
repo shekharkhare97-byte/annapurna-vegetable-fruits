@@ -1,5 +1,6 @@
 package com.example.ui.screens
 import kotlinx.coroutines.delay
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import androidx.compose.ui.geometry.Offset
 import android.graphics.Typeface
@@ -592,6 +593,7 @@ fun CartAndOrderScreen(
                                         position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
                                     }
                                     val riderMarkerState = remember { MarkerState(position = driverPosition) }
+                                    var riderBearing by remember { mutableStateOf(0f) }
                                     val riderIcon = remember {
                                         val bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
                                         val canvas = Canvas(bitmap)
@@ -605,15 +607,29 @@ fun CartAndOrderScreen(
                                     }
                                     LaunchedEffect(driverPosition) {
                                         val start = riderMarkerState.position
+                                        val from = Location("annapurna-start").apply {
+                                            latitude = start.latitude
+                                            longitude = start.longitude
+                                        }
+                                        val to = Location("annapurna-end").apply {
+                                            latitude = driverPosition.latitude
+                                            longitude = driverPosition.longitude
+                                        }
+                                        if (from.distanceTo(to) > 2f) riderBearing = from.bearingTo(to)
                                         repeat(20) { step ->
                                             val fraction = (step + 1) / 20.0
-                                            riderMarkerState.position = LatLng(
+                                            val interpolated = LatLng(
                                                 start.latitude + (driverPosition.latitude - start.latitude) * fraction,
                                                 start.longitude + (driverPosition.longitude - start.longitude) * fraction
                                             )
+                                            riderMarkerState.position = interpolated
+                                            cameraPositionState.position = CameraPosition.fromLatLngZoom(interpolated, 16f)
                                             delay(50)
                                         }
-                                        cameraPositionState.position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
+                                        cameraPositionState.animate(
+                                            CameraUpdateFactory.newLatLngZoom(driverPosition, 16f),
+                                            500
+                                        )
                                     }
                                     Text(
                                         text = "${customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner")}: ${trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner") }}",
@@ -638,7 +654,8 @@ fun CartAndOrderScreen(
                                             title = trackingPartnerName.ifBlank { "Delivery Partner" },
                                             snippet = "Live location",
                                             icon = riderIcon,
-                                            anchor = Offset(0.5f, 0.5f)
+                                            anchor = Offset(0.5f, 0.5f),
+                                            rotation = riderBearing
                                         )
                                     }
                                     trackingUpdatedAtMillis?.let { updatedAt ->
