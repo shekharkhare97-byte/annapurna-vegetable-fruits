@@ -12,7 +12,9 @@ import java.util.concurrent.TimeUnit
 @JsonClass(generateAdapter = true)
 data class ProxyChatTurnDto(
     val role: String,
-    val text: String
+    val text: String,
+    val imageBase64: String? = null,
+    val mimeType: String? = null
 )
 
 @JsonClass(generateAdapter = true)
