@@ -359,11 +359,11 @@ fun CustomerProfileScreen(
             title = { Text(tr("अन्नपूर्णा ग्राहक मदत", "अन्नपूर्णा ग्राहक सहायता", "Annapurna Customer Help")) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("SOS / Police: 112")
+                    Text(tr("SOS / पोलीस: 112", "SOS / पुलिस: 112", "SOS / Police: 112"))
                     TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))) }) { Text(tr("SOS • Police 112 वर कॉल करा", "SOS • Police 112 पर कॉल करें", "Call SOS • Police 112")) }
-                    Text("Customer Help: 8530011324")
+                    Text(tr("ग्राहक मदत: 8530011324", "ग्राहक सहायता: 8530011324", "Customer Help: 8530011324"))
                     TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8530011324"))) }) { Text(tr("Customer Help ला कॉल करा", "Customer Help पर कॉल करें", "Call Customer Help")) }
-                    Text("Email: annpurnavegitablesandfruits@gmail.com")
+                    Text(tr("ईमेल: annpurnavegitablesandfruits@gmail.com", "ईमेल: annpurnavegitablesandfruits@gmail.com", "Email: annpurnavegitablesandfruits@gmail.com"))
                     TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:annpurnavegitablesandfruits@gmail.com"))) }) { Text(tr("ईमेल पाठवा", "ईमेल भेजें", "Send email")) }
                 }
             },
