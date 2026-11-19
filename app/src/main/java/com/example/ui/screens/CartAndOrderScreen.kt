@@ -1,4 +1,11 @@
 package com.example.ui.screens
+import kotlinx.coroutines.delay
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import androidx.compose.ui.geometry.Offset
+import android.graphics.Typeface
+import android.graphics.Paint
+import android.graphics.Canvas
+import android.graphics.Bitmap
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -515,7 +522,28 @@ fun CartAndOrderScreen(
                                     val cameraPositionState = rememberCameraPositionState {
                                         position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
                                     }
+                                    val riderMarkerState = remember { MarkerState(position = driverPosition) }
+                                    val riderIcon = remember {
+                                        val bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
+                                        val canvas = Canvas(bitmap)
+                                        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                                            textSize = 94f
+                                            textAlign = Paint.Align.CENTER
+                                            typeface = Typeface.DEFAULT
+                                        }
+                                        canvas.drawText("🛵", 64f, 100f, paint)
+                                        BitmapDescriptorFactory.fromBitmap(bitmap)
+                                    }
                                     LaunchedEffect(driverPosition) {
+                                        val start = riderMarkerState.position
+                                        repeat(20) { step ->
+                                            val fraction = (step + 1) / 20.0
+                                            riderMarkerState.position = LatLng(
+                                                start.latitude + (driverPosition.latitude - start.latitude) * fraction,
+                                                start.longitude + (driverPosition.longitude - start.longitude) * fraction
+                                            )
+                                            delay(50)
+                                        }
                                         cameraPositionState.position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
                                     }
                                     Text(
@@ -532,9 +560,11 @@ fun CartAndOrderScreen(
                                         cameraPositionState = cameraPositionState
                                     ) {
                                         Marker(
-                                            state = MarkerState(position = driverPosition),
+                                            state = riderMarkerState,
                                             title = "Delivery Partner",
-                                            snippet = "Live location"
+                                            snippet = "Live location",
+                                            icon = riderIcon,
+                                            anchor = Offset(0.5f, 0.5f)
                                         )
                                     }
                                     trackingUpdatedAtMillis?.let { updatedAt ->
