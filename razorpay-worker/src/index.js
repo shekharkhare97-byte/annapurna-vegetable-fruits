@@ -350,9 +350,12 @@ async function completeDelivery(env, request, body) {
       /^[A-Z_]{3,40}$/.test(firestoreError.status)
       ? firestoreError.status
       : "UNKNOWN";
+    const safeMessage = typeof firestoreError.message === "string"
+      ? firestoreError.message.replace(/projects\/[^/\s]+/g, "projects/[redacted]").slice(0, 300)
+      : "No Firestore detail returned";
     return json({
       ok: false,
-      error: "Could not complete delivery (Firestore: " + safeCode + "). Refresh and try again.",
+      error: "Could not complete delivery (Firestore: " + safeCode + "). " + safeMessage,
     }, 409);
   }
   return json({ ok: true, delivered: true });
