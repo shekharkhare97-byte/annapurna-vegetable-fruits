@@ -118,6 +118,7 @@ fun CartAndOrderScreen(
     trackingStatus: String,
     trackingLocation: String,
     trackingUpdatedAtMillis: Long?,
+    trackingPartnerAccepted: Boolean,
     onIncreaseQty: (String) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
@@ -578,9 +579,7 @@ fun CartAndOrderScreen(
                                 }
                             }
                         }
-                        if (trackingLocation.isBlank() &&
-                            trackingStatus in listOf("accepted", "preparing", "out_for_delivery")
-                        ) {
+                        if (trackingPartnerAccepted && trackingLocation.isBlank()) {
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(18.dp),
