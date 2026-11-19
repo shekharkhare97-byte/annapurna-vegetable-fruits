@@ -679,9 +679,9 @@ fun CartAndOrderScreen(
                                     }
                                 }
                                 OutlinedTextField(value = deliveryReview, onValueChange = { deliveryReview = it.take(500) }, modifier = Modifier.fillMaxWidth(), label = { Text(reviewInputText) }, minLines = 2, maxLines = 4)
-                                Button(onClick = { onSubmitDeliveryReview(deliveryRating, deliveryReview) { success -> reviewSent = success; reviewMessage = if (success) reviewThanksText else reviewFailedText } }, modifier = Modifier.fillMaxWidth()) { Text(customerText("रेटिंग आणि अभिप्राय पाठवा", "रेटिंग और समीक्षा भेजें", "Submit rating and review")) }
+                                Button(onClick = { onSubmitDeliveryReview(deliveryRating, deliveryReview) { success -> reviewSent = success; reviewMessage = if (success) reviewThanksText else reviewFailedText } }, modifier = Modifier.fillMaxWidth()) { Text(reviewSubmitText) }
                             } else {
-                                Text(reviewMessage ?: "धन्यवाद! तुमचा अभिप्राय नोंदवला.", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                Text(reviewMessage ?: reviewThanksText, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                             }
                             reviewMessage?.takeIf { !reviewSent }?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                         }
