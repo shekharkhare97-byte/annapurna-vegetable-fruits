@@ -492,8 +492,17 @@ private fun SearchAndFilterBar(
     val allCount = ProduceCatalog.items.size
     val vegCount = ProduceCatalog.items.count { it.category == ProduceCategory.VEGETABLE }
     val fruitCount = ProduceCatalog.items.count { it.category == ProduceCategory.FRUIT }
+    val suggestions = remember(searchQuery, ProduceCatalog.items) {
+        if (searchQuery.isBlank()) emptyList()
+        else ProduceCatalog.items.filter { item ->
+            item.displayName().contains(searchQuery.trim(), ignoreCase = true) ||
+                item.englishKeywords.contains(searchQuery.trim(), ignoreCase = true) ||
+                item.englishName.contains(searchQuery.trim(), ignoreCase = true) ||
+                item.hindiName.contains(searchQuery.trim(), ignoreCase = true)
+        }.take(5)
+    }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
@@ -531,6 +540,53 @@ private fun SearchAndFilterBar(
                 .height(58.dp)
                 .testTag("search_produce_input")
         )
+
+        // Blinkit-style live suggestions appear while the customer types.
+        if (suggestions.isNotEmpty()) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 2.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    Text(
+                        text = "तुम्ही हे शोधत आहात",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+                    )
+                    suggestions.forEach { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSearchQueryChange(item.displayName()) }
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = item.displayName(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
