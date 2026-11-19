@@ -109,6 +109,35 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
+private fun decodeGooglePolyline(encoded: String): List<LatLng> {
+    val points = ArrayList<LatLng>()
+    var index = 0
+    var latitude = 0
+    var longitude = 0
+    while (index < encoded.length) {
+        var result = 0
+        var shift = 0
+        var value: Int
+        do {
+            value = encoded[index++].code - 63
+            result = result or ((value and 0x1f) shl shift)
+            shift += 5
+        } while (value >= 0x20 && index < encoded.length)
+        latitude += if ((result and 1) != 0) (result shr 1).inv() else result shr 1
+
+        result = 0
+        shift = 0
+        do {
+            value = encoded[index++].code - 63
+            result = result or ((value and 0x1f) shl shift)
+            shift += 5
+        } while (value >= 0x20 && index < encoded.length)
+        longitude += if ((result and 1) != 0) (result shr 1).inv() else result shr 1
+        points.add(LatLng(latitude / 1E5, longitude / 1E5))
+    }
+    return points
+}
+
 @SuppressLint("MissingPermission")
 @Composable
 fun CartAndOrderScreen(
@@ -594,6 +623,8 @@ fun CartAndOrderScreen(
                                     }
                                     val riderMarkerState = remember { MarkerState(position = driverPosition) }
                                     var riderBearing by remember { mutableStateOf(0f) }
+                                    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+                                    var routeEta by remember { mutableStateOf<String?>(null) }
                                     val riderIcon = remember {
                                         val bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
                                         val canvas = Canvas(bitmap)
@@ -605,7 +636,54 @@ fun CartAndOrderScreen(
                                         canvas.drawText("🛵", 64f, 100f, paint)
                                         BitmapDescriptorFactory.fromBitmap(bitmap)
                                     }
-                                    LaunchedEffect(driverPosition) {
+                                    LaunchedEffect(driverPosition, confirmedOrder?.deliveryAddress) {
+                                        val destinationAddress = confirmedOrder?.deliveryAddress?.trim().orEmpty()
+                                        if (destinationAddress.length >= 8) {
+                                            val routeResult = withContext(Dispatchers.IO) {
+                                                runCatching {
+                                                    val destination = if (!Geocoder.isPresent()) null else {
+                                                        @Suppress("DEPRECATION")
+                                                        Geocoder(context, Locale("en", "IN"))
+                                                            .getFromLocationName("$destinationAddress, Nashik, Maharashtra, India", 1)
+                                                            ?.firstOrNull()
+                                                    }
+                                                    if (destination == null) null else {
+                                                        val appInfo = context.packageManager.getApplicationInfo(
+                                                            context.packageName,
+                                                            android.content.pm.PackageManager.GET_META_DATA
+                                                        )
+                                                        val mapsKey = appInfo.metaData?.getString("com.google.android.geo.API_KEY").orEmpty()
+                                                        if (mapsKey.isBlank()) null else {
+                                                            val requestUrl = "https://maps.googleapis.com/maps/api/directions/json" +
+                                                                "?origin=${driverPosition.latitude},${driverPosition.longitude}" +
+                                                                "&destination=${destination.latitude},${destination.longitude}" +
+                                                                "&mode=driving&key=${android.net.Uri.encode(mapsKey)}"
+                                                            val request = okhttp3.Request.Builder().url(requestUrl).build()
+                                                            okhttp3.OkHttpClient().newCall(request).execute().use { response ->
+                                                                if (!response.isSuccessful) null else {
+                                                                    val body = response.body?.string().orEmpty()
+                                                                    val json = JSONObject(body)
+                                                                    val route = json.optJSONArray("routes")?.optJSONObject(0)
+                                                                    val overview = route?.optJSONObject("overview_polyline")?.optString("points")
+                                                                    val leg = route?.optJSONArray("legs")?.optJSONObject(0)
+                                                                    val duration = leg?.optJSONObject("duration")?.optString("text")
+                                                                    if (json.optString("status") != "OK" || overview.isNullOrBlank()) null
+                                                                    else {
+                                                                        val decoded = decodeGooglePolyline(overview)
+                                                                        if (decoded.isEmpty()) null else decoded to duration
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }.getOrNull()
+                                            }
+                                            routePoints = routeResult?.first ?: emptyList()
+                                            routeEta = routeResult?.second
+                                        } else {
+                                            routePoints = emptyList()
+                                            routeEta = null
+                                        }
                                         val start = riderMarkerState.position
                                         val from = Location("annapurna-start").apply {
                                             latitude = start.latitude
@@ -637,7 +715,10 @@ fun CartAndOrderScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = stringResource(R.string.tracking_live_location_available),
+                                        text = if (routeEta != null)
+                                            "🛵 " + customerText("अंदाजे पोहोचण्याची वेळ", "पहुँचने का अनुमानित समय", "Estimated arrival") + ": " + routeEta
+                                        else
+                                            stringResource(R.string.tracking_live_location_available),
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -649,6 +730,13 @@ fun CartAndOrderScreen(
                                             .testTag("customer_live_delivery_map"),
                                         cameraPositionState = cameraPositionState
                                     ) {
+                                        if (routePoints.size >= 2) {
+                                            com.google.maps.android.compose.Polyline(
+                                                points = routePoints,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                width = 12f
+                                            )
+                                        }
                                         Marker(
                                             state = riderMarkerState,
                                             title = trackingPartnerName.ifBlank { "Delivery Partner" },
