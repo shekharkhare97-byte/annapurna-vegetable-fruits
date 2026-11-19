@@ -41,39 +41,60 @@ export default {
       return json({ error: "messages array is required." }, 400);
     }
 
-    // Restrict requests to models listed on Google's Gemini API Free Tier.
-    const allowedModels = new Set(["gemini-3.8-flash", "gemini-3.1-flash-lite"]);
-    const model = allowedModels.has(body.model) ? body.model : "gemini-3.8-flash";
+    // Only use the two configured free-tier model choices. If one is busy,
+    // automatically try the other before returning an error to the app.
+    const allowedModels = ["gemini-3.8-flash", "gemini-3.1-flash-lite"];
+    const requestedModel = allowedModels.includes(body.model) ? body.model : allowedModels[0];
+    const modelOrder = [requestedModel, ...allowedModels.filter((item) => item !== requestedModel)];
     const systemInstruction = typeof body.systemInstruction === "string"
       ? body.systemInstruction.slice(0, 8000) : "";
     const contents = body.messages.slice(-24).map((m) => ({
       role: m.role === "model" ? "model" : "user",
       parts: [{ text: String(m.text || "").slice(0, 4000) }]
     }));
+    const requestBody = JSON.stringify({
+      contents,
+      ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {}),
+      generationConfig: { temperature: 0.7 }
+    });
 
-    try {
-      const upstream = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-          body: JSON.stringify({
-            contents,
-            ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {}),
-            generationConfig: { temperature: 0.7 }
-          })
+    let lastStatus = 502;
+    let lastMessage = "Gemini is temporarily unavailable. Please try again shortly.";
+    for (const model of modelOrder) {
+      try {
+        const upstream = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: requestBody
+          }
+        );
+        const data = await upstream.json().catch(() => ({}));
+        if (upstream.ok) {
+          const parts = data?.candidates?.[0]?.content?.parts || [];
+          const reply = parts.map((part) => part.text || "").join("").trim();
+          if (reply) return json({ reply, modelUsed: model });
+          lastStatus = 502;
+          lastMessage = "Gemini returned an empty response.";
+        } else {
+          lastStatus = upstream.status;
+          lastMessage = data?.error?.message || `Gemini API error (${upstream.status})`;
         }
-      );
-      const data = await upstream.json();
-      if (!upstream.ok) {
-        return json({ error: data?.error?.message || `Gemini API error (${upstream.status})` }, upstream.status);
+
+        // Retry only transient overload, rate-limit, and server errors.
+        if (![429, 500, 502, 503, 504].includes(lastStatus)) {
+          return json({ error: lastMessage }, lastStatus);
+        }
+      } catch {
+        lastStatus = 502;
+        lastMessage = "Could not reach Gemini API. Please try again.";
       }
-      const parts = data?.candidates?.[0]?.content?.parts || [];
-      const reply = parts.map((part) => part.text || "").join("").trim();
-      if (!reply) return json({ error: "Gemini returned an empty response." }, 502);
-      return json({ reply, modelUsed: model });
-    } catch {
-      return json({ error: "Could not reach Gemini API. Please try again." }, 502);
     }
+
+    return json({
+      error: lastMessage,
+      message: "Both free AI model options are temporarily busy or unavailable. Please wait a little and try again."
+    }, lastStatus);
   }
 };
