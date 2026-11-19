@@ -174,12 +174,12 @@ fun BazaarHomeScreen(
                         Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                "अंदाजे डिलिव्हरी वेळ: ३०–६० मिनिटे",
+                                customerText("अंदाजे डिलिव्हरी वेळ: ३०–६० मिनिटे", "अनुमानित डिलीवरी समय: ३०–६० मिनट", "Estimated delivery time: 30–60 minutes"),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleSmall
                             )
                             Text(
-                                "अंतर आणि ऑर्डरच्या गर्दीनुसार वेळ बदलू शकतो.",
+                                customerText("अंतर आणि ऑर्डरच्या गर्दीनुसार वेळ बदलू शकतो.", "दूरी और ऑर्डर की संख्या के अनुसार समय बदल सकता है।", "Time may vary depending on distance and order volume."),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -384,12 +384,12 @@ private fun StoreBrandHeader() {
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                         Text(
-                            "डिलिव्हरी कुठे हवी आहे?",
+                            customerText("डिलिव्हरी कुठे हवी आहे?", "डिलीवरी कहाँ चाहिए?", "Where should we deliver?"),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.82f)
                         )
                         Text(
-                            "तुमचा पत्ता ऑर्डर करताना भरा",
+                            customerText("तुमचा पत्ता ऑर्डर करताना भरा", "ऑर्डर करते समय अपना पता भरें", "Enter your address when placing the order"),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
@@ -1099,12 +1099,12 @@ private fun CustomerOffersStrip() {
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        "आजच्या खास Offers",
+                        customerText("आजच्या खास Offers", "आज के खास ऑफ़र", "Today’s special offers"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "तुमच्यासाठी खास बचत आणि ताज्या ऑफर्स",
+                        customerText("तुमच्यासाठी खास बचत आणि ताज्या ऑफर्स", "आपके लिए खास बचत और ताज़ा ऑफ़र", "Special savings and fresh offers for you"),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1178,7 +1178,7 @@ private fun CustomerOffersStrip() {
                                 shape = RoundedCornerShape(50)
                             ) {
                                 Text(
-                                    "आजची खास ऑफर",
+                                    customerText("आजची खास ऑफर", "आज का खास ऑफ़र", "Today’s special offer"),
                                     color = Color(0xFF3E2723),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
@@ -1206,4 +1206,10 @@ private fun CustomerOffersStrip() {
             }
         }
     }
+}
+
+@Composable
+private fun customerText(mr: String, hi: String, en: String): String {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+    return when (language) { "hi" -> hi; "en" -> en; else -> mr }
 }
