@@ -24,9 +24,9 @@ enum class ChatModelTier(
     val marathiSubtitle: String
 ) {
     FAST(
-        modelId = "gemini-3.5-flash-lite",
+        modelId = "gemini-3.1-flash-lite",
         marathiTitle = "झटपट (Fast)",
-        marathiSubtitle = "त्वरीत उत्तरांसाठी • gemini-3.5-flash-lite"
+        marathiSubtitle = "त्वरीत उत्तरांसाठी • gemini-3.1-flash-lite"
     ),
     GENERAL(
         modelId = "gemini-3.8-flash",
@@ -34,9 +34,9 @@ enum class ChatModelTier(
         marathiSubtitle = "दैनंदिन मदतीसाठी • gemini-3.8-flash"
     ),
     COMPLEX(
-        modelId = "gemini-4-argon",
+        modelId = "gemini-3.8-flash",
         marathiTitle = "सखोल तज्ञ (Complex)",
-        marathiSubtitle = "सविस्तर नियोजनासाठी • gemini-4-argon"
+        marathiSubtitle = "सविस्तर नियोजनासाठी • gemini-3.8-flash"
     )
 }
 
@@ -130,43 +130,52 @@ class GeminiRepository(
         selectedTier: ChatModelTier,
         cartSummary: String
     ): Result<String> = withContext(Dispatchers.IO) {
-        try {
-            val model = com.google.firebase.Firebase.ai(
-                backend = com.google.firebase.ai.GenerativeBackend.googleAI()
-            ).generativeModel(
-                modelName = selectedTier.modelId,
-                systemInstruction = com.google.firebase.ai.type.content {
-                    text(buildStoreSystemInstruction(cartSummary))
-                }
+        val service = requireSecureBackendService().getOrElse {
+            return@withContext Result.failure(it)
+        }
+        if (history.none { it.isUser }) {
+            return@withContext Result.failure(
+                IllegalArgumentException("कृपया आधी तुमचा प्रश्न लिहा.")
             )
+        }
 
-            val priorHistory = history.dropLast(1).map { turn ->
-                com.google.firebase.ai.type.content(role = if (turn.isUser) "user" else "model") {
-                    text(turn.text)
-                }
-            }
-            val chat = model.startChat(history = priorHistory)
-            val latestMessage = history.lastOrNull { it.isUser }?.text
-                ?: return@withContext Result.failure(
-                    IllegalArgumentException("कृपया आधी तुमचा प्रश्न लिहा.")
+        val request = ProxyChatRequest(
+            model = selectedTier.modelId,
+            systemInstruction = buildStoreSystemInstruction(cartSummary),
+            messages = history.map { turn ->
+                ProxyChatTurnDto(
+                    role = if (turn.isUser) "user" else "model",
+                    text = turn.text
                 )
-            val response = withTimeout(60_000L) {
-                chat.sendMessage(latestMessage)
             }
-            val replyText = response.text?.trim()
-            if (!replyText.isNullOrBlank()) {
-                Result.success(replyText)
+        )
+
+        try {
+            val response = withTimeout(90_000L) {
+                service.chatWithAssistant(request)
+            }
+            if (!response.error.isNullOrBlank()) {
+                Result.failure(IllegalStateException(response.error))
             } else {
-                Result.failure(IllegalStateException("AI कडून रिकामे उत्तर आले. कृपया पुन्हा प्रयत्न करा."))
+                val reply = response.reply?.trim()
+                if (reply.isNullOrBlank()) {
+                    Result.failure(IllegalStateException("AI कडून रिकामे उत्तर आले. कृपया पुन्हा प्रयत्न करा."))
+                } else {
+                    Result.success(reply)
+                }
             }
         } catch (e: TimeoutCancellationException) {
-            Log.e(TAG, "Firebase AI Logic chat request timed out", e)
-            Result.failure(IllegalStateException("विनंतीला ६० सेकंदांपेक्षा जास्त वेळ लागला. कृपया पुन्हा प्रयत्न करा."))
+            Log.e(TAG, "Cloudflare AI chat request timed out", e)
+            Result.failure(IllegalStateException("विनंतीला वेळ लागला. कृपया पुन्हा प्रयत्न करा."))
         } catch (e: CancellationException) {
             throw e
+        } catch (e: HttpException) {
+            val detail = parseHttpErrorMessage(e)
+            Log.e(TAG, "Cloudflare AI chat HTTP error: $detail", e)
+            Result.failure(IllegalStateException(detail))
         } catch (e: Exception) {
-            Log.e(TAG, "Firebase AI Logic chat failed", e)
-            Result.failure(IllegalStateException(e.localizedMessage ?: "Annapurna AI शी संपर्क साधताना अडचण आली. Firebase AI Logic सुरू आहे का ते तपासा."))
+            Log.e(TAG, "Cloudflare AI chat failed", e)
+            Result.failure(IllegalStateException(e.localizedMessage ?: "Annapurna AI शी संपर्क साधताना अडचण आली."))
         }
     }
 
