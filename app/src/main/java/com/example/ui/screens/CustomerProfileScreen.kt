@@ -98,8 +98,8 @@ fun CustomerProfileScreen(
                     Icon(Icons.Outlined.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(18.dp))
                 }
                 Column {
-                    Text(formState.customerName.ifBlank { "अन्नपूर्णा ग्राहक" }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(formState.mobileNumber.ifBlank { "मोबाईल नंबर जोडा" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(formState.customerName.ifBlank { tr("अन्नपूर्णा ग्राहक", "अन्नपूर्णा ग्राहक", "Annapurna Customer") }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(formState.mobileNumber.ifBlank { tr("मोबाईल नंबर जोडा", "मोबाइल नंबर जोड़ें", "Add mobile number") }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -108,18 +108,18 @@ fun CustomerProfileScreen(
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.Person, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
-                        Text("  माझी माहिती", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("  " + tr("माझी माहिती", "मेरी जानकारी", "My details"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.weight(1f))
                         androidx.compose.material3.TextButton(onClick = { editing = !editing }) {
-                            Text(if (editing) "बंद करा" else "बदला")
+                            Text(if (editing) tr("बंद करा", "बंद करें", "Close") else tr("बदला", "बदलें", "Edit"))
                         }
                     }
                     if (editing || formState.customerName.isBlank()) {
-                        OutlinedTextField(value = formState.customerName, onValueChange = onNameChange, label = { Text("पूर्ण नाव") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = formState.mobileNumber, onValueChange = onMobileChange, label = { Text("मोबाईल नंबर") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = formState.deliveryAddress, onValueChange = onAddressChange, label = { Text("डिलिव्हरी पत्ता") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                        OutlinedTextField(value = formState.customerName, onValueChange = onNameChange, label = { Text(tr("पूर्ण नाव", "पूरा नाम", "Full name")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = formState.mobileNumber, onValueChange = onMobileChange, label = { Text(tr("मोबाईल नंबर", "मोबाइल नंबर", "Mobile number")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = formState.deliveryAddress, onValueChange = onAddressChange, label = { Text(tr("डिलिव्हरी पत्ता", "डिलीवरी पता", "Delivery address")) }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                         Button(onClick = onSaveProfile, enabled = !formState.isSubmitting, modifier = Modifier.fillMaxWidth()) {
-                            Text(if (formState.isSubmitting) "जतन होत आहे..." else "माहिती जतन करा")
+                            Text(if (formState.isSubmitting) tr("जतन होत आहे...", "सेव हो रहा है...", "Saving...") else tr("माहिती जतन करा", "जानकारी सेव करें", "Save details"))
                         }
                         formState.cartErrorMarathi?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     } else {
@@ -128,7 +128,7 @@ fun CustomerProfileScreen(
                         HorizontalDivider()
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Outlined.LocationOn, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
-                            Text("  " + formState.deliveryAddress.ifBlank { "पत्ता जोडलेला नाही" })
+                            Text("  " + formState.deliveryAddress.ifBlank { tr("पत्ता जोडलेला नाही", "पता नहीं जोड़ा गया", "No address added") })
                         }
                     }
                 }
@@ -139,7 +139,7 @@ fun CustomerProfileScreen(
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.LocationOn, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
-                        Text("  लाईव्ह ऑर्डर ट्रॅकिंग", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("  " + tr("लाईव्ह ऑर्डर ट्रॅकिंग", "लाइव ऑर्डर ट्रैकिंग", "Live order tracking"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                     val trackingProgress = when (trackingStatus) {
                         "new" -> 0.15f
@@ -162,7 +162,7 @@ fun CustomerProfileScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            listOf("ऑर्डर", "तयारी", "Pickup", "डिलिव्हरी").forEachIndexed { index, label ->
+                            listOf(tr("ऑर्डर", "ऑर्डर", "Order"), tr("तयारी", "तैयारी", "Preparing"), "Pickup", tr("डिलिव्हरी", "डिलीवरी", "Delivery")).forEachIndexed { index, label ->
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -191,31 +191,31 @@ fun CustomerProfileScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("ऑर्डर प्रगती", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                            Text(tr("ऑर्डर प्रगती", "ऑर्डर की प्रगति", "Order progress"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                             Text("${(trackingProgress * 100).toInt()}%", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                         }
                     }
                     Text(
                         when (trackingStatus) {
-                            "new" -> "ऑर्डर मिळाली आहे. दुकानाकडून पुष्टीची प्रतीक्षा आहे."
-                            "accepted" -> "दुकानाने ऑर्डर स्वीकारली आहे."
-                            "preparing" -> "तुमची ऑर्डर निवडून पॅक केली जात आहे."
-                            "ready_for_pickup" -> "ऑर्डर तयार आहे. डिलिव्हरी पार्टनर येत आहे."
-                            "claimed_pending_shop_otp" -> "डिलिव्हरी पार्टनर दुकानात पोहोचला आहे. दुकानाकडून Pickup OTP पुष्टी बाकी आहे."
-                            "picked_up" -> "डिलिव्हरी पार्टनरने दुकानातून तुमची ऑर्डर घेतली आहे."
-                            "out_for_delivery" -> "तुमची ऑर्डर डिलिव्हरीसाठी निघाली आहे."
-                            "completed" -> "ऑर्डर यशस्वीपणे पोहोचवली आहे."
-                            "cancelled" -> "ही ऑर्डर रद्द झाली आहे."
-                            "unavailable" -> "ट्रॅकिंग सध्या उपलब्ध नाही. इंटरनेट तपासा."
-                            else -> "ऑर्डर केल्यानंतर तिचे अपडेट येथे दिसतील."
+                            "new" -> tr("ऑर्डर मिळाली आहे. दुकानाकडून पुष्टीची प्रतीक्षा आहे.", "ऑर्डर मिल गई है। दुकान की पुष्टि का इंतज़ार है।", "Order received. Waiting for shop confirmation.")
+                            "accepted" -> tr("दुकानाने ऑर्डर स्वीकारली आहे.", "दुकान ने ऑर्डर स्वीकार कर ली है।", "The shop has accepted your order.")
+                            "preparing" -> tr("तुमची ऑर्डर निवडून पॅक केली जात आहे.", "आपका ऑर्डर चुना और पैक किया जा रहा है।", "Your order is being picked and packed.")
+                            "ready_for_pickup" -> tr("ऑर्डर तयार आहे. डिलिव्हरी पार्टनर येत आहे.", "ऑर्डर तैयार है। डिलीवरी पार्टनर आ रहा है।", "Your order is ready. The delivery partner is on the way.")
+                            "claimed_pending_shop_otp" -> tr("डिलिव्हरी पार्टनर दुकानात पोहोचला आहे. दुकानाकडून Pickup OTP पुष्टी बाकी आहे.", "डिलीवरी पार्टनर दुकान पहुँच गया है। दुकान से Pickup OTP की पुष्टि बाकी है।", "The delivery partner has reached the shop. Shop confirmation of the pickup OTP is pending.")
+                            "picked_up" -> tr("डिलिव्हरी पार्टनरने दुकानातून तुमची ऑर्डर घेतली आहे.", "डिलीवरी पार्टनर ने दुकान से आपका ऑर्डर ले लिया है।", "The delivery partner has picked up your order from the shop.")
+                            "out_for_delivery" -> tr("तुमची ऑर्डर डिलिव्हरीसाठी निघाली आहे.", "आपका ऑर्डर डिलीवरी के लिए निकल गया है।", "Your order is out for delivery.")
+                            "completed" -> tr("ऑर्डर यशस्वीपणे पोहोचवली आहे.", "ऑर्डर सफलतापूर्वक पहुँचा दिया गया है।", "Your order has been delivered successfully.")
+                            "cancelled" -> tr("ही ऑर्डर रद्द झाली आहे.", "यह ऑर्डर रद्द कर दिया गया है।", "This order has been cancelled.")
+                            "unavailable" -> tr("ट्रॅकिंग सध्या उपलब्ध नाही. इंटरनेट तपासा.", "ट्रैकिंग अभी उपलब्ध नहीं है। इंटरनेट जाँचें।", "Tracking is currently unavailable. Check your internet connection.")
+                            else -> tr("ऑर्डर केल्यानंतर तिचे अपडेट येथे दिसतील.", "ऑर्डर करने के बाद इसके अपडेट यहाँ दिखेंगे।", "Order updates will appear here after you place an order.")
                         }
                     )
                     if (trackingLocation.isNotBlank()) {
                         val coordinates = trackingLocation.split(",")
-                        Text("डिलिव्हरी पार्टनरचे Live लोकेशन उपलब्ध आहे.", fontWeight = FontWeight.SemiBold)
+                        Text(tr("डिलिव्हरी पार्टनरचे Live लोकेशन उपलब्ध आहे.", "डिलीवरी पार्टनर की Live Location उपलब्ध है।", "Delivery partner live location is available."), fontWeight = FontWeight.SemiBold)
                         trackingUpdatedAtMillis?.let { updatedAt ->
                             val timeLabel = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(updatedAt))
-                            Text("शेवटचे लोकेशन अपडेट: $timeLabel", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${tr("शेवटचे लोकेशन अपडेट", "आखिरी लोकेशन अपडेट", "Last location update")}: $timeLabel", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         if (coordinates.size == 2) {
                             val latitude = coordinates.getOrNull(0)?.toDoubleOrNull()
@@ -238,8 +238,8 @@ fun CustomerProfileScreen(
                                     ) {
                                         Marker(
                                             state = MarkerState(position = deliveryPartnerPosition),
-                                            title = "डिलिव्हरी पार्टनर",
-                                            snippet = "तुमच्या ऑर्डरचे Live लोकेशन"
+                                            title = tr("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner"),
+                                            snippet = tr("तुमच्या ऑर्डरचे Live लोकेशन", "आपके ऑर्डर की Live Location", "Live location of your order")
                                         )
                                     }
                                 }
@@ -247,7 +247,7 @@ fun CustomerProfileScreen(
                                     val mapUri = Uri.parse("geo:$latitude,$longitude?q=$latitude,$longitude")
                                     context.startActivity(Intent(Intent.ACTION_VIEW, mapUri))
                                 }, modifier = Modifier.fillMaxWidth()) {
-                                    Text("Google Maps मध्ये मोठा नकाशा उघडा")
+                                    Text(tr("Google Maps मध्ये मोठा नकाशा उघडा", "Google Maps में बड़ा नक्शा खोलें", "Open larger map in Google Maps"))
                                 }
                             }
                         }
@@ -258,13 +258,13 @@ fun CustomerProfileScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.ReceiptLong, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
-                Text("  माझ्या ऑर्डर्स", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("  " + tr("माझ्या ऑर्डर्स", "मेरे ऑर्डर", "My orders"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
-                androidx.compose.material3.TextButton(onClick = onOpenOrders) { Text("सर्व पहा") }
+                androidx.compose.material3.TextButton(onClick = onOpenOrders) { Text(tr("सर्व पहा", "सभी देखें", "View all")) }
             }
         }
         if (recentOrders.isEmpty()) {
-            item { Text("अजून कोणतीही ऑर्डर नाही. तुमची पहिली खरेदी सुरू करा!") }
+            item { Text(tr("अजून कोणतीही ऑर्डर नाही. तुमची पहिली खरेदी सुरू करा!", "अभी कोई ऑर्डर नहीं है। अपनी पहली खरीदारी शुरू करें!", "No orders yet. Start your first purchase!")) }
         } else {
             items(recentOrders.take(5)) { order ->
                 Card {
@@ -281,11 +281,11 @@ fun CustomerProfileScreen(
                 Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.FavoriteBorder, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
-                        Text("  माझी आवडती उत्पादने", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("  " + tr("माझी आवडती उत्पादने", "मेरे पसंदीदा उत्पाद", "My favorite products"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                     val favorites = produceItems.filter { it.id in favoriteIds }
                     if (favorites.isEmpty()) {
-                        Text("अजून आवडते उत्पादन निवडलेले नाही. बाजारात ❤️ दाबून उत्पादने येथे सेव्ह करा.")
+                        Text(tr("अजून आवडते उत्पादन निवडलेले नाही. बाजारात ❤️ दाबून उत्पादने येथे सेव्ह करा.", "अभी कोई पसंदीदा उत्पाद नहीं चुना। बाज़ार में ❤️ दबाकर उत्पाद यहाँ सेव करें।", "No favorite products yet. Tap ❤️ in the market to save products here."))
                     } else {
                         favorites.forEach { product ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -296,7 +296,7 @@ fun CustomerProfileScreen(
                                 TextButton(onClick = {
                                     favoriteIds = favoriteIds - product.id
                                     favoritePrefs.edit().putStringSet("ids", favoriteIds).apply()
-                                }) { Text("काढा") }
+                                }) { Text(tr("काढा", "हटाएँ", "Remove")) }
                             }
                             HorizontalDivider()
                         }
@@ -309,19 +309,19 @@ fun CustomerProfileScreen(
                 Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.AddLocationAlt, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
-                        Text("  माझे सेव्ह केलेले पत्ते", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("  " + tr("माझे सेव्ह केलेले पत्ते", "मेरे सेव किए गए पते", "My saved addresses"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                     savedAddresses.forEach { address ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(address, style = MaterialTheme.typography.bodyMedium)
-                                Text("ऑर्डरसाठी हा पत्ता वापरा", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(tr("ऑर्डरसाठी हा पत्ता वापरा", "ऑर्डर के लिए इस पते का उपयोग करें", "Use this address for orders"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            OutlinedButton(onClick = { onAddressChange(address) }) { Text("निवडा") }
+                            OutlinedButton(onClick = { onAddressChange(address) }) { Text(tr("निवडा", "चुनें", "Select")) }
                         }
                         HorizontalDivider()
                     }
-                    OutlinedTextField(value = addressDraft, onValueChange = { addressDraft = it }, label = { Text("नवीन घर / ऑफिस पत्ता") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                    OutlinedTextField(value = addressDraft, onValueChange = { addressDraft = it }, label = { Text(tr("नवीन घर / ऑफिस पत्ता", "नया घर / ऑफिस का पता", "New home / office address")) }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                     Button(
                         onClick = {
                             val value = addressDraft.trim()
@@ -333,19 +333,19 @@ fun CustomerProfileScreen(
                         },
                         enabled = addressDraft.isNotBlank(),
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("पत्ता सेव्ह करा") }
+                    ) { Text(tr("पत्ता सेव्ह करा", "पता सेव करें", "Save address")) }
                     HorizontalDivider()
-                    ProfileShortcut(Icons.Outlined.FavoriteBorder, "आवडती उत्पादने", "आवडते पदार्थ लवकर शोधा")
+                    ProfileShortcut(Icons.Outlined.FavoriteBorder, tr("आवडती उत्पादने", "पसंदीदा उत्पाद", "Favorite products"), tr("आवडते पदार्थ लवकर शोधा", "पसंदीदा चीज़ें जल्दी खोजें", "Find favorite items quickly"))
                     HorizontalDivider()
-                    ProfileShortcut(Icons.Outlined.CardGiftcard, "कूपन आणि ऑफर्स", "सध्या उपलब्ध ऑफर्स कार्टमध्ये तपासा")
+                    ProfileShortcut(Icons.Outlined.CardGiftcard, tr("कूपन आणि ऑफर्स", "कूपन और ऑफ़र", "Coupons and offers"), tr("सध्या उपलब्ध ऑफर्स कार्टमध्ये तपासा", "उपलब्ध ऑफ़र कार्ट में देखें", "Check available offers in your cart"))
                     HorizontalDivider()
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Outlined.HelpOutline, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                            Text("मदत आणि ग्राहक सेवा", fontWeight = FontWeight.SemiBold)
-                            Text("ऑर्डर, पेमेंट आणि डिलिव्हरीविषयी सामान्य मदत", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(tr("मदत आणि ग्राहक सेवा", "मदद और ग्राहक सेवा", "Help and customer service"), fontWeight = FontWeight.SemiBold)
+                            Text(tr("ऑर्डर, पेमेंट आणि डिलिव्हरीविषयी सामान्य मदत", "ऑर्डर, भुगतान और डिलीवरी से जुड़ी मदद", "Help with orders, payments and delivery"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        TextButton(onClick = { showHelp = true }) { Text("मदत") }
+                        TextButton(onClick = { showHelp = true }) { Text(tr("मदत", "मदद", "Help")) }
                     }
                     HorizontalDivider()
                 }
@@ -356,18 +356,18 @@ fun CustomerProfileScreen(
     if (showHelp) {
         AlertDialog(
             onDismissRequest = { showHelp = false },
-            title = { Text("अन्नपूर्णा ग्राहक मदत") },
+            title = { Text(tr("अन्नपूर्णा ग्राहक मदत", "अन्नपूर्णा ग्राहक सहायता", "Annapurna Customer Help")) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("SOS / Police: 112")
-                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))) }) { Text("SOS • Police 112 वर कॉल करा") }
+                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))) }) { Text(tr("SOS • Police 112 वर कॉल करा", "SOS • Police 112 पर कॉल करें", "Call SOS • Police 112")) }
                     Text("Customer Help: 8530011324")
-                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8530011324"))) }) { Text("Customer Help ला कॉल करा") }
+                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8530011324"))) }) { Text(tr("Customer Help ला कॉल करा", "Customer Help पर कॉल करें", "Call Customer Help")) }
                     Text("Email: annpurnavegitablesandfruits@gmail.com")
-                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:annpurnavegitablesandfruits@gmail.com"))) }) { Text("ईमेल पाठवा") }
+                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:annpurnavegitablesandfruits@gmail.com"))) }) { Text(tr("ईमेल पाठवा", "ईमेल भेजें", "Send email")) }
                 }
             },
-            confirmButton = { TextButton(onClick = { showHelp = false }) { Text("ठीक आहे") } }
+            confirmButton = { TextButton(onClick = { showHelp = false }) { Text(tr("ठीक आहे", "ठीक है", "OK")) } }
         )
     }
 }
@@ -381,4 +381,10 @@ private fun ProfileShortcut(icon: androidx.compose.ui.graphics.vector.ImageVecto
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+@Composable
+private fun tr(mr: String, hi: String, en: String): String {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+    return when (language) { "hi" -> hi; "en" -> en; else -> mr }
 }
