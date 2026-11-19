@@ -10,5 +10,5 @@ package com.example.data.remote
  */
 object BackendConfig {
     // Public HTTPS endpoint of your deployed `/backend` proxy service (e.g. "https://annapurna-proxy-xxx.a.run.app/")
-    const val BACKEND_BASE_URL: String = ""
+    const val BACKEND_BASE_URL: String = "https://annapurna-customer-ai.shekharkhare97.workers.dev/"
 }
