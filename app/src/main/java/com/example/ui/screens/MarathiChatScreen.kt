@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.util.Base64
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -51,6 +52,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -86,7 +88,7 @@ fun MarathiChatScreen(
     chatState: ChatUiState,
     onSelectModelTier: (ChatModelTier) -> Unit,
     onInputChange: (String) -> Unit,
-    onSendMessage: (String?) -> Unit,
+    onSendMessage: (String?, String?, String?) -> Unit,
     onResetChat: () -> Unit,
     onBackToBazaar: () -> Unit,
     modifier: Modifier = Modifier
@@ -98,6 +100,23 @@ fun MarathiChatScreen(
     var listening by remember { mutableStateOf(false) }
     var speechError by remember { mutableStateOf<String?>(null) }
     var recognizer by remember { mutableStateOf<SpeechRecognizer?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            try {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: throw IllegalStateException("फोटो वाचता आला नाही.")
+                if (bytes.size > 4 * 1024 * 1024) {
+                    speechError = "कृपया 4 MB पेक्षा लहान फोटो निवडा."
+                } else {
+                    val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                    val prompt = chatState.inputText.ifBlank { "या फोटोतील वस्तू/भाजी/फळ ओळखा आणि माहिती सांगा." }
+                    onSendMessage(prompt, Base64.encodeToString(bytes, Base64.NO_WRAP), mime)
+                }
+            } catch (e: Exception) {
+                speechError = e.localizedMessage ?: "फोटो पाठवता आला नाही."
+            }
+        }
+    }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -321,7 +340,7 @@ fun MarathiChatScreen(
         ) {
             items(marathiChatSuggestions) { suggestion ->
                 AssistChip(
-                    onClick = { onSendMessage(suggestion) },
+                    onClick = { onSendMessage(suggestion, null, null) },
                     enabled = !chatState.isSending,
                     label = {
                         Text(
@@ -347,6 +366,10 @@ fun MarathiChatScreen(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
+            TextButton(
+                onClick = { photoPicker.launch("image/*") },
+                enabled = !chatState.isSending
+            ) { Text("📷") }
             OutlinedTextField(
                 value = chatState.inputText,
                 onValueChange = onInputChange,
@@ -359,7 +382,7 @@ fun MarathiChatScreen(
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(
-                    onSend = { onSendMessage(null) }
+                    onSend = { onSendMessage(null, null, null) }
                 ),
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier
