@@ -468,10 +468,12 @@ fun AnnapurnaRootApp() {
                                 chatState = chatState,
                                 onSelectModelTier = aiViewModel::selectModelTier,
                                 onInputChange = aiViewModel::updateChatInput,
-                                onSendMessage = { overridePrompt ->
+                                onSendMessage = { overridePrompt, imageBase64, mimeType ->
                                     aiViewModel.sendChatMessage(
                                         promptOverride = overridePrompt,
-                                        cartSummary = storeViewModel.buildCartSummaryForAi()
+                                        cartSummary = storeViewModel.buildCartSummaryForAi(),
+                                        imageBase64 = imageBase64,
+                                        mimeType = mimeType
                                     )
                                 },
                                 onResetChat = aiViewModel::resetConversation,
