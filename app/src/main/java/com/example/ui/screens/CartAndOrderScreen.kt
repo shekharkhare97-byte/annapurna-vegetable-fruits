@@ -94,6 +94,12 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.math.roundToLong
 import org.json.JSONObject
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -500,15 +506,46 @@ fun CartAndOrderScreen(
                         if (trackingLocation.isNotBlank()) {
                             val parts = trackingLocation.split(",")
                             if (parts.size == 2) {
-                                Text(stringResource(R.string.tracking_live_location_available), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                                trackingUpdatedAtMillis?.let { updatedAt ->
-                                    val updatedTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(updatedAt))
-                                    Text("शेवटचे लोकेशन अपडेट: $updatedTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                val driverLatitude = parts[0].toDoubleOrNull()
+                                val driverLongitude = parts[1].toDoubleOrNull()
+                                if (driverLatitude != null && driverLongitude != null &&
+                                    driverLatitude in -90.0..90.0 && driverLongitude in -180.0..180.0
+                                ) {
+                                    val driverPosition = LatLng(driverLatitude, driverLongitude)
+                                    val cameraPositionState = rememberCameraPositionState {
+                                        position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
+                                    }
+                                    LaunchedEffect(driverPosition) {
+                                        cameraPositionState.position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
+                                    }
+                                    Text(
+                                        text = stringResource(R.string.tracking_live_location_available),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    GoogleMap(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(220.dp)
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .testTag("customer_live_delivery_map"),
+                                        cameraPositionState = cameraPositionState
+                                    ) {
+                                        Marker(
+                                            state = MarkerState(position = driverPosition),
+                                            title = "Delivery Partner",
+                                            snippet = "Live location"
+                                        )
+                                    }
+                                    trackingUpdatedAtMillis?.let { updatedAt ->
+                                        val updatedTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(updatedAt))
+                                        Text("शेवटचे लोकेशन अपडेट: $updatedTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    TextButton(onClick = {
+                                        val uri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${parts[0]},${parts[1]}")
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                    }) { Text(stringResource(R.string.tracking_open_google_maps)) }
                                 }
-                                TextButton(onClick = {
-                                    val uri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${parts[0]},${parts[1]}")
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                                }) { Text(stringResource(R.string.tracking_open_google_maps)) }
                             }
                         }
                         val progress = when (trackingStatus) {
