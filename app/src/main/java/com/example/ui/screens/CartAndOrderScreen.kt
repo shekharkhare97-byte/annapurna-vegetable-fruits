@@ -119,6 +119,7 @@ fun CartAndOrderScreen(
     trackingLocation: String,
     trackingUpdatedAtMillis: Long?,
     trackingPartnerAccepted: Boolean,
+    trackingPartnerName: String,
     onIncreaseQty: (String) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
@@ -548,6 +549,11 @@ fun CartAndOrderScreen(
                                         cameraPositionState.position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
                                     }
                                     Text(
+                                        text = "Delivery Partner: ${trackingPartnerName.ifBlank { "Delivery Partner" }}",
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
                                         text = stringResource(R.string.tracking_live_location_available),
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.SemiBold
@@ -562,7 +568,7 @@ fun CartAndOrderScreen(
                                     ) {
                                         Marker(
                                             state = riderMarkerState,
-                                            title = "Delivery Partner",
+                                            title = trackingPartnerName.ifBlank { "Delivery Partner" },
                                             snippet = "Live location",
                                             icon = riderIcon,
                                             anchor = Offset(0.5f, 0.5f)
@@ -590,7 +596,12 @@ fun CartAndOrderScreen(
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Text(
-                                        "🛵 Delivery Partner ने ऑर्डर स्वीकारली आहे",
+                                        "🛵 Delivery Partner: ${trackingPartnerName.ifBlank { "नाव मिळवत आहोत" }}",
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        "Delivery Partner ने ऑर्डर स्वीकारली आहे",
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
