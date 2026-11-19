@@ -138,6 +138,18 @@ fun CartAndOrderScreen(
     BackHandler(onBack = onBackToBazaar)
 
     val context = LocalContext.current
+    var shopMapPosition by remember { mutableStateOf<LatLng?>(null) }
+    LaunchedEffect(Unit) {
+        shopMapPosition = withContext(Dispatchers.IO) {
+            runCatching {
+                @Suppress("DEPRECATION")
+                Geocoder(context, Locale("en", "IN"))
+                    .getFromLocationName("Surya co op HSG society, road boargad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India", 1)
+                    ?.firstOrNull()
+                    ?.let { LatLng(it.latitude, it.longitude) }
+            }.getOrNull()
+        }
+    }
     var deliveryRating by rememberSaveable { mutableStateOf(5) }
     var deliveryReview by rememberSaveable { mutableStateOf("") }
     var reviewSent by rememberSaveable { mutableStateOf(false) }
@@ -509,6 +521,61 @@ fun CartAndOrderScreen(
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                        if (trackingLocation.isBlank()) {
+                            val shopPosition = shopMapPosition
+                            if (shopPosition != null) {
+                                val shopCamera = rememberCameraPositionState {
+                                    position = CameraPosition.fromLatLngZoom(shopPosition, 15f)
+                                }
+                                val shopVehicleIcon = remember {
+                                    val bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
+                                    val canvas = Canvas(bitmap)
+                                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                                        textSize = 94f
+                                        textAlign = Paint.Align.CENTER
+                                        typeface = Typeface.DEFAULT
+                                    }
+                                    canvas.drawText("🛵", 64f, 100f, paint)
+                                    BitmapDescriptorFactory.fromBitmap(bitmap)
+                                }
+                                Text(
+                                    if (trackingPartnerAccepted)
+                                        "🛵 ${trackingPartnerName.ifBlank { "Delivery Partner" }} दुकानातून Pickup करण्याच्या तयारीत आहे."
+                                    else
+                                        "🛵 तुमची ऑर्डर दुकानात तयार होत आहे. गाडी दुकानाजवळ आहे.",
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                GoogleMap(
+                                    modifier = Modifier.fillMaxWidth().height(220.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .testTag("customer_live_delivery_map"),
+                                    cameraPositionState = shopCamera
+                                ) {
+                                    Marker(
+                                        state = MarkerState(position = shopPosition),
+                                        title = "Annapurna Shop",
+                                        snippet = "Delivery vehicle waiting at shop",
+                                        icon = shopVehicleIcon,
+                                        anchor = Offset(0.5f, 0.5f)
+                                    )
+                                }
+                                Text(
+                                    if (trackingPartnerAccepted)
+                                        "Pickup झाल्यावर गाडीचे Live Location येथे दिसेल."
+                                    else
+                                        "Delivery Partner ऑर्डर Pickup करेपर्यंत गाडी दुकानातच दिसेल.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Text(
+                                    "दुकानाचे नकाशावरील Location मिळवत आहोत...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
