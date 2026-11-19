@@ -1,0 +1,4 @@
+name = "annapurna-customer-ai"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-11-20"
+workers_dev = true
