@@ -71,7 +71,12 @@ class AiFeaturesViewModel(
         }
     }
 
-    fun sendChatMessage(promptOverride: String? = null, cartSummary: String) {
+    fun sendChatMessage(
+        promptOverride: String? = null,
+        cartSummary: String,
+        imageBase64: String? = null,
+        mimeType: String? = null
+    ) {
         val currentState = _chatState.value
         if (currentState.isSending) return
         val messageText = (promptOverride ?: currentState.inputText).trim()
@@ -80,7 +85,9 @@ class AiFeaturesViewModel(
         val userTurn = ChatTurn(
             id = UUID.randomUUID().toString(),
             isUser = true,
-            text = messageText
+            text = messageText,
+            imageBase64 = imageBase64,
+            mimeType = mimeType
         )
 
         val updatedMessages = currentState.messages + userTurn
