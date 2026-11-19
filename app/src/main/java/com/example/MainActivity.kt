@@ -407,8 +407,13 @@ fun AnnapurnaRootApp() {
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
                                 onAskRecipeInChat = { produce ->
                                     currentTab = AnnapurnaTab.ASSISTANT
+                                    val recipePrompt = when (currentLanguage) {
+                                        "hi" -> "${produce.marathiName} से बनने वाली एक आसान और स्वादिष्ट रेसिपी बताइए। सामग्री, मात्रा और बनाने की विधि चरणों में समझाइए।"
+                                        "en" -> "Suggest an easy and tasty recipe using ${produce.marathiName}. Explain ingredients, quantities, and step-by-step instructions."
+                                        else -> "${produce.marathiName} वापरून एखादी सोपी आणि चविष्ट महाराष्ट्रीयन पाककृती सांगा. साहित्य, प्रमाण आणि कृती क्रमाने समजावून सांगा."
+                                    }
                                     aiViewModel.sendChatMessage(
-                                        promptOverride = "${produce.marathiName} वापरून एखादी सोपी आणि चविष्ट महाराष्ट्रीयन पाककृती सांगा.",
+                                        promptOverride = recipePrompt,
                                         cartSummary = storeViewModel.buildCartSummaryForAi()
                                     )
                                 },
