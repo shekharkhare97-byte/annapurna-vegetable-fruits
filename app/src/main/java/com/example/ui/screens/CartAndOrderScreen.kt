@@ -578,6 +578,31 @@ fun CartAndOrderScreen(
                                 }
                             }
                         }
+                        if (trackingLocation.isBlank() &&
+                            trackingStatus in listOf("accepted", "preparing", "out_for_delivery")
+                        ) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(18.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        "🛵 Delivery Partner ने ऑर्डर स्वीकारली आहे",
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        "Live Location मिळवत आहोत. GPS मिळताच नकाशावर स्कूटर आपोआप दिसेल.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
                         val progress = when (trackingStatus) {
                             "new" -> 0
                             "accepted" -> 1
