@@ -98,7 +98,7 @@ fun WeightSelectionDialog(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         isError = customWeightText.isNotEmpty() && !valid,
-                        supportingText = { Text(if (valid) "०.००१ ते १०० किलो" else "योग्य वजन लिहा") },
+                        supportingText = { Text(if (valid) customerText("०.००१ ते १०० किलो", "०.००१ से १०० किलो", "0.001 to 100 kg") else customerText("योग्य वजन लिहा", "सही वजन दर्ज करें", "Enter a valid weight")) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -112,7 +112,7 @@ fun WeightSelectionDialog(
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         Text(
-                            text = if (valid) "या वजनाची किंमत" else "कृपया योग्य वजन भरा",
+                            text = if (valid) customerText("या वजनाची किंमत", "इस वजन की कीमत", "Price for this weight") else customerText("कृपया योग्य वजन भरा", "कृपया सही वजन दर्ज करें", "Please enter a valid weight"),
                             style = MaterialTheme.typography.labelMedium,
                             color = if (valid) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -138,4 +138,10 @@ fun WeightSelectionDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
+}
+
+@Composable
+private fun customerText(mr: String, hi: String, en: String): String {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+    return when (language) { "hi" -> hi; "en" -> en; else -> mr }
 }
