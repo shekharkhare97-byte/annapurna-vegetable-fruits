@@ -644,7 +644,7 @@ fun CartAndOrderScreen(
                                     GoogleMap(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(220.dp)
+                                            .height(300.dp)
                                             .clip(RoundedCornerShape(18.dp))
                                             .testTag("customer_live_delivery_map"),
                                         cameraPositionState = cameraPositionState
