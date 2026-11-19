@@ -56,7 +56,9 @@ data class ChatTurn(
     val id: String,
     val isUser: Boolean,
     val text: String,
-    val modelUsed: String? = null
+    val modelUsed: String? = null,
+    val imageBase64: String? = null,
+    val mimeType: String? = null
 )
 
 data class GeneratedStudioImage(
@@ -145,7 +147,9 @@ class GeminiRepository(
             messages = history.map { turn ->
                 ProxyChatTurnDto(
                     role = if (turn.isUser) "user" else "model",
-                    text = turn.text
+                    text = turn.text,
+                    imageBase64 = turn.imageBase64,
+                    mimeType = turn.mimeType
                 )
             }
         )
