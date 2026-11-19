@@ -334,7 +334,18 @@ async function completeDelivery(env, request, body) {
     body: JSON.stringify({ writes }),
   });
   if (!commit.ok) {
-    console.error("delivery-completion-commit-failed", commit.status);
+    const commitError = await commit.json().catch(() => ({}));
+    const firestoreError = commitError && commitError.error ? commitError.error : {};
+    // Keep detailed Firestore diagnostics in Worker logs only; never expose project
+    // details or backend messages to the delivery partner.
+    console.error("delivery-completion-commit-failed", JSON.stringify({
+      httpStatus: commit.status,
+      firestoreStatus: firestoreError.status || null,
+      firestoreCode: firestoreError.code || null,
+      firestoreMessage: typeof firestoreError.message === "string"
+        ? firestoreError.message.slice(0, 500)
+        : null,
+    }));
     return json({ ok: false, error: "Could not complete delivery. Refresh and try again." }, 409);
   }
   return json({ ok: true, delivered: true });
