@@ -290,7 +290,7 @@ async function completeDelivery(env, request, body) {
   const writes = [
     {
       update: {
-        name: base + "/orders/" + orderId,
+        name: "projects/" + projectId + "/databases/(default)/documents/orders/" + orderId,
         fields: firestoreFields({
           deliveryState: "delivered",
           status: "completed",
@@ -304,7 +304,7 @@ async function completeDelivery(env, request, body) {
     },
     {
       update: {
-        name: base + "/" + trackingPath,
+        name: "projects/" + projectId + "/databases/(default)/documents/" + trackingPath,
         fields: firestoreFields({
           status: "completed",
           deliveryLocationSharing: false,
@@ -316,7 +316,7 @@ async function completeDelivery(env, request, body) {
     },
     {
       update: {
-        name: base + "/deliveryPartners/" + encodeURIComponent(partnerUid),
+        name: "projects/" + projectId + "/databases/(default)/documents/deliveryPartners/" + encodeURIComponent(partnerUid),
         fields: firestoreFields({
           completedDeliveryCount: completedCount,
           deliveryMilestoneBonusRupees: totalMilestoneBonus,
