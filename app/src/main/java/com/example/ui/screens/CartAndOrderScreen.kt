@@ -663,6 +663,10 @@ fun CartAndOrderScreen(
                         }
                         Text(statusLabel, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                         Text(stringResource(R.string.status_admin_update), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val reviewThanksText = customerText("धन्यवाद! तुमचा अभिप्राय नोंदवला.", "धन्यवाद! आपकी प्रतिक्रिया दर्ज की गई।", "Thank you! Your feedback has been recorded.")
+                        val reviewFailedText = customerText("अभिप्राय पाठवता आला नाही. पुन्हा प्रयत्न करा.", "प्रतिक्रिया भेजी नहीं जा सकी। फिर कोशिश करें।", "Could not send feedback. Please try again.")
+                        val reviewSubmitText = customerText("रेटिंग आणि अभिप्राय पाठवा", "रेटिंग और समीक्षा भेजें", "Submit rating and review")
+                        val reviewInputText = customerText("तुमचा अनुभव लिहा (ऐच्छिक)", "अपना अनुभव लिखें (वैकल्पिक)", "Write your experience (optional)")
                         if (trackingStatus == "completed") {
                             HorizontalDivider()
                             Text(customerText("डिलिव्हरी पार्टनरला रेटिंग द्या", "डिलीवरी पार्टनर को रेटिंग दें", "Rate your delivery partner"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -674,8 +678,8 @@ fun CartAndOrderScreen(
                                         }
                                     }
                                 }
-                                OutlinedTextField(value = deliveryReview, onValueChange = { deliveryReview = it.take(500) }, modifier = Modifier.fillMaxWidth(), label = { Text(customerText("तुमचा अनुभव लिहा (ऐच्छिक)", "अपना अनुभव लिखें (वैकल्पिक)", "Write your experience (optional)")) }, minLines = 2, maxLines = 4)
-                                Button(onClick = { onSubmitDeliveryReview(deliveryRating, deliveryReview) { success -> reviewSent = success; reviewMessage = if (success) customerText("धन्यवाद! तुमचा अभिप्राय नोंदवला.", "धन्यवाद! आपकी प्रतिक्रिया दर्ज की गई।", "Thank you! Your feedback has been recorded.") else customerText("अभिप्राय पाठवता आला नाही. पुन्हा प्रयत्न करा.", "प्रतिक्रिया भेजी नहीं जा सकी। फिर कोशिश करें।", "Could not send feedback. Please try again.") } }, modifier = Modifier.fillMaxWidth()) { Text(customerText("रेटिंग आणि अभिप्राय पाठवा", "रेटिंग और समीक्षा भेजें", "Submit rating and review")) }
+                                OutlinedTextField(value = deliveryReview, onValueChange = { deliveryReview = it.take(500) }, modifier = Modifier.fillMaxWidth(), label = { Text(reviewInputText) }, minLines = 2, maxLines = 4)
+                                Button(onClick = { onSubmitDeliveryReview(deliveryRating, deliveryReview) { success -> reviewSent = success; reviewMessage = if (success) reviewThanksText else reviewFailedText } }, modifier = Modifier.fillMaxWidth()) { Text(customerText("रेटिंग आणि अभिप्राय पाठवा", "रेटिंग और समीक्षा भेजें", "Submit rating and review")) }
                             } else {
                                 Text(reviewMessage ?: "धन्यवाद! तुमचा अभिप्राय नोंदवला.", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                             }
