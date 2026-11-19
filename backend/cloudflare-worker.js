@@ -15,12 +15,12 @@ export default {
     });
 
     if (request.method === "GET" && url.pathname === "/api/health") {
-      return json({ status: "ok", service: "annapurna-customer-ai-worker", mode: "free-chat" });
+      return json({ status: "ok", service: "annapurna-customer-ai-worker", mode: "free-chat-vision" });
     }
 
     if (request.method !== "POST" || url.pathname !== "/api/chat") {
       if (url.pathname === "/api/generate-image") {
-        return json({ error: "AI image generation is not included in the free-only setup. Chat and recipe help are available." }, 501);
+        return json({ error: "AI image generation is not included in the free-only setup. Chat and photo understanding are available." }, 501);
       }
       return json({ error: "Not found" }, 404);
     }
@@ -31,7 +31,7 @@ export default {
     let body;
     try {
       const raw = await request.text();
-      if (raw.length > 256 * 1024) return json({ error: "Payload too large." }, 413);
+      if (raw.length > 6 * 1024 * 1024) return json({ error: "Payload too large. Please choose a smaller photo." }, 413);
       body = JSON.parse(raw || "{}");
     } catch {
       return json({ error: "Invalid JSON body." }, 400);
@@ -41,17 +41,23 @@ export default {
       return json({ error: "messages array is required." }, 400);
     }
 
-    // Only use the two configured free-tier model choices. If one is busy,
-    // automatically try the other before returning an error to the app.
     const allowedModels = ["gemini-3.8-flash", "gemini-3.1-flash-lite"];
     const requestedModel = allowedModels.includes(body.model) ? body.model : allowedModels[0];
     const modelOrder = [requestedModel, ...allowedModels.filter((item) => item !== requestedModel)];
     const systemInstruction = typeof body.systemInstruction === "string"
       ? body.systemInstruction.slice(0, 8000) : "";
-    const contents = body.messages.slice(-24).map((m) => ({
-      role: m.role === "model" ? "model" : "user",
-      parts: [{ text: String(m.text || "").slice(0, 4000) }]
-    }));
+    const contents = body.messages.slice(-24).map((m) => {
+      const parts = [{ text: String(m.text || "").slice(0, 4000) }];
+      if (typeof m.imageBase64 === "string" && m.imageBase64.length > 0) {
+        const cleanBase64 = m.imageBase64.replace(/^data:[^;]+;base64,/, "");
+        if (cleanBase64.length > 5 * 1024 * 1024) throw new Error("Image too large.");
+        const mimeType = ["image/jpeg", "image/png", "image/webp"].includes(m.mimeType)
+          ? m.mimeType : "image/jpeg";
+        parts.push({ inlineData: { mimeType, data: cleanBase64 } });
+      }
+      return { role: m.role === "model" ? "model" : "user", parts };
+    });
+
     const requestBody = JSON.stringify({
       contents,
       ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {}),
@@ -81,14 +87,13 @@ export default {
           lastStatus = upstream.status;
           lastMessage = data?.error?.message || `Gemini API error (${upstream.status})`;
         }
-
-        // Retry only transient overload, rate-limit, and server errors.
         if (![429, 500, 502, 503, 504].includes(lastStatus)) {
           return json({ error: lastMessage }, lastStatus);
         }
-      } catch {
-        lastStatus = 502;
-        lastMessage = "Could not reach Gemini API. Please try again.";
+      } catch (error) {
+        lastStatus = 400;
+        lastMessage = error?.message === "Image too large." ? error.message : "Could not reach Gemini API. Please try again.";
+        if (lastStatus === 400) return json({ error: lastMessage }, lastStatus);
       }
     }
 
