@@ -52,6 +52,7 @@ private val AnnapurnaPale = Color(0xFFF1F8F2)
 @Composable
 fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
     val context = LocalContext.current
+    val selectedLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
     val prefs = remember { context.getSharedPreferences("annapurna_customer_entry", Context.MODE_PRIVATE) }
     var completed by remember { mutableStateOf(prefs.getBoolean("onboarding_complete", false)) }
     var phone by remember { mutableStateOf(prefs.getString("customer_mobile", "") ?: "") }
@@ -119,22 +120,22 @@ fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
                 )
                 when (stage) {
                     "phone" -> {
-                        Text(customerText("पुढे जाण्यासाठी मोबाइल नंबर टाका", "आगे बढ़ने के लिए मोबाइल नंबर दर्ज करें", "Enter your mobile number to continue"), fontWeight = FontWeight.SemiBold)
+                        Text(customerText(selectedLanguage, "पुढे जाण्यासाठी मोबाइल नंबर टाका", "आगे बढ़ने के लिए मोबाइल नंबर दर्ज करें", "Enter your mobile number to continue"), fontWeight = FontWeight.SemiBold)
                         OutlinedTextField(
                             value = phone,
                             onValueChange = { phone = it.filter(Char::isDigit).takeLast(10); error = null },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            label = { Text(customerText("मोबाइल नंबर", "मोबाइल नंबर", "Mobile number")) },
+                            label = { Text(customerText(selectedLanguage, "मोबाइल नंबर", "मोबाइल नंबर", "Mobile number")) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                            placeholder = { Text(customerText("१० अंकी मोबाइल नंबर", "10 अंकों का मोबाइल नंबर", "10-digit mobile number")) }
+                            placeholder = { Text(customerText(selectedLanguage, "१० अंकी मोबाइल नंबर", "10 अंकों का मोबाइल नंबर", "10-digit mobile number")) }
                         )
                         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                         Button(
                             onClick = {
                                 val normalized = phone.filter(Char::isDigit).takeLast(10)
                                 if (!normalized.matches(Regex("^[6-9][0-9]{9}$"))) {
-                                    error = customerText("योग्य १० अंकी मोबाइल नंबर टाका", "सही 10 अंकों का मोबाइल नंबर दर्ज करें", "Enter a valid 10-digit mobile number")
+                                    error = customerText(selectedLanguage, "योग्य १० अंकी मोबाइल नंबर टाका", "सही 10 अंकों का मोबाइल नंबर दर्ज करें", "Enter a valid 10-digit mobile number")
                                 } else {
                                     prefs.edit().putString("customer_mobile", normalized).apply()
                                     phone = normalized
@@ -143,19 +144,19 @@ fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
                             },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = AnnapurnaGreen)
-                        ) { Text(customerText("पुढे जा", "आगे बढ़ें", "Continue"), fontWeight = FontWeight.Bold) }
-                        Text(customerText("OTP किंवा पासवर्डची गरज नाही.", "OTP या पासवर्ड की ज़रूरत नहीं है।", "No OTP or password required."), color = Color.DarkGray, style = MaterialTheme.typography.bodySmall)
+                        ) { Text(customerText(selectedLanguage, "पुढे जा", "आगे बढ़ें", "Continue"), fontWeight = FontWeight.Bold) }
+                        Text(customerText(selectedLanguage, "OTP किंवा पासवर्डची गरज नाही.", "OTP या पासवर्ड की ज़रूरत नहीं है।", "No OTP or password required."), color = Color.DarkGray, style = MaterialTheme.typography.bodySmall)
                     }
                     "splash" -> {
                         Spacer(Modifier.height(8.dp))
-                        Text(customerText("ताज्या भाज्या आणि फळे आता घरपोच!", "ताज़ी सब्ज़ियाँ और फल अब घर पर!", "Fresh vegetables and fruits delivered to your home!"), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                        Text(customerText(selectedLanguage, "ताज्या भाज्या आणि फळे आता घरपोच!", "ताज़ी सब्ज़ियाँ और फल अब घर पर!", "Fresh vegetables and fruits delivered to your home!"), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
                     }
                     "category" -> {
-                        Text(customerText("तुम्हाला काय खरेदी करायचे आहे?", "आप क्या खरीदना चाहते हैं?", "What would you like to shop for?"), fontWeight = FontWeight.Bold)
-                        CategoryChoice("🥬", customerText("भाज्या", "सब्ज़ियाँ", "Vegetables"), customerText("ताज्या भाज्या", "ताज़ी सब्ज़ियाँ", "Fresh vegetables")) {
+                        Text(customerText(selectedLanguage, "तुम्हाला काय खरेदी करायचे आहे?", "आप क्या खरीदना चाहते हैं?", "What would you like to shop for?"), fontWeight = FontWeight.Bold)
+                        CategoryChoice("🥬", customerText(selectedLanguage, "भाज्या", "सब्ज़ियाँ", "Vegetables"), customerText(selectedLanguage, "ताज्या भाज्या", "ताज़ी सब्ज़ियाँ", "Fresh vegetables")) {
                             finishEntry(prefs, "vegetables") { completed = true; stage = "done" }
                         }
-                        CategoryChoice("🍎", customerText("फळे", "फल", "Fruits"), customerText("ताजी फळे", "ताज़े फल", "Fresh fruits")) {
+                        CategoryChoice("🍎", customerText(selectedLanguage, "फळे", "फल", "Fruits"), customerText(selectedLanguage, "ताजी फळे", "ताज़े फल", "Fresh fruits")) {
                             finishEntry(prefs, "fruits") { completed = true; stage = "done" }
                         }
                     }
@@ -191,8 +192,6 @@ private fun CategoryChoice(emoji: String, title: String, subtitle: String, onCli
     }
 }
 
-@Composable
-private fun customerText(mr: String, hi: String, en: String): String {
-    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+private fun customerText(language: String, mr: String, hi: String, en: String): String {
     return when (language) { "hi" -> hi; "en" -> en; else -> mr }
 }
