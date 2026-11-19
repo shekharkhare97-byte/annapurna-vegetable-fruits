@@ -46,7 +46,7 @@ export default {
     const modelOrder = [requestedModel, ...allowedModels.filter((item) => item !== requestedModel)];
     const systemInstruction = typeof body.systemInstruction === "string"
       ? body.systemInstruction.slice(0, 8000) : "";
-    const contents = body.messages.slice(-24).map((m) => {
+    if (body.messages.some((m) => typeof m.imageBase64 === "string" && m.imageBase64.length > 5 * 1024 * 1024)) {\n      return json({ error: "Image too large. Please choose a smaller photo." }, 413);\n    }\n    const contents = body.messages.slice(-24).map((m) => {
       const parts = [{ text: String(m.text || "").slice(0, 4000) }];
       if (typeof m.imageBase64 === "string" && m.imageBase64.length > 0) {
         const cleanBase64 = m.imageBase64.replace(/^data:[^;]+;base64,/, "");
