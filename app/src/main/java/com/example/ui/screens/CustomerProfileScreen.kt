@@ -339,13 +339,6 @@ fun CustomerProfileScreen(
                     HorizontalDivider()
                     ProfileShortcut(Icons.Outlined.CardGiftcard, "कूपन आणि ऑफर्स", "सध्या उपलब्ध ऑफर्स कार्टमध्ये तपासा")
                     HorizontalDivider()
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))) }, modifier = Modifier.weight(1f)) { Text("SOS • Police 112") }
-                        OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8530011324"))) }, modifier = Modifier.weight(1f)) { Text("Help Call") }
-                    }
-                    OutlinedButton(onClick = {
-                        context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:annpurnavegitablesandfruits@gmail.com")))
-                    }, modifier = Modifier.fillMaxWidth()) { Text("Email Support") }
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Outlined.HelpOutline, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
@@ -354,6 +347,7 @@ fun CustomerProfileScreen(
                         }
                         TextButton(onClick = { showHelp = true }) { Text("मदत") }
                     }
+                    HorizontalDivider()
                 }
             }
         }
@@ -364,15 +358,12 @@ fun CustomerProfileScreen(
             onDismissRequest = { showHelp = false },
             title = { Text("अन्नपूर्णा ग्राहक मदत") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("ऑर्डरची स्थिती Profile मधील Live Order Tracking मध्ये पहा.")
-                    Text("पेमेंट यशस्वी झाले पण ऑर्डर दिसत नसेल, तर थोडा वेळ थांबा आणि इंटरनेट तपासा.")
-                    Text("डिलिव्हरी पत्ता बदलायचा असल्यास सेव्ह केलेल्या पत्त्यांमधून योग्य पत्ता निवडा.")
-                    Text("तातडीच्या मदतीसाठी Police 112 वर कॉल करा.")
-                    Text("ग्राहक मदत क्रमांक: 8530011324")
-                    Text("ईमेल: annpurnavegitablesandfruits@gmail.com")
-                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))) }) { Text("SOS / Police 112 वर कॉल करा") }
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("SOS / Police: 112")
+                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))) }) { Text("SOS • Police 112 वर कॉल करा") }
+                    Text("Customer Help: 8530011324")
                     TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8530011324"))) }) { Text("Customer Help ला कॉल करा") }
+                    Text("Email: annpurnavegitablesandfruits@gmail.com")
                     TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:annpurnavegitablesandfruits@gmail.com"))) }) { Text("ईमेल पाठवा") }
                 }
             },
