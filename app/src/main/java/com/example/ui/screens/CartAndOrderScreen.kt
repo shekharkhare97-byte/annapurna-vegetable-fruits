@@ -549,7 +549,7 @@ fun CartAndOrderScreen(
                                         cameraPositionState.position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
                                     }
                                     Text(
-                                        text = "Delivery Partner: ${trackingPartnerName.ifBlank { "Delivery Partner" }}",
+                                        text = "${customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner")}: ${trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner") }}",
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -576,7 +576,7 @@ fun CartAndOrderScreen(
                                     }
                                     trackingUpdatedAtMillis?.let { updatedAt ->
                                         val updatedTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(updatedAt))
-                                        Text("शेवटचे लोकेशन अपडेट: $updatedTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text("${customerText("शेवटचे लोकेशन अपडेट", "आखिरी लोकेशन अपडेट", "Last location update")}: $updatedTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                     TextButton(onClick = {
                                         val uri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${parts[0]},${parts[1]}")
@@ -665,7 +665,7 @@ fun CartAndOrderScreen(
                         Text(stringResource(R.string.status_admin_update), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (trackingStatus == "completed") {
                             HorizontalDivider()
-                            Text("Delivery Boy ला Rating द्या", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text(customerText("डिलिव्हरी पार्टनरला रेटिंग द्या", "डिलीवरी पार्टनर को रेटिंग दें", "Rate your delivery partner"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                             if (!reviewSent) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                                     (1..5).forEach { star ->
@@ -674,8 +674,8 @@ fun CartAndOrderScreen(
                                         }
                                     }
                                 }
-                                OutlinedTextField(value = deliveryReview, onValueChange = { deliveryReview = it.take(500) }, modifier = Modifier.fillMaxWidth(), label = { Text("तुमचा अनुभव लिहा (ऐच्छिक)") }, minLines = 2, maxLines = 4)
-                                Button(onClick = { onSubmitDeliveryReview(deliveryRating, deliveryReview) { success -> reviewSent = success; reviewMessage = if (success) "धन्यवाद! तुमचा अभिप्राय नोंदवला." else "अभिप्राय पाठवता आला नाही. पुन्हा प्रयत्न करा." } }, modifier = Modifier.fillMaxWidth()) { Text("Rating आणि Review पाठवा") }
+                                OutlinedTextField(value = deliveryReview, onValueChange = { deliveryReview = it.take(500) }, modifier = Modifier.fillMaxWidth(), label = { Text(customerText("तुमचा अनुभव लिहा (ऐच्छिक)", "अपना अनुभव लिखें (वैकल्पिक)", "Write your experience (optional)")) }, minLines = 2, maxLines = 4)
+                                Button(onClick = { onSubmitDeliveryReview(deliveryRating, deliveryReview) { success -> reviewSent = success; reviewMessage = if (success) customerText("धन्यवाद! तुमचा अभिप्राय नोंदवला.", "धन्यवाद! आपकी प्रतिक्रिया दर्ज की गई।", "Thank you! Your feedback has been recorded.") else customerText("अभिप्राय पाठवता आला नाही. पुन्हा प्रयत्न करा.", "प्रतिक्रिया भेजी नहीं जा सकी। फिर कोशिश करें।", "Could not send feedback. Please try again.") } }, modifier = Modifier.fillMaxWidth()) { Text(customerText("रेटिंग आणि अभिप्राय पाठवा", "रेटिंग और समीक्षा भेजें", "Submit rating and review")) }
                             } else {
                                 Text(reviewMessage ?: "धन्यवाद! तुमचा अभिप्राय नोंदवला.", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                             }
@@ -1518,4 +1518,10 @@ private fun formatOrderShareReceipt(order: OrderEntity): String {
         एकूण देय रक्कम: ₹${MarathiFormatters.formatRupees(order.totalAmountRupeesDecimal)}
         धन्यवाद! ताजा शेतमाल लवकरच घरपोच केला जाईल.
     """.trimIndent()
+}
+
+@Composable
+private fun customerText(mr: String, hi: String, en: String): String {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+    return when (language) { "hi" -> hi; "en" -> en; else -> mr }
 }
