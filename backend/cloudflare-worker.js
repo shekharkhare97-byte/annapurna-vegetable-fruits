@@ -46,7 +46,8 @@ export default {
     const modelOrder = [requestedModel, ...allowedModels.filter((item) => item !== requestedModel)];
     const systemInstruction = typeof body.systemInstruction === "string"
       ? body.systemInstruction.slice(0, 8000) : "";
-    if (body.messages.some((m) => typeof m.imageBase64 === "string" && m.imageBase64.length > 5 * 1024 * 1024)) {\n      return json({ error: "Image too large. Please choose a smaller photo." }, 413);\n    }\n    const contents = body.messages.slice(-24).map((m) => {
+    if (body.messages.some((m) => typeof m.imageBase64 === "string" && m.imageBase64.length > 5 * 1024 * 1024)) {
+      return json({ error: "Image too large. Please choose a smaller photo." }, 413);\n    }\n    const contents = body.messages.slice(-24).map((m) => {
       const parts = [{ text: String(m.text || "").slice(0, 4000) }];
       if (typeof m.imageBase64 === "string" && m.imageBase64.length > 0) {
         const cleanBase64 = m.imageBase64.replace(/^data:[^;]+;base64,/, "");
@@ -91,9 +92,11 @@ export default {
           return json({ error: lastMessage }, lastStatus);
         }
       } catch (error) {
-        lastStatus = 400;
-        lastMessage = error?.message === "Image too large." ? error.message : "Could not reach Gemini API. Please try again.";
-        if (lastStatus === 400) return json({ error: lastMessage }, lastStatus);
+        if (error?.message === "Image too large.") {
+          return json({ error: error.message }, 413);
+        }
+        lastStatus = 502;
+        lastMessage = "Could not reach Gemini API. Please try again.";
       }
     }
 
