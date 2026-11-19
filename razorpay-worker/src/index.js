@@ -1,7 +1,7 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json; charset=utf-8",
 };
 
@@ -137,12 +137,51 @@ async function writeFirestoreDocument(env, path, fields) {
 }
 
 async function verifyFirebaseIdToken(idToken) {
+  // Verify Firebase Auth ID tokens using Google's published Secure Token
+  // signing keys. The OAuth tokeninfo endpoint is not a reliable verifier
+  // for Firebase-issued ID tokens and may omit user_id.
   if (typeof idToken !== "string" || idToken.length < 100 || idToken.length > 5000) return null;
-  const response = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken));
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.aud !== "annapurna-vegetables-and-78cef" ||
-      typeof payload.user_id !== "string" || !payload.user_id) return null;
-  return payload.user_id;
+  const parts = idToken.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const decode = (part) => {
+      const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+      const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    };
+    const header = decode(parts[0]);
+    const claims = decode(parts[1]);
+    const now = Math.floor(Date.now() / 1000);
+    if (header.alg !== "RS256" || typeof header.kid !== "string" ||
+        claims.aud !== "annapurna-vegetables-and-78cef" ||
+        claims.iss !== "https://securetoken.google.com/annapurna-vegetables-and-78cef" ||
+        typeof claims.sub !== "string" || !claims.sub ||
+        claims.sub.length > 128 || !Number.isFinite(claims.exp) ||
+        claims.exp <= now || !Number.isFinite(claims.iat) ||
+        claims.iat > now + 300 || !Number.isFinite(claims.auth_time) ||
+        claims.auth_time > now + 300) return null;
+
+    const keysResponse = await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com");
+    if (!keysResponse.ok) return null;
+    const keySet = await keysResponse.json();
+    const jwk = (keySet.keys || []).find((key) => key.kid === header.kid && key.alg === "RS256");
+    if (!jwk) return null;
+    const publicKey = await crypto.subtle.importKey(
+      "jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]
+    );
+    const signature = Uint8Array.from(
+      atob(parts[2].replace(/-/g, "+").replace(/_/g, "/") +
+        "=".repeat((4 - parts[2].length % 4) % 4)),
+      (c) => c.charCodeAt(0)
+    );
+    const signedData = new TextEncoder().encode(parts[0] + "." + parts[1]);
+    const valid = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", publicKey, signature, signedData);
+    return valid ? claims.sub : null;
+  } catch (error) {
+    console.error("firebase-id-token-verification-failed", error?.message || "unknown");
+    return null;
+  }
 }
 
 async function issueCustomerDeliveryOtp(env, body) {
