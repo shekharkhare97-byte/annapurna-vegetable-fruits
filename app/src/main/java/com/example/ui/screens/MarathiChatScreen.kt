@@ -1,5 +1,15 @@
 package com.example.ui.screens
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +35,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,10 +52,17 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -73,6 +92,79 @@ fun MarathiChatScreen(
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBackToBazaar)
+
+    val context = LocalContext.current
+    val speechLanguage = context.resources.configuration.locales[0].toLanguageTag()
+    var listening by remember { mutableStateOf(false) }
+    var speechError by remember { mutableStateOf<String?>(null) }
+    var recognizer by remember { mutableStateOf<SpeechRecognizer?>(null) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val speechIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, speechLanguage)
+            }
+            try {
+                recognizer?.startListening(speechIntent)
+                listening = true
+            } catch (_: Exception) {
+                speechError = "माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा."
+            }
+        } else {
+            speechError = "बोलून प्रश्न विचारण्यासाठी Microphone परवानगी द्या."
+        }
+    }
+
+    DisposableEffect(context) {
+        if (SpeechRecognizer.isRecognitionAvailable(context)) {
+            val sr = SpeechRecognizer.createSpeechRecognizer(context)
+            sr.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: android.os.Bundle?) { listening = true }
+                override fun onBeginningOfSpeech() {}
+                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() { listening = false }
+                override fun onError(error: Int) {
+                    listening = false
+                    speechError = "आवाज समजला नाही. पुन्हा बोला किंवा टाइप करा."
+                }
+                override fun onResults(results: android.os.Bundle?) {
+                    listening = false
+                    val words = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    if (!words.isNullOrBlank()) onInputChange(
+                        listOf(chatState.inputText, words).filter { it.isNotBlank() }.joinToString(" ")
+                    )
+                }
+                override fun onPartialResults(partialResults: android.os.Bundle?) {}
+                override fun onEvent(eventType: Int, params: android.os.Bundle?) {}
+            })
+            recognizer = sr
+        } else {
+            speechError = "या मोबाईलमध्ये Speech Recognition उपलब्ध नाही."
+        }
+        onDispose {
+            recognizer?.destroy()
+            recognizer = null
+            listening = false
+        }
+    }
+
+    val tts = remember { mutableStateOf<TextToSpeech?>(null) }
+    DisposableEffect(context) {
+        val engine = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts.value?.language = Locale.forLanguageTag(speechLanguage)
+            }
+        }
+        tts.value = engine
+        onDispose {
+            engine.stop()
+            engine.shutdown()
+            tts.value = null
+        }
+    }
 
     val listState = rememberLazyListState()
 
@@ -176,7 +268,12 @@ fun MarathiChatScreen(
                 .testTag("chat_messages_list")
         ) {
             items(chatState.messages, key = { it.id }) { turn ->
-                ChatBubbleItem(turn = turn)
+                ChatBubbleItem(turn = turn, onSpeak = { spokenText ->
+                    tts.value?.let { engine ->
+                        engine.language = Locale.forLanguageTag(speechLanguage)
+                        engine.speak(spokenText, TextToSpeech.QUEUE_FLUSH, null, turn.id)
+                    }
+                })
             }
 
             if (chatState.isSending) {
@@ -236,6 +333,15 @@ fun MarathiChatScreen(
             }
         }
 
+        if (speechError != null) {
+            Text(
+                text = speechError!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+
         // Message Composer Row
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -260,7 +366,38 @@ fun MarathiChatScreen(
                     .weight(1f)
                     .testTag("chat_message_input")
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            FilledIconButton(
+                onClick = {
+                    speechError = null
+                    if (listening) {
+                        recognizer?.stopListening()
+                        listening = false
+                    } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        val speechIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE, speechLanguage)
+                        }
+                        try {
+                            recognizer?.startListening(speechIntent)
+                            listening = true
+                        } catch (_: Exception) {
+                            speechError = "माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा."
+                        }
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                },
+                enabled = !chatState.isSending,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = if (listening) "आवाज थांबवा" else "बोलून प्रश्न विचारा",
+                    tint = if (listening) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
             FilledIconButton(
                 onClick = { onSendMessage(null) },
                 enabled = !chatState.isSending && chatState.inputText.isNotBlank(),
@@ -282,7 +419,7 @@ fun MarathiChatScreen(
 }
 
 @Composable
-private fun ChatBubbleItem(turn: ChatTurn) {
+private fun ChatBubbleItem(turn: ChatTurn, onSpeak: (String) -> Unit) {
     val alignment = if (turn.isUser) Alignment.CenterEnd else Alignment.CenterStart
     val containerColor = if (turn.isUser) {
         MaterialTheme.colorScheme.primary
@@ -316,13 +453,24 @@ private fun ChatBubbleItem(turn: ChatTurn) {
                     text = turn.text,
                     style = MaterialTheme.typography.bodyLarge
                 )
-                if (!turn.isUser && turn.modelUsed != null) {
+                if (!turn.isUser) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = turn.modelUsed,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { onSpeak(turn.text) }, modifier = Modifier.size(36.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.VolumeUp,
+                                contentDescription = "उत्तर ऐका",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        if (turn.modelUsed != null) {
+                            Text(
+                                text = turn.modelUsed,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }
