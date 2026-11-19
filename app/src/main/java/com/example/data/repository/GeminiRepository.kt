@@ -24,9 +24,9 @@ enum class ChatModelTier(
     val marathiSubtitle: String
 ) {
     FAST(
-        modelId = "gemini-3.1-flash-lite",
+        modelId = "gemini-3.5-flash-lite",
         marathiTitle = "झटपट (Fast)",
-        marathiSubtitle = "त्वरीत उत्तरांसाठी • gemini-3.1-flash-lite"
+        marathiSubtitle = "त्वरीत उत्तरांसाठी • gemini-3.5-flash-lite"
     ),
     GENERAL(
         modelId = "gemini-3.8-flash",
@@ -130,46 +130,43 @@ class GeminiRepository(
         selectedTier: ChatModelTier,
         cartSummary: String
     ): Result<String> = withContext(Dispatchers.IO) {
-        val service = requireSecureBackendService().getOrElse { return@withContext Result.failure(it) }
-
-        val messages = history.map { turn ->
-            ProxyChatTurnDto(
-                role = if (turn.isUser) "user" else "model",
-                text = turn.text
-            )
-        }
-
-        val request = ProxyChatRequest(
-            model = selectedTier.modelId,
-            systemInstruction = buildStoreSystemInstruction(cartSummary),
-            messages = messages
-        )
-
         try {
+            val model = com.google.firebase.Firebase.ai(
+                backend = com.google.firebase.ai.GenerativeBackend.googleAI()
+            ).generativeModel(
+                modelName = selectedTier.modelId,
+                systemInstruction = com.google.firebase.ai.type.content {
+                    text(buildStoreSystemInstruction(cartSummary))
+                }
+            )
+
+            val priorHistory = history.dropLast(1).map { turn ->
+                com.google.firebase.ai.type.content(role = if (turn.isUser) "user" else "model") {
+                    text(turn.text)
+                }
+            }
+            val chat = model.startChat(history = priorHistory)
+            val latestMessage = history.lastOrNull { it.isUser }?.text
+                ?: return@withContext Result.failure(
+                    IllegalArgumentException("कृपया आधी तुमचा प्रश्न लिहा.")
+                )
             val response = withTimeout(60_000L) {
-                service.chatWithAssistant(request)
+                chat.sendMessage(latestMessage)
             }
-            if (!response.error.isNullOrBlank()) {
-                return@withContext Result.failure(IllegalStateException(response.error))
-            }
-            val replyText = response.reply?.trim()
+            val replyText = response.text?.trim()
             if (!replyText.isNullOrBlank()) {
                 Result.success(replyText)
             } else {
-                Result.failure(IllegalStateException("बॅकएंडकडून रिकामे उत्तर आले. कृपया पुन्हा प्रयत्न करा."))
+                Result.failure(IllegalStateException("AI कडून रिकामे उत्तर आले. कृपया पुन्हा प्रयत्न करा."))
             }
         } catch (e: TimeoutCancellationException) {
-            Log.e(TAG, "Backend chat request timed out", e)
+            Log.e(TAG, "Firebase AI Logic chat request timed out", e)
             Result.failure(IllegalStateException("विनंतीला ६० सेकंदांपेक्षा जास्त वेळ लागला. कृपया पुन्हा प्रयत्न करा."))
         } catch (e: CancellationException) {
             throw e
-        } catch (e: HttpException) {
-            val detail = parseHttpErrorMessage(e)
-            Log.e(TAG, "Backend chat HTTP error: $detail", e)
-            Result.failure(IllegalStateException(detail))
         } catch (e: Exception) {
-            Log.e(TAG, "Backend chat failed", e)
-            Result.failure(IllegalStateException(e.localizedMessage ?: "सुरक्षित बॅकएंडशी संपर्क साधताना अडचण आली."))
+            Log.e(TAG, "Firebase AI Logic chat failed", e)
+            Result.failure(IllegalStateException(e.localizedMessage ?: "Annapurna AI शी संपर्क साधताना अडचण आली. Firebase AI Logic सुरू आहे का ते तपासा."))
         }
     }
 
