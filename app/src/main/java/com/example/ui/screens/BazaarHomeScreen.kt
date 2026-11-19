@@ -551,7 +551,7 @@ private fun SearchAndFilterBar(
             ) {
                 Column(modifier = Modifier.padding(vertical = 4.dp)) {
                     Text(
-                        text = "तुम्ही हे शोधत आहात",
+                        text = customerText("तुम्ही हे शोधत आहात", "आप यह खोज रहे हैं", "You are searching for"),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
