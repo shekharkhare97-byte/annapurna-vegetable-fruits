@@ -263,7 +263,7 @@ async function updateCustomerLiveLocation(env, body) {
   return json({ ok: true, updated: true });
 }
 
-async function verifyPickupQr(env, request, body) {
+async function verifyPickupQr(env, request, body, attempt = 0) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   const partnerUid = await verifyFirebaseIdToken(idToken);
@@ -385,11 +385,22 @@ async function verifyPickupQr(env, request, body) {
   });
   if (!commit.ok) {
     const failure = await commit.json().catch(() => ({}));
+    const firestoreStatus = failure.error?.status || "unknown";
     console.error("pickup-qr-commit-failed", {
       status: commit.status,
-      firestoreStatus: failure.error?.status || "unknown",
+      firestoreStatus,
+      attempt,
     });
-    return json({ ok: false, error: "QR could not be verified. Check the connection and scan again." }, 409);
+    // Firestore may reject a valid atomic pickup when another app updates the
+    // order at nearly the same time. Re-read all documents and retry safely.
+    if (attempt < 2 && ["ABORTED", "FAILED_PRECONDITION"].includes(firestoreStatus)) {
+      return verifyPickupQr(env, request, body, attempt + 1);
+    }
+    return json({
+      ok: false,
+      error: "QR verification could not be saved. Please scan again.",
+      code: firestoreStatus,
+    }, 409);
   }
   return json({ ok: true, pickedUp: true });
 }
