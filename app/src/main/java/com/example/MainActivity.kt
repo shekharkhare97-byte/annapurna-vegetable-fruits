@@ -1,6 +1,12 @@
 package com.example
 
 import android.os.Bundle
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import com.google.firebase.Firebase
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.appcheck.appCheck
@@ -182,12 +188,53 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         enableEdgeToEdge()
         setContent {
             AnnapurnaTheme {
-                CustomerWelcomeFlow {
-                    AnnapurnaRootApp()
+                CustomerStartupPermissions {
+                    CustomerWelcomeFlow {
+                        AnnapurnaRootApp()
+                    }
                 }
             }
         }
     }
+}
+
+
+/** Requests the permissions used by the customer app on its first launch. */
+@Composable
+private fun CustomerStartupPermissions(content: @Composable () -> Unit) {
+    val context = LocalContext.current
+    val preferences = remember(context) {
+        context.getSharedPreferences("annapurna_startup_permissions", android.content.Context.MODE_PRIVATE)
+    }
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        // Do not block shopping if a customer declines an optional permission.
+        preferences.edit().putBoolean("requested_once", true).apply()
+    }
+
+    LaunchedEffect(Unit) {
+        if (!preferences.getBoolean("requested_once", false)) {
+            val requested = mutableListOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.RECORD_AUDIO
+            )
+            if (Build.VERSION.SDK_INT >= 33) {
+                requested += Manifest.permission.POST_NOTIFICATIONS
+            }
+            val missing = requested.filter { permission ->
+                ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED
+            }
+            if (missing.isEmpty()) {
+                preferences.edit().putBoolean("requested_once", true).apply()
+            } else {
+                launcher.launch(missing.toTypedArray())
+            }
+        }
+    }
+
+    content()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
