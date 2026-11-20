@@ -34,7 +34,7 @@ class _AppState extends State<AnnapurnaApp>{
   Navigator.push(context,MaterialPageRoute(builder:(_)=>DeliveryCheckout(
    amount:total,
    lines:cart.entries.map((e){final p=items.firstWhere((x)=>x.name==e.key);return '${p.name} • ${(e.value*1000).round()} ग्रॅम • ₹${(price(p)*e.value).toStringAsFixed(2)}';}).toList(),
-   onConfirm:(name,phone,address,payment,latitude,longitude){
+   onConfirm:(name,phone,address,payment,latitude,longitude) async {
     final insufficient=cart.entries.where((e){final p=items.firstWhere((x)=>x.name==e.key);return e.value>p.stock;}).toList();
     if(insufficient.isNotEmpty){
      final e=insufficient.first;final p=items.firstWhere((x)=>x.name==e.key);
