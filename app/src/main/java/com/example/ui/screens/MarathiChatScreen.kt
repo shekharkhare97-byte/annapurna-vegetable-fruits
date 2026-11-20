@@ -422,7 +422,7 @@ fun MarathiChatScreen(
             }
             Spacer(modifier = Modifier.width(6.dp))
             FilledIconButton(
-                onClick = { onSendMessage(null) },
+                onClick = { onSendMessage(null, null, null) },
                 enabled = !chatState.isSending && chatState.inputText.isNotBlank(),
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
