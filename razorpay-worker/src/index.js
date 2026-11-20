@@ -184,69 +184,14 @@ async function verifyFirebaseIdToken(idToken) {
   }
 }
 
-async function issueCustomerDeliveryOtp(env, body) {
-  const trackingToken = body?.trackingToken;
-  if (typeof trackingToken !== "string" ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trackingToken)) {
-    return json({ ok: false, error: "Invalid tracking token" }, 400);
-  }
-  const auth = await getFirebaseAccessToken(env);
-  const base = "https://firestore.googleapis.com/v1/projects/" + auth.projectId + "/databases/(default)/documents";
-  const queryResponse = await fetch(base + ":runQuery", {
-    method: "POST",
-    headers: { Authorization: "Bearer " + auth.token, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      structuredQuery: {
-        from: [{ collectionId: "orders" }],
-        where: { fieldFilter: {
-          field: { fieldPath: "trackingToken" },
-          op: "EQUAL",
-          value: { stringValue: trackingToken },
-        }},
-        limit: 1,
-      },
-    }),
-  });
-  const queryResult = await queryResponse.json().catch(() => ({}));
-  if (!queryResponse.ok) throw new Error("Order lookup failed");
-  const orderDocument = Array.isArray(queryResult) ? queryResult.find((entry) => entry.document)?.document : null;
-  if (!orderDocument) return json({ ok: false, error: "Order not found" }, 404);
-  const orderId = orderDocument.name.split("/").pop();
-  const order = firestoreDocumentData(orderDocument);
-  if (order.trackingToken !== trackingToken || !order.deliveryPartnerUid ||
-      !["picked_up", "out_for_delivery"].includes(order.deliveryState)) {
-    return json({ ok: false, error: "Delivery OTP is not available for this order yet" }, 409);
-  }
-  const existingOtp = await firestoreGetDocument(env, "deliveryOtps/" + encodeURIComponent(orderId));
-  if (existingOtp.exists) {
-    const current = firestoreDocumentData(existingOtp.data);
-    if (current.partnerUid === order.deliveryPartnerUid && current.trackingToken === trackingToken &&
-        current.expiresAt && Date.parse(current.expiresAt) > Date.now() &&
-        Number(current.attempts || 0) < 5) {
-      return json({ ok: true, otp: current.otp, expiresAt: current.expiresAt });
-    }
-  }
-  const otp = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-  await writeFirestoreDocument(env, "deliveryOtps/" + encodeURIComponent(orderId), {
-    otp,
-    partnerUid: order.deliveryPartnerUid,
-    trackingToken,
-    attempts: 0,
-    expiresAt,
-    createdAt: new Date().toISOString(),
-  });
-  return json({ ok: true, otp, expiresAt });
-}
-
 async function updateCustomerLiveLocation(env, body) {
   const trackingToken = body?.trackingToken;
-  const latitude = Number(body?.latitude);
-  const longitude = Number(body?.longitude);
+  const latitude = body?.latitude;
+  const longitude = body?.longitude;
   if (typeof trackingToken !== "string" ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trackingToken) ||
-      !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
-      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+      typeof latitude !== "number" || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      typeof longitude !== "number" || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
     return json({ ok: false, error: "Valid tracking token and GPS coordinates are required" }, 400);
   }
 
@@ -874,13 +819,6 @@ export default {
       catch (error) {
         console.error("pickup-qr-verification-failed", error?.message || "unknown");
         return json({ ok: false, error: "Could not verify pickup QR. Please retry." }, 502);
-      }
-    }
-    if (url.pathname === "/customer-delivery-otp") {
-      try { return await issueCustomerDeliveryOtp(env, body); }
-      catch (error) {
-        console.error("customer-delivery-otp-failed", error?.message || "unknown");
-        return json({ ok: false, error: "Could not create delivery OTP. Please retry." }, 502);
       }
     }
     if (url.pathname === "/complete-delivery") {
