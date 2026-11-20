@@ -124,18 +124,6 @@ function firestoreDocumentData(document) {
   return result;
 }
 
-async function writeFirestoreDocument(env, path, fields) {
-  const { token, projectId } = await getFirebaseAccessToken(env);
-  const url = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/" + path;
-  const response = await fetch(url, {
-    method: "PATCH",
-    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-    body: JSON.stringify({ fields: firestoreFields(fields) }),
-  });
-  if (!response.ok) throw new Error("Firestore OTP save failed");
-  return response.json();
-}
-
 async function verifyFirebaseIdToken(idToken) {
   // Verify Firebase Auth ID tokens using Google's published Secure Token
   // signing keys. The OAuth tokeninfo endpoint is not a reliable verifier
@@ -824,8 +812,8 @@ export default {
     if (url.pathname === "/complete-delivery") {
       try { return await completeDelivery(env, request, body); }
       catch (error) {
-        console.error("verify-delivery-otp-failed", error?.message || "unknown");
-        return json({ ok: false, error: "Could not verify delivery OTP. Please retry." }, 502);
+        console.error("delivery-completion-failed", error?.message || "unknown");
+        return json({ ok: false, error: "Could not complete delivery. Please retry." }, 502);
       }
     }
 
