@@ -239,6 +239,97 @@ async function issueCustomerDeliveryOtp(env, body) {
   return json({ ok: true, otp, expiresAt });
 }
 
+async function updateCustomerLiveLocation(env, body) {
+  const trackingToken = body?.trackingToken;
+  const latitude = Number(body?.latitude);
+  const longitude = Number(body?.longitude);
+  if (typeof trackingToken !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trackingToken) ||
+      !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    return json({ ok: false, error: "Valid tracking token and GPS coordinates are required" }, 400);
+  }
+
+  const { token: accessToken, projectId } = await getFirebaseAccessToken(env);
+  const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
+  const queryResponse = await fetch(base + ":runQuery", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: "orders" }],
+        where: { fieldFilter: {
+          field: { fieldPath: "trackingToken" },
+          op: "EQUAL",
+          value: { stringValue: trackingToken },
+        }},
+        limit: 1,
+      },
+    }),
+  });
+  const queryResult = await queryResponse.json().catch(() => ({}));
+  if (!queryResponse.ok) throw new Error("Customer order lookup failed");
+  const orderDocument = Array.isArray(queryResult)
+    ? queryResult.find((entry) => entry.document)?.document
+    : null;
+  if (!orderDocument) return json({ ok: false, error: "Order not found" }, 404);
+
+  const orderId = orderDocument.name.split("/").pop();
+  const order = firestoreDocumentData(orderDocument);
+  if (order.trackingToken !== trackingToken ||
+      !["new", "accepted", "preparing", "ready_for_pickup", "picked_up", "out_for_delivery"].includes(order.status) ||
+      ["delivered", "cancelled"].includes(order.deliveryState)) {
+    return json({ ok: false, error: "Live location sharing is closed for this order" }, 409);
+  }
+
+  const previousUpdate = order.customerLocationUpdatedAt
+    ? Date.parse(order.customerLocationUpdatedAt)
+    : 0;
+  if (Number.isFinite(previousUpdate) && Date.now() - previousUpdate < 2500) {
+    return json({ ok: true, throttled: true });
+  }
+
+  const now = new Date().toISOString();
+  const commit = await fetch(base + ":commit", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      writes: [{
+        update: {
+          name: base + "/orders/" + encodeURIComponent(orderId),
+          fields: firestoreFields({
+            customerLatitude: latitude,
+            customerLongitude: longitude,
+            customerLocationSharing: true,
+            customerLocationUpdatedAt: { __firestoreTimestamp: now },
+          }),
+        },
+        updateMask: {
+          fieldPaths: [
+            "customerLatitude",
+            "customerLongitude",
+            "customerLocationSharing",
+            "customerLocationUpdatedAt",
+          ],
+        },
+        currentDocument: { updateTime: orderDocument.updateTime },
+      }],
+    }),
+  });
+  if (!commit.ok) {
+    const failure = await commit.json().catch(() => ({}));
+    if (failure.error?.status === "ABORTED" || failure.error?.status === "FAILED_PRECONDITION") {
+      return json({ ok: true, retry: true });
+    }
+    console.error("customer-live-location-save-failed", {
+      status: commit.status,
+      firestoreStatus: failure.error?.status || "unknown",
+    });
+    return json({ ok: false, error: "Could not update customer location" }, 409);
+  }
+  return json({ ok: true, updated: true });
+}
+
 async function verifyPickupQr(env, request, body) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -426,10 +517,11 @@ async function completeDelivery(env, request, body) {
           status: "completed",
           deliveryDeliveredAt: { __firestoreTimestamp: now },
           deliveryLocationSharing: false,
+          customerLocationSharing: false,
           deliveryMilestoneBonusRupees: milestoneBonus,
         }),
       },
-      updateMask: { fieldPaths: ["deliveryState", "status", "deliveryDeliveredAt", "deliveryLocationSharing", "deliveryMilestoneBonusRupees"] },
+      updateMask: { fieldPaths: ["deliveryState", "status", "deliveryDeliveredAt", "deliveryLocationSharing", "customerLocationSharing", "deliveryMilestoneBonusRupees"] },
       currentDocument: { updateTime: orderDoc.updateTime },
     },
     {
@@ -770,6 +862,13 @@ export default {
     let body;
     try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
 
+    if (url.pathname === "/customer-live-location") {
+      try { return await updateCustomerLiveLocation(env, body); }
+      catch (error) {
+        console.error("customer-live-location-failed", error?.message || "unknown");
+        return json({ ok: false, error: "Could not update customer location. Please retry." }, 502);
+      }
+    }
     if (url.pathname === "/verify-pickup-qr") {
       try { return await verifyPickupQr(env, request, body); }
       catch (error) {
