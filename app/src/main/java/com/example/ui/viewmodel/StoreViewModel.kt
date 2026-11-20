@@ -1,6 +1,16 @@
 package com.example.ui.viewmodel
 
 import android.content.Context
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Looper
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.firebase.firestore.FieldValue
 import java.net.HttpURLConnection
 import java.net.URL
 import org.json.JSONObject
@@ -51,6 +61,9 @@ class StoreViewModel(
     private val _selectedCategory = MutableStateFlow(ProduceCategory.ALL)
     private var productsListener: ListenerRegistration? = null
     private var trackingListener: ListenerRegistration? = null
+    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context.applicationContext)
+    private var customerLocationCallback: LocationCallback? = null
+    private var customerLocationToken: String? = null
     private val appContext = context.applicationContext
     private val trackingPrefs = appContext.getSharedPreferences("annapurna_order_tracking", Context.MODE_PRIVATE)
     private val _trackingStatus = MutableStateFlow("")
@@ -393,6 +406,12 @@ class StoreViewModel(
                     _trackingStatus.value = snapshot.getString("status") ?: "new"
                     _trackingPartnerAccepted.value = snapshot.getBoolean("deliveryPartnerAccepted") == true
                     _trackingPartnerName.value = snapshot.getString("deliveryPartnerName")?.trim().orEmpty()
+                    if (_trackingPartnerAccepted.value &&
+                        _trackingStatus.value !in listOf("completed", "cancelled")) {
+                        startCustomerLiveLocation(token)
+                    } else {
+                        stopCustomerLiveLocation()
+                    }
                     val latitude = snapshot.getDouble("deliveryLatitude")
                     val longitude = snapshot.getDouble("deliveryLongitude")
                     _trackingLocation.value = if (snapshot.getBoolean("deliveryLocationSharing") == true && latitude != null && longitude != null) "$latitude,$longitude" else ""
@@ -400,6 +419,49 @@ class StoreViewModel(
                         ?: snapshot.getTimestamp("updatedAt"))?.toDate()?.time
                 }
             }
+    }
+
+    private fun startCustomerLiveLocation(token: String) {
+        if (customerLocationToken == token && customerLocationCallback != null) return
+        stopCustomerLiveLocation()
+        val fineGranted = ContextCompat.checkSelfPermission(
+            appContext, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!fineGranted) return
+
+        val callback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val location = result.lastLocation ?: return
+                if (!location.latitude.isFinite() || !location.longitude.isFinite()) return
+                FirebaseFirestore.getInstance()
+                    .collection("orderTracking").document(token)
+                    .update(
+                        mapOf(
+                            "customerLatitude" to location.latitude,
+                            "customerLongitude" to location.longitude,
+                            "customerLocationSharing" to true,
+                            "customerLocationUpdatedAt" to FieldValue.serverTimestamp()
+                        )
+                    )
+            }
+        }
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000L)
+            .setMinUpdateDistanceMeters(10f)
+            .build()
+        try {
+            fusedLocationClient.requestLocationUpdates(request, callback, Looper.getMainLooper())
+            customerLocationCallback = callback
+            customerLocationToken = token
+        } catch (_: SecurityException) {
+            customerLocationCallback = null
+            customerLocationToken = null
+        }
+    }
+
+    private fun stopCustomerLiveLocation() {
+        customerLocationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
+        customerLocationCallback = null
+        customerLocationToken = null
     }
 
     fun submitDeliveryReview(rating: Int, review: String, onResult: (Boolean) -> Unit = {}) {
@@ -430,6 +492,13 @@ class StoreViewModel(
                     .addOnFailureListener { onResult(false) }
             }
             .addOnFailureListener { onResult(false) }
+    }
+
+    override fun onCleared() {
+        stopCustomerLiveLocation()
+        trackingListener?.remove()
+        productsListener?.remove()
+        super.onCleared()
     }
 
     fun dismissOrderReceipt() {
