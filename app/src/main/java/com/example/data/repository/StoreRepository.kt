@@ -193,9 +193,13 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "createdAtMillis" to now
             )
         if (latitude != null && longitude != null) {
+            // Keep the destination in explicit customer fields for the Delivery app.
+            // Coordinates are GPS when permission is granted, with address-geocoding fallback.
             remoteOrderData["latitude"] = latitude
             remoteOrderData["longitude"] = longitude
-            remoteOrderData["locationSource"] = "customer_address_geocoded"
+            remoteOrderData["customerLatitude"] = latitude
+            remoteOrderData["customerLongitude"] = longitude
+            remoteOrderData["locationSource"] = "customer_location"
         }
         val trackingData = mapOf(
             "status" to "new",
