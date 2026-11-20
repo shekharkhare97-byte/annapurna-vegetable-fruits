@@ -194,7 +194,7 @@ class StoreRepository(private val storeDao: StoreDao) {
             )
         if (latitude != null && longitude != null) {
             // Keep the destination in explicit customer fields for the Delivery app.
-            // Coordinates are GPS when permission is granted, with address-geocoding fallback.
+            // Coordinates are the customer's precise device GPS; the typed address is never a substitute.
             remoteOrderData["latitude"] = latitude
             remoteOrderData["longitude"] = longitude
             remoteOrderData["customerLatitude"] = latitude
