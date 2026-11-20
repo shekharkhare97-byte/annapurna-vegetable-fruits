@@ -30,7 +30,18 @@ jobs:
       - name: Add location permissions
         working-directory: mobile
         run: |
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />' android/app/src/main/AndroidManifest.xml
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          marker = '<manifest'
+          insert = '\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />'
+          if 'android.permission.ACCESS_FINE_LOCATION' not in s:
+              s = s.replace('>', '>', 1)
+              pos = s.find('>')
+              s = s[:pos+1] + insert + s[pos+1:]
+              p.write_text(s)
+          PY
 
       - name: Get packages
         working-directory: mobile
