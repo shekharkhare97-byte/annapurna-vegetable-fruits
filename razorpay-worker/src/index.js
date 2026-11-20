@@ -239,6 +239,137 @@ async function issueCustomerDeliveryOtp(env, body) {
   return json({ ok: true, otp, expiresAt });
 }
 
+async function verifyPickupQr(env, request, body) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const partnerUid = await verifyFirebaseIdToken(idToken);
+  if (!partnerUid) return json({ ok: false, error: "Delivery partner authentication required" }, 401);
+
+  const orderId = body?.orderId;
+  const scannedToken = body?.token;
+  if (typeof orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(orderId) ||
+      typeof scannedToken !== "string" || scannedToken.length < 40 || scannedToken.length > 160) {
+    return json({ ok: false, error: "Invalid pickup QR" }, 400);
+  }
+
+  const qrPath = "pickupQrTokens/" + encodeURIComponent(orderId);
+  const orderPath = "orders/" + encodeURIComponent(orderId);
+  const openPath = "deliveryOpenOrders/" + encodeURIComponent(orderId);
+  const qrDoc = await firestoreGetDocument(env, qrPath);
+  const orderDoc = await firestoreGetDocument(env, orderPath);
+  const openDoc = await firestoreGetDocument(env, openPath);
+  if (!qrDoc.exists || !orderDoc.exists || !openDoc.exists) {
+    return json({ ok: false, error: "Pickup QR or assigned order was not found" }, 404);
+  }
+
+  const qr = firestoreDocumentData(qrDoc.data);
+  const order = firestoreDocumentData(orderDoc.data);
+  const openOrder = firestoreDocumentData(openDoc.data);
+
+  // A retry after a successful scan is safe, but the same QR can never pick up
+  // another order or be redeemed by a different partner.
+  if (qr.used === true && qr.usedByUid === partnerUid &&
+      order.deliveryPartnerUid === partnerUid &&
+      ["picked_up", "out_for_delivery"].includes(order.deliveryState)) {
+    return json({ ok: true, pickedUp: true, alreadyVerified: true });
+  }
+
+  const partnerDoc = await firestoreGetDocument(env, "deliveryPartners/" + encodeURIComponent(partnerUid));
+  if (!partnerDoc.exists) return json({ ok: false, error: "Delivery Partner account not found" }, 403);
+  const partner = firestoreDocumentData(partnerDoc.data);
+  if (partner.registrationComplete !== true || partner.registrationStatus !== "approved" ||
+      partner.accountStatus !== "active" || partner.isBlocked === true) {
+    return json({ ok: false, error: "Delivery Partner account is not approved and active" }, 403);
+  }
+
+  if (qr.orderId !== orderId || qr.partnerUid !== partnerUid ||
+      qr.token !== scannedToken || qr.used === true ||
+      !qr.expiresAt || Date.parse(qr.expiresAt) <= Date.now()) {
+    return json({ ok: false, error: "Pickup QR is invalid, expired, or already used" }, 403);
+  }
+  if (order.deliveryPartnerUid !== partnerUid ||
+      order.deliveryState !== "claimed_pending_shop_qr" ||
+      openOrder.state !== "claimed_pending_shop_qr" ||
+      openOrder.claimedByUid !== partnerUid) {
+    return json({ ok: false, error: "This order is not assigned to your account for shop pickup" }, 403);
+  }
+
+  const { token: accessToken, projectId } = await getFirebaseAccessToken(env);
+  const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
+  const now = new Date().toISOString();
+  const writes = [
+    {
+      update: {
+        name: base + "/" + qrPath,
+        fields: firestoreFields({
+          used: true,
+          usedByUid: partnerUid,
+          usedAt: { __firestoreTimestamp: now },
+        }),
+      },
+      updateMask: { fieldPaths: ["used", "usedByUid", "usedAt"] },
+      currentDocument: { updateTime: qrDoc.updateTime },
+    },
+    {
+      update: {
+        name: base + "/" + orderPath,
+        fields: firestoreFields({
+          deliveryState: "picked_up",
+          deliveryPickedUpAt: { __firestoreTimestamp: now },
+          updatedAt: { __firestoreTimestamp: now },
+        }),
+      },
+      updateMask: { fieldPaths: ["deliveryState", "deliveryPickedUpAt", "updatedAt"] },
+      currentDocument: { updateTime: orderDoc.updateTime },
+    },
+    {
+      update: {
+        name: base + "/" + openPath,
+        fields: firestoreFields({
+          state: "picked_up",
+          pickedUpAt: { __firestoreTimestamp: now },
+        }),
+      },
+      updateMask: { fieldPaths: ["state", "pickedUpAt"] },
+      currentDocument: { updateTime: openDoc.updateTime },
+    },
+  ];
+
+  const trackingToken = typeof order.trackingToken === "string" ? order.trackingToken : "";
+  if (trackingToken) {
+    const trackingPath = "orderTracking/" + encodeURIComponent(trackingToken);
+    const trackingDoc = await firestoreGetDocument(env, trackingPath);
+    if (trackingDoc.exists) {
+      writes.push({
+        update: {
+          name: base + "/" + trackingPath,
+          fields: firestoreFields({
+            status: "picked_up",
+            updatedAt: { __firestoreTimestamp: now },
+          }),
+        },
+        updateMask: { fieldPaths: ["status", "updatedAt"] },
+        currentDocument: { updateTime: trackingDoc.updateTime },
+      });
+    }
+  }
+
+  const commit = await fetch(base + ":commit", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+    body: JSON.stringify({ writes }),
+  });
+  if (!commit.ok) {
+    const failure = await commit.json().catch(() => ({}));
+    console.error("pickup-qr-commit-failed", {
+      status: commit.status,
+      firestoreStatus: failure.error?.status || "unknown",
+    });
+    return json({ ok: false, error: "QR could not be verified. Check the connection and scan again." }, 409);
+  }
+  return json({ ok: true, pickedUp: true });
+}
+
 async function completeDelivery(env, request, body) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -260,14 +391,13 @@ async function completeDelivery(env, request, body) {
     return json({ ok: false, error: "Order tracking record is invalid" }, 409);
   }
 
-  // The Worker uses service-account access, which bypasses Firestore rules.
-  // Re-check the shop pickup OTP here so a direct API call cannot mark an
-  // order delivered before the shop has verified the 8-digit pickup code.
-  const pickupOtpDoc = await firestoreGetDocument(env, "pickupOtps/" + encodeURIComponent(orderId));
-  if (!pickupOtpDoc.exists) return json({ ok: false, error: "Shop pickup OTP has not been verified" }, 409);
-  const pickupOtp = firestoreDocumentData(pickupOtpDoc.data);
-  if (pickupOtp.verified !== true || pickupOtp.partnerUid !== partnerUid) {
-    return json({ ok: false, error: "Shop pickup OTP verification is required before delivery completion" }, 403);
+  // Delivery can be completed only after the assigned partner has redeemed
+  // the one-time Shop Pickup QR through this trusted Worker endpoint.
+  const pickupQrDoc = await firestoreGetDocument(env, "pickupQrTokens/" + encodeURIComponent(orderId));
+  if (!pickupQrDoc.exists) return json({ ok: false, error: "Shop pickup QR has not been verified" }, 409);
+  const pickupQr = firestoreDocumentData(pickupQrDoc.data);
+  if (pickupQr.used !== true || pickupQr.usedByUid !== partnerUid || pickupQr.partnerUid !== partnerUid) {
+    return json({ ok: false, error: "Shop pickup QR verification is required before delivery completion" }, 403);
   }
 
   const { token, projectId } = await getFirebaseAccessToken(env);
@@ -640,6 +770,13 @@ export default {
     let body;
     try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
 
+    if (url.pathname === "/verify-pickup-qr") {
+      try { return await verifyPickupQr(env, request, body); }
+      catch (error) {
+        console.error("pickup-qr-verification-failed", error?.message || "unknown");
+        return json({ ok: false, error: "Could not verify pickup QR. Please retry." }, 502);
+      }
+    }
     if (url.pathname === "/customer-delivery-otp") {
       try { return await issueCustomerDeliveryOtp(env, body); }
       catch (error) {
