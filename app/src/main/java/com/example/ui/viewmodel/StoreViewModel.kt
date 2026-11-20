@@ -221,6 +221,7 @@ class StoreViewModel(
     }
 
     override fun onCleared() {
+        stopCustomerLiveLocation()
         productsListener?.remove()
         trackingListener?.remove()
         super.onCleared()
@@ -494,12 +495,6 @@ class StoreViewModel(
             .addOnFailureListener { onResult(false) }
     }
 
-    override fun onCleared() {
-        stopCustomerLiveLocation()
-        trackingListener?.remove()
-        productsListener?.remove()
-        super.onCleared()
-    }
 
     fun dismissOrderReceipt() {
         _confirmedOrder.value = null
