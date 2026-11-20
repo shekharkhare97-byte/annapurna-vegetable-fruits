@@ -270,6 +270,10 @@ fun CartAndOrderScreen(
                     }
                 }.getOrNull()
             }
+            // GPS may finish while address geocoding is in progress; never overwrite it.
+            if (gpsAddressSnapshot == typedAddress && deliveryLatitude != null && deliveryLongitude != null) {
+                return@LaunchedEffect
+            }
             if (destination == null) {
                 deliveryMessage = context.getString(R.string.delivery_address_not_found)
                 deliveryLatitude = null
