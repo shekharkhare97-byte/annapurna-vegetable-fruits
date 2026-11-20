@@ -3,8 +3,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 const green=Color(0xFF087A35), pale=Color(0xFFF2F8F2);
-void main()=>runApp(const AnnapurnaApp());
+Future<void> main() async {
+ WidgetsFlutterBinding.ensureInitialized();
+ await Firebase.initializeApp(options: const FirebaseOptions(
+  apiKey: 'AIzaSyAbn6vgttUNB4AeleqIlpbD49YD-dlUpfc',
+  appId: '1:153570599397:android:622743c3d169439c5d0f0c',
+  messagingSenderId: '153570599397',
+  projectId: 'annapurna-vegetables-and-78cef',
+  storageBucket: 'annapurna-vegetables-and-78cef.firebasestorage.app',
+ ));
+ runApp(const AnnapurnaApp());
+}
 class Item{String name,cat,emoji;double price,stock;Item(this.name,this.cat,this.price,this.emoji,{this.stock=50});}
 class MyApp extends AnnapurnaApp{const MyApp({super.key});}
 class AnnapurnaApp extends StatefulWidget{const AnnapurnaApp({super.key});@override State<AnnapurnaApp> createState()=>_AppState();}
@@ -30,12 +42,21 @@ class _AppState extends State<AnnapurnaApp>{
      return false;
     }
     final amount=total;
+    final orderNumber='ANP-${DateTime.now().millisecondsSinceEpoch}';
+    final display='ऑर्डर $orderNumber • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • GPS: ${latitude},${longitude} • ${payment} • स्थिती: नवीन';
+    try {
+     await FirebaseFirestore.instance.collection('orders').doc(orderNumber).set({
+      'orderId':orderNumber,'customerName':name,'phone':phone,'address':address,
+      'amount':amount,'paymentMethod':payment,'latitude':latitude,'longitude':longitude,
+      'items':cart.entries.map((e){final p=items.firstWhere((x)=>x.name==e.key);return {'name':p.name,'quantityKg':e.value,'unitPrice':price(p)};}).toList(),
+      'status':'नवीन','displayText':display,'createdAt':FieldValue.serverTimestamp(),
+     });
+    } catch(e) {
+     if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('ऑर्डर ऑनलाइन सेव्ह झाली नाही: $e')));
+     return false;
+    }
     for(final e in cart.entries){final p=items.firstWhere((x)=>x.name==e.key);p.stock=(p.stock-e.value).clamp(0,999999).toDouble();}
-    setState((){
-     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • GPS: ${latitude},${longitude} • ${payment} • स्थिती: नवीन');
-     sales.insert(0,'विक्री • ₹${amount.toStringAsFixed(2)}');
-     cart.clear();
-    });
+    setState((){orders.insert(0,display);sales.insert(0,'विक्री • ₹${amount.toStringAsFixed(2)}');cart.clear();});
     save();
     return true;
    },
@@ -73,7 +94,7 @@ class _AppState extends State<AnnapurnaApp>{
 class DeliveryCheckout extends StatefulWidget{
  const DeliveryCheckout({super.key,required this.amount,required this.lines,required this.onConfirm});
  final double amount;final List<String> lines;
- final bool Function(String,String,String,String,double,double) onConfirm;
+ final Future<bool> Function(String,String,String,String,double,double) onConfirm;
  @override State<DeliveryCheckout> createState()=>_DeliveryCheckoutState();
 }
 class _DeliveryCheckoutState extends State<DeliveryCheckout>{
@@ -123,7 +144,7 @@ class _DeliveryCheckoutState extends State<DeliveryCheckout>{
     try { position=await _getCustomerLocation(); }
     catch(e){ if(mounted){setState(()=>saving=false);ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString().replaceFirst('Exception: ',''))));} return; }
     if(!mounted)return;
-    final confirmed = widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment,position.latitude,position.longitude);
+    final confirmed = await widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment,position.latitude,position.longitude);
     if (!confirmed) { setState(() => saving = false); return; }
     showDialog(context:context,barrierDismissible:false,builder:(_)=>AlertDialog(
      icon:const Icon(Icons.check_circle,color:green,size:48),
@@ -145,25 +166,34 @@ class DeliveryPartnerPage extends StatefulWidget{
  @override State<DeliveryPartnerPage> createState()=>_DeliveryPartnerPageState();
 }
 class _DeliveryPartnerPageState extends State<DeliveryPartnerPage>{
- static const stages=['नवीन','ऑर्डर स्वीकारली','पॅकिंग सुरू','डिलिव्हरीसाठी निघाली','पोहोचवली'];
+ static const stages=['نवीन','ऑर्डर स्वीकारली','पॅकिंग सुरू','डिलिव्हरीसाठी निघाली','पोहोचवली'];
  @override Widget build(BuildContext context)=>Scaffold(
  appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:const Text('डिलिव्हरी पार्टनर')),
- body:widget.orders.isEmpty
- ?const Center(child:Text('सध्या कोणतीही ऑर्डर नाही'))
- :ListView.builder(padding:const EdgeInsets.all(12),itemCount:widget.orders.length,itemBuilder:(context,i){
-  final order=widget.orders[i];final parts=order.split(' • स्थिती: ');final status=parts.length>1?parts.last:'नवीन';
-  return Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   Text(parts.first,style:const TextStyle(fontWeight:FontWeight.bold)),
-   const SizedBox(height:8),
-   Row(children:[const Icon(Icons.delivery_dining,color:green),const SizedBox(width:6),Expanded(child:Text('सध्याची स्थिती: $status'))]),
-   if(order.contains('GPS: ')) ...[
-    const SizedBox(height:8),
-    Builder(builder:(_){final match=RegExp(r'GPS: ([0-9.\-]+),([0-9.\-]+)').firstMatch(order);if(match==null)return const SizedBox.shrink();final lat=match.group(1)!,lon=match.group(2)!;return OutlinedButton.icon(onPressed:()async{final uri=Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lon');await launchUrl(uri,mode:LaunchMode.externalApplication);},icon:const Icon(Icons.location_on),label:const Text('ग्राहकाचे लोकेशन नकाशावर पहा'));})
-   ],
-   const SizedBox(height:8),
-   DropdownButtonFormField<String>(value:stages.contains(status)?status:'नवीन',decoration:const InputDecoration(labelText:'ऑर्डरची स्थिती बदला',border:OutlineInputBorder()),items:stages.map((s)=>DropdownMenuItem(value:s,child:Text(s))).toList(),onChanged:(s){if(s!=null){widget.onUpdate(i,s);setState((){});}}),
-  ])));
- })
+ body:StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
+  stream:FirebaseFirestore.instance.collection('orders').orderBy('createdAt',descending:true).snapshots(),
+  builder:(context,snapshot){
+   if(snapshot.hasError)return Center(child:Text('ऑर्डर लोड होत नाहीत: ${snapshot.error}'));
+   if(!snapshot.hasData)return const Center(child:CircularProgressIndicator());
+   final docs=snapshot.data!.docs;
+   if(docs.isEmpty)return const Center(child:Text('सध्या कोणतीही ऑनलाइन ऑर्डर नाही'));
+   return ListView.builder(padding:const EdgeInsets.all(12),itemCount:docs.length,itemBuilder:(context,i){
+    final doc=docs[i],data=doc.data();final status=(data['status']??'नवीन').toString();
+    final display=(data['displayText']??'ऑर्डर ${doc.id}').toString();
+    final lat=(data['latitude'] as num?)?.toDouble(),lon=(data['longitude'] as num?)?.toDouble();
+    return Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+     Text(display,style:const TextStyle(fontWeight:FontWeight.bold)),
+     const SizedBox(height:8),
+     Row(children:[const Icon(Icons.delivery_dining,color:green),const SizedBox(width:6),Expanded(child:Text('सध्याची स्थिती: $status'))]),
+     if(lat!=null&&lon!=null) ...[
+      const SizedBox(height:8),
+      OutlinedButton.icon(onPressed:()async{final uri=Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lon');await launchUrl(uri,mode:LaunchMode.externalApplication);},icon:const Icon(Icons.location_on),label:const Text('ग्राहकाचे लोकेशन नकाशावर पहा'))
+     ],
+     const SizedBox(height:8),
+     DropdownButtonFormField<String>(value:stages.contains(status)?status:'नवीन',decoration:const InputDecoration(labelText:'ऑर्डरची स्थिती बदला',border:OutlineInputBorder()),items:stages.map((v)=>DropdownMenuItem(value:v,child:Text(v))).toList(),onChanged:(v)async{if(v==null)return;try{final updated=display.replaceAll('स्थिती: $status','स्थिती: $v');await doc.reference.update({'status':v,'updatedAt':FieldValue.serverTimestamp(),'displayText':updated});}catch(err){if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('स्थिती बदलता आली नाही: $err')));}}),
+    ])));
+   });
+  },
+ )
  );
 }
 class Detail extends StatefulWidget{
