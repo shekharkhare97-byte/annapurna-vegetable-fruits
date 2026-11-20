@@ -27,6 +27,11 @@ jobs:
             flutter create --platforms=android --org com.annapurna --project-name annapurna_mobile .
           fi
 
+      - name: Add location permissions
+        working-directory: mobile
+        run: |
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />' android/app/src/main/AndroidManifest.xml
+
       - name: Get packages
         working-directory: mobile
         run: flutter pub get
