@@ -123,6 +123,13 @@ class StoreRepository(private val storeDao: StoreDao) {
         deliveryDistanceKm: Double? = null,
         deliveryTipRupees: Int = 0
     ): OrderEntity {
+        require(
+            latitude != null && longitude != null &&
+                latitude.isFinite() && longitude.isFinite() &&
+                latitude in -90.0..90.0 && longitude in -180.0..180.0
+        ) {
+            "ग्राहकाचे अचूक GPS Location आवश्यक आहे. GPS शिवाय ऑर्डर नोंदवता येणार नाही."
+        }
         val summaryLines = items.joinToString(separator = "\n") { line ->
             val quantityLabel = if (line.produce.isPieceBased) {
                 "${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
