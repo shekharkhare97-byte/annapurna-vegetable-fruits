@@ -221,95 +221,46 @@ fun CartAndOrderScreen(
             deliveryMessage = context.getString(R.string.delivery_charge_added)
         }
     }
+    fun clearCustomerGps(message: String) {
+        deliveryLatitude = null
+        deliveryLongitude = null
+        deliveryCharge = null
+        deliveryDistanceKm = null
+        gpsAddressSnapshot = ""
+        deliveryMessage = message
+    }
+
     fun fetchGpsForDelivery() {
+        clearCustomerGps(context.getString(R.string.delivery_auto_calculating))
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
-            .addOnSuccessListener { loc -> if (loc != null) calculateDeliveryFromLocation(loc) else deliveryMessage = context.getString(R.string.delivery_location_missing) }
-            .addOnFailureListener { deliveryMessage = context.getString(R.string.delivery_location_failed) }
+            .addOnSuccessListener { loc ->
+                if (loc != null) calculateDeliveryFromLocation(loc)
+                else clearCustomerGps(context.getString(R.string.delivery_location_missing))
+            }
+            .addOnFailureListener { clearCustomerGps(context.getString(R.string.delivery_location_failed)) }
     }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (granted) fetchGpsForDelivery() else deliveryMessage = context.getString(R.string.gps_enable_message)
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) fetchGpsForDelivery()
+        else clearCustomerGps("अचूक GPS परवानगी आवश्यक आहे. परवानगी न दिल्यास ऑर्डर देता येणार नाही.")
     }
 
     fun requestDeliveryLocation() {
+        clearCustomerGps("ग्राहकाचे अचूक GPS Location मिळवत आहोत…")
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val enabled = runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
         if (!enabled) { showGpsOffDialog = true; return }
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        if (fine) fetchGpsForDelivery()
+        else locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
-    // Request precise customer GPS when checkout opens. Address geocoding remains
-    // the fallback if the customer declines permission or GPS is unavailable.
+    // Order placement requires a fresh, precise device GPS fix. A typed address
+    // is descriptive only and is never converted into substitute coordinates.
     LaunchedEffect(Unit) {
         requestDeliveryLocation()
-    }
-
-    LaunchedEffect(formState.deliveryAddress) {
-        val typedAddress = formState.deliveryAddress.trim()
-        if (gpsAddressSnapshot == typedAddress && deliveryLatitude != null && deliveryLongitude != null) {
-            return@LaunchedEffect
-        }
-        if (typedAddress.length >= 5) {
-            deliveryCharge = null
-            deliveryDistanceKm = null
-            deliveryMessage = context.getString(R.string.delivery_address_checking)
-            kotlinx.coroutines.delay(900)
-            val destination = withContext(Dispatchers.IO) {
-                runCatching {
-                    if (!Geocoder.isPresent()) null else {
-                        @Suppress("DEPRECATION")
-                        Geocoder(context, Locale("en", "IN"))
-                            .getFromLocationName("$typedAddress, Nashik, Maharashtra, India", 1)
-                            ?.firstOrNull()
-                    }
-                }.getOrNull()
-            }
-            // GPS may finish while address geocoding is in progress; never overwrite it.
-            if (gpsAddressSnapshot == typedAddress && deliveryLatitude != null && deliveryLongitude != null) {
-                return@LaunchedEffect
-            }
-            if (destination == null) {
-                deliveryMessage = context.getString(R.string.delivery_address_not_found)
-                deliveryLatitude = null
-                deliveryLongitude = null
-            } else {
-                deliveryLatitude = destination.latitude
-                deliveryLongitude = destination.longitude
-                val shop = withContext(Dispatchers.IO) {
-                    runCatching {
-                        @Suppress("DEPRECATION")
-                        Geocoder(context, Locale("en", "IN")).getFromLocationName(
-                            "Surya co op HSG society, Road Borgad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India",
-                            1
-                        )?.firstOrNull()
-                    }.getOrNull()
-                }
-                if (shop == null) {
-                    deliveryMessage = context.getString(R.string.delivery_shop_retry)
-                    deliveryLatitude = null
-                    deliveryLongitude = null
-                } else {
-                    val meters = FloatArray(1)
-                    Location.distanceBetween(shop.latitude, shop.longitude, destination.latitude, destination.longitude, meters)
-                    val km = meters[0] / 1000.0
-                    deliveryDistanceKm = km
-                    deliveryCharge = kotlin.math.ceil(km).toInt().coerceAtLeast(1) * 10
-                    deliveryMessage = "डिलिव्हरी चार्ज बिलात आपोआप जोडला आहे."
-                }
-            }
-        } else {
-            deliveryCharge = null
-            deliveryDistanceKm = null
-            deliveryLatitude = null
-            deliveryLongitude = null
-            deliveryMessage = context.getString(R.string.delivery_enter_full_address)
-        }
     }
 
     val itemsTotal = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
@@ -328,10 +279,11 @@ fun CartAndOrderScreen(
             paymentError = context.getString(R.string.payment_reopen_app)
             return
         }
-        if (formState.customerName.trim().length < 2 ||
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+            deliveryLatitude == null || deliveryLongitude == null ||
+            formState.customerName.trim().length < 2 ||
             !MarathiFormatters.isValidIndianMobile(formState.mobileNumber) ||
             formState.deliveryAddress.trim().length < 8 ||
-            deliveryLatitude == null || deliveryLongitude == null ||
             deliveryCharge == null || deliveryDistanceKm == null
         ) {
             paymentError = context.getString(R.string.payment_fill_customer_details)
@@ -512,9 +464,15 @@ fun CartAndOrderScreen(
                 paymentError = paymentError,
                 paymentInProgress = paymentInProgress,
                 onSubmitOrder = {
-                    if (paymentMethod != "COD") {
+                    val preciseGpsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    if (!preciseGpsGranted) {
+                        clearCustomerGps("अचूक GPS परवानगी द्या. GPS शिवाय ऑर्डर स्वीकारली जाणार नाही.")
+                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    } else if (deliveryLatitude == null || deliveryLongitude == null || deliveryCharge == null || deliveryDistanceKm == null) {
+                        requestDeliveryLocation()
+                    } else if (paymentMethod != "COD") {
                         startRazorpayPayment()
-                    } else if (deliveryLatitude != null && deliveryLongitude != null && deliveryCharge != null && deliveryDistanceKm != null) {
+                    } else {
                         onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
                     }
                 }
