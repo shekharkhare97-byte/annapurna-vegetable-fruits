@@ -189,6 +189,7 @@ fun CartAndOrderScreen(
     var deliveryDistanceKm by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
     var deliveryLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
+    var gpsAddressSnapshot by rememberSaveable { mutableStateOf("") }
     var deliveryMessage by rememberSaveable { mutableStateOf(context.getString(R.string.delivery_auto_calculating)) }
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var paymentMethod by rememberSaveable { mutableStateOf("COD") }
@@ -199,6 +200,9 @@ fun CartAndOrderScreen(
     val fusedLocationClient = remember(context) { LocationServices.getFusedLocationProviderClient(context) }
 
     fun calculateDeliveryFromLocation(location: Location) {
+        // Preserve the phone's actual GPS coordinates for this checkout address.
+        // Short localities such as Satpur must not replace this with a guessed pin.
+        gpsAddressSnapshot = formState.deliveryAddress.trim()
         deliveryLatitude = location.latitude; deliveryLongitude = location.longitude
         deliveryCharge = null; deliveryDistanceKm = null; deliveryMessage = context.getString(R.string.delivery_calculating_distance)
         coroutineScope.launch {
@@ -240,8 +244,17 @@ fun CartAndOrderScreen(
         if (fine || coarse) fetchGpsForDelivery() else locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
+    // Request precise customer GPS when checkout opens. Address geocoding remains
+    // the fallback if the customer declines permission or GPS is unavailable.
+    LaunchedEffect(Unit) {
+        requestDeliveryLocation()
+    }
+
     LaunchedEffect(formState.deliveryAddress) {
         val typedAddress = formState.deliveryAddress.trim()
+        if (gpsAddressSnapshot == typedAddress && deliveryLatitude != null && deliveryLongitude != null) {
+            return@LaunchedEffect
+        }
         if (typedAddress.length >= 5) {
             deliveryCharge = null
             deliveryDistanceKm = null
