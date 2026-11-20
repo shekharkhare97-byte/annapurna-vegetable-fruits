@@ -81,7 +81,59 @@ class _AppState extends State<AnnapurnaApp>{
   ])));
  }),style:FilledButton.styleFrom(backgroundColor:green),child:const Text('＋ वजन निवडा'))
  ])));
- Widget cartPage()=>ListView(padding:const EdgeInsets.all(14),children:[const Text('माझी पिशवी',style:TextStyle(fontSize:22,fontWeight:FontWeight.bold)),if(cart.isEmpty)const Padding(padding:EdgeInsets.all(30),child:Text('तुमची पिशवी रिकामी आहे 🛒')),...cart.entries.map((e){final p=items.firstWhere((x)=>x.name==e.key);return Card(color:Colors.white,child:ListTile(leading:Text(p.emoji,style:const TextStyle(fontSize:28)),title:Text(p.name),subtitle:Text((e.value*1000).round().toString()+' ग्रॅम • ₹'+price(p).toStringAsFixed(0)+'/kg'),trailing:Row(mainAxisSize:MainAxisSize.min,children:[IconButton(onPressed:(){setState((){if(e.value<=.125){cart.remove(e.key);}else{cart[e.key]=e.value-.125;}});save();},icon:const Icon(Icons.remove)),Text((e.value*1000).round().toString()+'g'),IconButton(onPressed:()=>add(p),icon:const Icon(Icons.add)),IconButton(onPressed:(){setState(()=>cart.remove(e.key));save();},icon:const Icon(Icons.delete_outline,color:Colors.red))])));}),Card(color:Colors.white,child:ListTile(title:const Text('एकूण रक्कम'),trailing:Text('₹'+total.toStringAsFixed(2),style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)))),FilledButton(onPressed:cart.isEmpty?null:checkout,child:const Text('ऑर्डर करा / चेकआउट'))]);
+ Widget cartPage(){
+  final entries=cart.entries.toList(growable:false);
+  return ListView.builder(
+   key: const PageStorageKey<String>('annapurna-cart-list'),
+   padding: const EdgeInsets.all(14),
+   itemCount: entries.length+3,
+   itemBuilder:(context,index){
+    if(index==0)return const Padding(padding:EdgeInsets.only(bottom:12),child:Text('माझी पिशवी',style:TextStyle(fontSize:22,fontWeight:FontWeight.bold)));
+    if(index<=entries.length){
+     final entry=entries[index-1];
+     final matches=items.where((x)=>x.name==entry.key);
+     if(matches.isEmpty)return const SizedBox.shrink();
+     final product=matches.first;
+     final quantity=entry.value;
+     return Card(
+      color:Colors.white,
+      margin:const EdgeInsets.only(bottom:10),
+      child:Padding(
+       padding:const EdgeInsets.all(10),
+       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[
+         Text(product.emoji,style:const TextStyle(fontSize:30)),
+         const SizedBox(width:10),
+         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text(product.name,style:const TextStyle(fontWeight:FontWeight.bold,fontSize:16)),
+          Text('${(quantity*1000).round()} ग्रॅम • ₹${price(product).toStringAsFixed(0)}/kg'),
+         ])),
+        ]),
+        const SizedBox(height:6),
+        Wrap(spacing:6,runSpacing:4, crossAxisAlignment:WrapCrossAlignment.center,children:[
+         IconButton(tooltip:'वजन कमी करा',onPressed:(){
+          setState((){if(quantity<=.125){cart.remove(entry.key);}else{cart[entry.key]=quantity-.125;}});
+          save();
+         },icon:const Icon(Icons.remove_circle_outline)),
+         Text('${(quantity*1000).round()} g',style:const TextStyle(fontWeight:FontWeight.bold)),
+         IconButton(tooltip:'वजन वाढवा',onPressed:()=>add(product),icon:const Icon(Icons.add_circle_outline)),
+         IconButton(tooltip:'कार्टमधून काढा',onPressed:(){setState(()=>cart.remove(entry.key));save();},icon:const Icon(Icons.delete_outline,color:Colors.red)),
+        ]),
+       ]),
+      ),
+     );
+    }
+    if(index==entries.length+1){
+     if(entries.isEmpty)return const Padding(padding:EdgeInsets.all(30),child:Center(child:Text('तुमची पिशवी रिकामी आहे 🛒')));
+     return Card(color:Colors.white,child:ListTile(title:const Text('एकूण रक्कम'),trailing:Text('₹${total.toStringAsFixed(2)}',style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold))));
+    }
+    return Padding(padding:const EdgeInsets.only(top:10),child:FilledButton(
+     onPressed:cart.isEmpty?null:checkout,
+     child:const Text('ऑर्डर करा / चेकआउट'),
+    ));
+   },
+  );
+ }
  Widget profile()=>ListView(padding:const EdgeInsets.all(14),children:[const CircleAvatar(radius:40,backgroundColor:Color(0xFFD7F0DF),child:Icon(Icons.person,size:48,color:green)),const Center(child:Text('शेखर खरे',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold))),...['माझ्या ऑर्डर्स','पत्ता व्यवस्थापन','कूपन / सवलत','सेटिंग्ज','मदत आणि समर्थन','डिलिव्हरी पार्टनर','स्टॉक व्यवस्थापन','ग्राहक खाते'].map((s)=>Card(color:Colors.white,child:ListTile(title:Text(s),trailing:const Icon(Icons.chevron_right),onTap:()=>open(s))))]);
  void open(String title){
  if(title=='डिलिव्हरी पार्टनर'){
