@@ -229,7 +229,7 @@ async function updateCustomerLiveLocation(env, body) {
     body: JSON.stringify({
       writes: [{
         update: {
-          name: base + "/orders/" + encodeURIComponent(orderId),
+          name: "projects/" + projectId + "/databases/(default)/documents/orders/" + encodeURIComponent(orderId),
           fields: firestoreFields({
             customerLatitude: latitude,
             customerLongitude: longitude,
@@ -324,7 +324,7 @@ async function verifyPickupQr(env, request, body, attempt = 0) {
   const writes = [
     {
       update: {
-        name: base + "/" + qrPath,
+        name: "projects/" + projectId + "/databases/(default)/documents/" + qrPath,
         fields: firestoreFields({
           used: true,
           usedByUid: partnerUid,
@@ -336,7 +336,7 @@ async function verifyPickupQr(env, request, body, attempt = 0) {
     },
     {
       update: {
-        name: base + "/" + orderPath,
+        name: "projects/" + projectId + "/databases/(default)/documents/" + orderPath,
         fields: firestoreFields({
           deliveryState: "picked_up",
           deliveryPickedUpAt: { __firestoreTimestamp: now },
@@ -348,7 +348,7 @@ async function verifyPickupQr(env, request, body, attempt = 0) {
     },
     {
       update: {
-        name: base + "/" + openPath,
+        name: "projects/" + projectId + "/databases/(default)/documents/" + openPath,
         fields: firestoreFields({
           state: "picked_up",
           pickedUpAt: { __firestoreTimestamp: now },
@@ -366,7 +366,7 @@ async function verifyPickupQr(env, request, body, attempt = 0) {
     if (trackingDoc.exists) {
       writes.push({
         update: {
-          name: base + "/" + trackingPath,
+          name: "projects/" + projectId + "/databases/(default)/documents/" + trackingPath,
           fields: firestoreFields({
             status: "picked_up",
             updatedAt: { __firestoreTimestamp: now },
@@ -650,8 +650,8 @@ async function savePaidOrder(env, body, verified) {
     headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
     body: JSON.stringify({
       writes: [
-        { update: { name: base + "/orders/" + orderId, fields: orderDocFields }, currentDocument: { exists: false } },
-        { update: { name: base + "/orderTracking/" + token, fields: trackingFields }, currentDocument: { exists: false } },
+        { update: { name: "projects/" + projectId + "/databases/(default)/documents/orders/" + orderId, fields: orderDocFields }, currentDocument: { exists: false } },
+        { update: { name: "projects/" + projectId + "/databases/(default)/documents/orderTracking/" + token, fields: trackingFields }, currentDocument: { exists: false } },
       ],
     }),
   });
