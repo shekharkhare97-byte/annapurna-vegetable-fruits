@@ -396,10 +396,15 @@ async function verifyPickupQr(env, request, body, attempt = 0) {
     if (attempt < 2 && ["ABORTED", "FAILED_PRECONDITION"].includes(firestoreStatus)) {
       return verifyPickupQr(env, request, body, attempt + 1);
     }
+    const firestoreMessage = typeof failure.error?.message === "string"
+      ? failure.error.message.replace(/projects\/[^/\s]+/g, "projects/[redacted]").slice(0, 300)
+      : "No Firestore detail returned";
+    console.error("pickup-qr-commit-detail", { firestoreStatus, firestoreMessage });
     return json({
       ok: false,
       error: "QR verification could not be saved. Please scan again.",
       code: firestoreStatus,
+      detail: firestoreMessage,
     }, 409);
   }
   return json({ ok: true, pickedUp: true });
