@@ -147,7 +147,7 @@ class AiFeaturesViewModel(
             val last = normalized.lastOrNull()
             if (last != null && last.isUser == turn.isUser) {
                 // Merge consecutive same-role turns (e.g. if a previous request errored before model replied)
-                normalized[normalized.lastIndex] = last.copy(text = "${last.text}\n${turn.text}")
+                normalized[normalized.lastIndex] = last.copy(\n                    text = "${last.text}\n${turn.text}",\n                    imageBase64 = turn.imageBase64 ?: last.imageBase64,\n                    mimeType = turn.mimeType ?: last.mimeType\n                )
             } else {
                 normalized.add(turn)
             }
