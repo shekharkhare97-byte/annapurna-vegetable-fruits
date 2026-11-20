@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 const green=Color(0xFF087A35), pale=Color(0xFFF2F8F2);
 void main()=>runApp(const AnnapurnaApp());
 class Item{String name,cat,emoji;double price,stock;Item(this.name,this.cat,this.price,this.emoji,{this.stock=50});}
@@ -20,7 +22,7 @@ class _AppState extends State<AnnapurnaApp>{
   Navigator.push(context,MaterialPageRoute(builder:(_)=>DeliveryCheckout(
    amount:total,
    lines:cart.entries.map((e){final p=items.firstWhere((x)=>x.name==e.key);return '${p.name} • ${(e.value*1000).round()} ग्रॅम • ₹${(price(p)*e.value).toStringAsFixed(2)}';}).toList(),
-   onConfirm:(name,phone,address,payment){
+   onConfirm:(name,phone,address,payment,latitude,longitude){
     final insufficient=cart.entries.where((e){final p=items.firstWhere((x)=>x.name==e.key);return e.value>p.stock;}).toList();
     if(insufficient.isNotEmpty){
      final e=insufficient.first;final p=items.firstWhere((x)=>x.name==e.key);
@@ -30,7 +32,7 @@ class _AppState extends State<AnnapurnaApp>{
     final amount=total;
     for(final e in cart.entries){final p=items.firstWhere((x)=>x.name==e.key);p.stock=(p.stock-e.value).clamp(0,999999).toDouble();}
     setState((){
-     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • ${payment} • स्थिती: नवीन');
+     orders.insert(0,'ऑर्डर #${(1241+orders.length)} • ₹${amount.toStringAsFixed(2)} • ${name} • ${phone} • ${address} • GPS: ${latitude},${longitude} • ${payment} • स्थिती: नवीन');
      sales.insert(0,'विक्री • ₹${amount.toStringAsFixed(2)}');
      cart.clear();
     });
@@ -71,13 +73,21 @@ class _AppState extends State<AnnapurnaApp>{
 class DeliveryCheckout extends StatefulWidget{
  const DeliveryCheckout({super.key,required this.amount,required this.lines,required this.onConfirm});
  final double amount;final List<String> lines;
- final bool Function(String,String,String,String) onConfirm;
+ final bool Function(String,String,String,String,double,double) onConfirm;
  @override State<DeliveryCheckout> createState()=>_DeliveryCheckoutState();
 }
 class _DeliveryCheckoutState extends State<DeliveryCheckout>{
  final name=TextEditingController(),phone=TextEditingController(),address=TextEditingController(),landmark=TextEditingController();
  String payment='घरपोच पैसे (Cash on Delivery)';
  bool saving=false;
+ Future<Position> _getCustomerLocation() async {
+  final enabled=await Geolocator.isLocationServiceEnabled();
+  if(!enabled) throw Exception('मोबाईलचे Location/GPS सुरू करा.');
+  var permission=await Geolocator.checkPermission();
+  if(permission==LocationPermission.denied) permission=await Geolocator.requestPermission();
+  if(permission==LocationPermission.denied || permission==LocationPermission.deniedForever) throw Exception('ऑर्डरसाठी Location permission आवश्यक आहे.');
+  return Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high,timeLimit: Duration(seconds:20)));
+ }
  @override void dispose(){name.dispose();phone.dispose();address.dispose();landmark.dispose();super.dispose();}
  @override Widget build(BuildContext context)=>Scaffold(
  appBar:AppBar(backgroundColor:green,foregroundColor:Colors.white,title:const Text('डिलिव्हरी तपशील')),
@@ -109,12 +119,16 @@ class _DeliveryCheckoutState extends State<DeliveryCheckout>{
      return;
     }
     setState(()=>saving=true);
-    final confirmed = widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment);
+    late Position position;
+    try { position=await _getCustomerLocation(); }
+    catch(e){ if(mounted){setState(()=>saving=false);ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString().replaceFirst('Exception: ',''))));} return; }
+    if(!mounted)return;
+    final confirmed = widget.onConfirm(n,ph,ad+(landmark.text.trim().isEmpty?'':' • खूण: ${landmark.text.trim()}'),payment,position.latitude,position.longitude);
     if (!confirmed) { setState(() => saving = false); return; }
     showDialog(context:context,barrierDismissible:false,builder:(_)=>AlertDialog(
      icon:const Icon(Icons.check_circle,color:green,size:48),
      title:const Text('ऑर्डर नोंदवली!'),
-     content:const Text('तुमची ऑर्डर या फोनमध्ये जतन झाली आहे. दुकानाकडून पुष्टी मिळाल्यावर डिलिव्हरीची माहिती कळेल.'),
+     content:Text('तुमची ऑर्डर या फोनमध्ये जतन झाली आहे. ग्राहकाचे GPS लोकेशन: ${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}. दुकानाकडून पुष्टी मिळाल्यावर डिलिव्हरीची माहिती कळेल.'),
      actions:[FilledButton(onPressed:(){Navigator.pop(context);Navigator.pop(context);Navigator.pop(context);},child:const Text('ठीक आहे'))],
     ));
    },
@@ -142,6 +156,10 @@ class _DeliveryPartnerPageState extends State<DeliveryPartnerPage>{
    Text(parts.first,style:const TextStyle(fontWeight:FontWeight.bold)),
    const SizedBox(height:8),
    Row(children:[const Icon(Icons.delivery_dining,color:green),const SizedBox(width:6),Expanded(child:Text('सध्याची स्थिती: $status'))]),
+   if(order.contains('GPS: ')) ...[
+    const SizedBox(height:8),
+    Builder(builder:(_){final match=RegExp(r'GPS: ([0-9.\-]+),([0-9.\-]+)').firstMatch(order);if(match==null)return const SizedBox.shrink();final lat=match.group(1)!,lon=match.group(2)!;return OutlinedButton.icon(onPressed:()async{final uri=Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lon');await launchUrl(uri,mode:LaunchMode.externalApplication);},icon:const Icon(Icons.location_on),label:const Text('ग्राहकाचे लोकेशन नकाशावर पहा'));})
+   ],
    const SizedBox(height:8),
    DropdownButtonFormField<String>(value:stages.contains(status)?status:'नवीन',decoration:const InputDecoration(labelText:'ऑर्डरची स्थिती बदला',border:OutlineInputBorder()),items:stages.map((s)=>DropdownMenuItem(value:s,child:Text(s))).toList(),onChanged:(s){if(s!=null){widget.onUpdate(i,s);setState((){});}}),
   ])));
