@@ -223,7 +223,8 @@ class StoreViewModel(
     }
 
     override fun onCleared() {
-        stopCustomerLiveLocation()
+        // The foreground service owns order tracking independently of this ViewModel.
+        // Do not stop it when the UI is cleared or the customer leaves the app.
         productsListener?.remove()
         trackingListener?.remove()
         super.onCleared()
