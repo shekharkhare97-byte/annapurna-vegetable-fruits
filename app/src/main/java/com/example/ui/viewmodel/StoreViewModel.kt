@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.content.Context
+import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Looper
@@ -17,6 +18,7 @@ import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.example.R
+import com.example.service.CustomerLocationService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -423,45 +425,28 @@ class StoreViewModel(
     }
 
     private fun startCustomerLiveLocation(token: String) {
-        if (customerLocationToken == token && customerLocationCallback != null) return
+        if (customerLocationToken == token) return
         stopCustomerLiveLocation()
         val fineGranted = ContextCompat.checkSelfPermission(
             appContext, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
         if (!fineGranted) return
 
-        val callback = object : LocationCallback() {
-            override fun onLocationResult(result: LocationResult) {
-                val location = result.lastLocation ?: return
-                if (!location.latitude.isFinite() || !location.longitude.isFinite()) return
-                FirebaseFirestore.getInstance()
-                    .collection("orderTracking").document(token)
-                    .update(
-                        mapOf(
-                            "customerLatitude" to location.latitude,
-                            "customerLongitude" to location.longitude,
-                            "customerLocationSharing" to true,
-                            "customerLocationUpdatedAt" to FieldValue.serverTimestamp()
-                        )
-                    )
-            }
-        }
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000L)
-            .setMinUpdateDistanceMeters(10f)
-            .build()
+        val serviceIntent = Intent(appContext, CustomerLocationService::class.java)
+            .setAction(CustomerLocationService.ACTION_START)
+            .putExtra(CustomerLocationService.EXTRA_TOKEN, token)
         try {
-            fusedLocationClient.requestLocationUpdates(request, callback, Looper.getMainLooper())
-            customerLocationCallback = callback
+            ContextCompat.startForegroundService(appContext, serviceIntent)
             customerLocationToken = token
-        } catch (_: SecurityException) {
-            customerLocationCallback = null
+        } catch (_: RuntimeException) {
+            // Android may reject a foreground-service start if the app is already backgrounded.
+            // The order remains trackable when the customer reopens the app.
             customerLocationToken = null
         }
     }
 
     private fun stopCustomerLiveLocation() {
-        customerLocationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
-        customerLocationCallback = null
+        appContext.stopService(Intent(appContext, CustomerLocationService::class.java))
         customerLocationToken = null
     }
 
