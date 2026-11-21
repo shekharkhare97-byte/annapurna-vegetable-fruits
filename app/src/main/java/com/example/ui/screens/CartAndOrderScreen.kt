@@ -15,7 +15,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.location.Location
-import android.location.Geocoder
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.gms.tasks.Tasks
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -172,11 +173,15 @@ fun CartAndOrderScreen(
     LaunchedEffect(Unit) {
         shopMapPosition = withContext(Dispatchers.IO) {
             runCatching {
-                @Suppress("DEPRECATION")
-                Geocoder(context, Locale("en", "IN"))
-                    .getFromLocationName("Surya co op HSG society, road boargad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India", 1)
-                    ?.firstOrNull()
-                    ?.let { LatLng(it.latitude, it.longitude) }
+                val snapshot = Tasks.await(
+                    FirebaseFirestore.getInstance().collection("shopSettings").document("main").get()
+                )
+                val latitude = snapshot.getDouble("latitude")
+                val longitude = snapshot.getDouble("longitude")
+                if (latitude != null && longitude != null &&
+                    latitude.isFinite() && longitude.isFinite() &&
+                    latitude in -90.0..90.0 && longitude in -180.0..180.0
+                ) LatLng(latitude, longitude) else null
             }.getOrNull()
         }
     }
@@ -207,10 +212,18 @@ fun CartAndOrderScreen(
         deliveryCharge = null; deliveryDistanceKm = null; deliveryMessage = context.getString(R.string.delivery_calculating_distance)
         coroutineScope.launch {
             val shop = withContext(Dispatchers.IO) { runCatching {
-                if (!Geocoder.isPresent()) null else {
-                    @Suppress("DEPRECATION")
-                    Geocoder(context, Locale("en", "IN")).getFromLocationName("Surya co op HSG society, road boargad, Hari Har Colony, Mhasrul Gaon, Nashik, Maharashtra 422004, India", 1)?.firstOrNull()
-                }
+                val snapshot = Tasks.await(
+                    FirebaseFirestore.getInstance().collection("shopSettings").document("main").get()
+                )
+                val latitude = snapshot.getDouble("latitude")
+                val longitude = snapshot.getDouble("longitude")
+                if (latitude != null && longitude != null &&
+                    latitude.isFinite() && longitude.isFinite() &&
+                    latitude in -90.0..90.0 && longitude in -180.0..180.0
+                ) Location("annapurna_shop").apply {
+                    this.latitude = latitude
+                    this.longitude = longitude
+                } else null
             }.getOrNull() }
             if (shop == null) { deliveryMessage = context.getString(R.string.delivery_shop_location_missing); return@launch }
             val meters = FloatArray(1)
