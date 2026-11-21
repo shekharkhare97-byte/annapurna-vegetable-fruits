@@ -622,8 +622,19 @@ async function savePaidOrder(env, body, verified) {
 
   const { token: accessToken, projectId } = await getFirebaseAccessToken(env);
   const now = new Date().toISOString();
-  const orderFields = { ...order, createdAt: { __firestoreTimestamp: now } };
-  delete orderFields.createdAt;
+  // Payment fields are written by this trusted Worker, never trusted from the Android payload.
+  // This gives the Admin order screen an authoritative captured amount and Razorpay references.
+  const orderFields = {
+    ...order,
+    paymentMethod: "RAZORPAY",
+    paymentGateway: "razorpay",
+    paymentStatus: "paid",
+    transactionId: verified.paymentId,
+    paidAmountPaise: verified.amount,
+    razorpayPaymentId: verified.paymentId,
+    razorpayOrderId: verified.orderId,
+    paymentCapturedAt: { __firestoreTimestamp: now },
+  };
   const orderDocFields = firestoreFields(orderFields);
   orderDocFields.createdAt = { timestampValue: now };
   const trackingFields = firestoreFields(tracking);
