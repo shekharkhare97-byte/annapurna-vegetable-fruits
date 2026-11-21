@@ -379,6 +379,9 @@ class StoreViewModel(
                 repository.latestTrackingToken?.let { token ->
                     trackingPrefs.edit().putString("latest_token", token).apply()
                     listenToOrderStatus(token)
+                    // Start while checkout is still foregrounded; Android may block a later
+                    // background location-service start when the delivery partner accepts.
+                    startCustomerLiveLocation(token)
                 }
                 _confirmedOrder.value = savedOrder
             } catch (error: Exception) {
@@ -409,11 +412,10 @@ class StoreViewModel(
                     _trackingStatus.value = snapshot.getString("status") ?: "new"
                     _trackingPartnerAccepted.value = snapshot.getBoolean("deliveryPartnerAccepted") == true
                     _trackingPartnerName.value = snapshot.getString("deliveryPartnerName")?.trim().orEmpty()
-                    if (_trackingPartnerAccepted.value &&
-                        _trackingStatus.value !in listOf("completed", "cancelled")) {
-                        startCustomerLiveLocation(token)
-                    } else {
+                    if (_trackingStatus.value in listOf("completed", "cancelled")) {
                         stopCustomerLiveLocation()
+                    } else if (_trackingPartnerAccepted.value) {
+                        startCustomerLiveLocation(token)
                     }
                     val latitude = snapshot.getDouble("deliveryLatitude")
                     val longitude = snapshot.getDouble("deliveryLongitude")
