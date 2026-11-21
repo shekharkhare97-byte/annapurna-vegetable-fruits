@@ -30,6 +30,7 @@ class CustomerLocationService : Service() {
     private var callback: LocationCallback? = null
     private var statusListener: com.google.firebase.firestore.ListenerRegistration? = null
     private var token: String? = null
+    private var deliveryAccepted = false
 
     override fun onCreate() {
         super.onCreate()
@@ -57,7 +58,6 @@ class CustomerLocationService : Service() {
         }
         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_TOKEN, currentToken).apply()
         listenForCompletion(currentToken)
-        startLocationUpdates(currentToken)
         return START_STICKY
     }
 
@@ -67,7 +67,16 @@ class CustomerLocationService : Service() {
             .addSnapshotListener { snapshot, error ->
                 if (error == null && snapshot != null && snapshot.exists()) {
                     val status = snapshot.getString("status")
-                    if (status == "completed" || status == "cancelled") stopSharing()
+                    if (status == "completed" || status == "cancelled") {
+                        stopSharing()
+                    } else {
+                        deliveryAccepted = snapshot.getBoolean("deliveryPartnerAccepted") == true
+                        if (deliveryAccepted) startLocationUpdates(currentToken)
+                        else {
+                            callback?.let { fused.removeLocationUpdates(it) }
+                            callback = null
+                        }
+                    }
                 }
             }
     }
@@ -76,6 +85,7 @@ class CustomerLocationService : Service() {
         if (callback != null) return
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
+                if (!deliveryAccepted) return
                 val location = result.lastLocation ?: return
                 if (!location.latitude.isFinite() || !location.longitude.isFinite()) return
                 firestore.collection("orderTracking").document(currentToken).update(
@@ -113,7 +123,7 @@ class CustomerLocationService : Service() {
         NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setContentTitle("Annapurna order location")
-            .setContentText("Delivery partner साठी तुमचे live location share होत आहे")
+            .setContentText("Delivery partner ऑर्डर स्वीकारल्यावर live location share होईल")
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
