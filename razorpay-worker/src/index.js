@@ -360,23 +360,25 @@ async function verifyPickupQr(env, request, body, attempt = 0) {
   ];
 
   const trackingToken = typeof order.trackingToken === "string" ? order.trackingToken : "";
-  if (trackingToken) {
-    const trackingPath = "orderTracking/" + encodeURIComponent(trackingToken);
-    const trackingDoc = await firestoreGetDocument(env, trackingPath);
-    if (trackingDoc.exists) {
-      writes.push({
-        update: {
-          name: "projects/" + projectId + "/databases/(default)/documents/" + trackingPath,
-          fields: firestoreFields({
-            status: "picked_up",
-            updatedAt: { __firestoreTimestamp: now },
-          }),
-        },
-        updateMask: { fieldPaths: ["status", "updatedAt"] },
-        currentDocument: { updateTime: trackingDoc.updateTime },
-      });
-    }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trackingToken)) {
+    return json({ ok: false, error: "Order tracking token is invalid" }, 409);
   }
+  const trackingPath = "orderTracking/" + encodeURIComponent(trackingToken);
+  const trackingDoc = await firestoreGetDocument(env, trackingPath);
+  if (!trackingDoc.exists) {
+    return json({ ok: false, error: "Order tracking record is missing. Pickup QR was not verified." }, 409);
+  }
+  writes.push({
+    update: {
+      name: "projects/" + projectId + "/databases/(default)/documents/" + trackingPath,
+      fields: firestoreFields({
+        status: "picked_up",
+        updatedAt: { __firestoreTimestamp: now },
+      }),
+    },
+    updateMask: { fieldPaths: ["status", "updatedAt"] },
+    currentDocument: { updateTime: trackingDoc.updateTime },
+  });
 
   const commit = await fetch(base + ":commit", {
     method: "POST",
