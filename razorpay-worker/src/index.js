@@ -780,8 +780,15 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, service: "annapurna-razorpay" });
     }
+    // Support diagnostics expose payment/deployment metadata. Require a private
+    // bearer token so these read-only endpoints are not publicly enumerable.
+    const supportToken = env.SUPPORT_DIAGNOSTIC_TOKEN;
+    const suppliedSupportToken = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const supportAuthorized = Boolean(supportToken) && safeEqual(suppliedSupportToken, supportToken);
+
     // Read-only diagnostic: validates Razorpay credentials without creating a payment/order.
     if (request.method === "GET" && url.pathname === "/support/config-check") {
+      if (!supportAuthorized) return json({ ok: false, error: "Unauthorized" }, 401);
       if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
         return json({ ok: false, configured: false, error: "Razorpay credentials are missing" }, 503);
       }
@@ -808,6 +815,7 @@ export default {
     if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) return json({ error: "Payment service is not configured" }, 503);
 
     if (request.method === "GET" && url.pathname === "/support/payment-check") {
+      if (!supportAuthorized) return json({ ok: false, error: "Unauthorized" }, 401);
       try {
         const results = await checkReportedPayments(env);
         return json({ ok: true, readOnly: true, results });
