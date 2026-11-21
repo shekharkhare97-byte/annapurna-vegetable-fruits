@@ -79,7 +79,6 @@ import com.example.data.model.ProduceCategory
 import com.example.ui.screens.BazaarHomeScreen
 import com.example.ui.screens.CustomerWelcomeFlow
 import com.example.ui.screens.CartAndOrderScreen
-import com.example.ui.screens.ImageStudioScreen
 import com.example.ui.screens.MarathiChatScreen
 import com.example.ui.screens.CustomerProfileScreen
 import com.example.ui.theme.AnnapurnaTheme
@@ -114,12 +113,6 @@ enum class AnnapurnaTab(
         selectedIcon = Icons.Filled.AutoAwesome,
         unselectedIcon = Icons.Outlined.AutoAwesome,
         tag = "nav_tab_assistant"
-    ),
-    STUDIO(
-        labelRes = R.string.nav_studio,
-        selectedIcon = Icons.Filled.PhotoCamera,
-        unselectedIcon = Icons.Outlined.PhotoCamera,
-        tag = "nav_tab_studio"
     ),
     PROFILE(
         labelRes = R.string.nav_profile,
@@ -272,10 +265,6 @@ fun AnnapurnaRootApp() {
     val trackingPartnerName by storeViewModel.trackingPartnerName.collectAsStateWithLifecycle()
 
     val chatState by aiViewModel.chatState.collectAsStateWithLifecycle()
-    val selectedImageSize by aiViewModel.selectedImageSize.collectAsStateWithLifecycle()
-    val selectedAspectRatio by aiViewModel.selectedAspectRatio.collectAsStateWithLifecycle()
-    val studioPrompt by aiViewModel.studioPrompt.collectAsStateWithLifecycle()
-    val studioState by aiViewModel.studioState.collectAsStateWithLifecycle()
 
     val totalCartItems = remember(cartItems) { cartItems.sumOf { it.quantity } }
     var languageMenuExpanded by remember { mutableStateOf(false) }
@@ -546,20 +535,6 @@ fun AnnapurnaRootApp() {
                             )
                         }
 
-                        AnnapurnaTab.STUDIO -> {
-                            ImageStudioScreen(
-                                selectedSize = selectedImageSize,
-                                selectedRatio = selectedAspectRatio,
-                                prompt = studioPrompt,
-                                studioState = studioState,
-                                onSelectSize = aiViewModel::selectStudioImageSize,
-                                onSelectRatio = aiViewModel::selectStudioAspectRatio,
-                                onPromptChange = aiViewModel::updateStudioPrompt,
-                                onGenerateClick = aiViewModel::generateHighQualityImage,
-                                onBackToBazaar = { currentTab = AnnapurnaTab.BAZAAR },
-                                modifier = contentModifier
-                            )
-                        }
                     }
                 }
             }
