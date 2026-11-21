@@ -211,8 +211,18 @@ async function updateCustomerLiveLocation(env, body) {
   const order = firestoreDocumentData(orderDocument);
   if (order.trackingToken !== trackingToken ||
       !["new", "accepted", "preparing", "ready_for_pickup", "picked_up", "out_for_delivery"].includes(order.status) ||
-      ["delivered", "cancelled"].includes(order.deliveryState)) {
+      !["claimed_pending_shop_qr", "picked_up", "out_for_delivery"].includes(order.deliveryState)) {
     return json({ ok: false, error: "Live location sharing is closed for this order" }, 409);
+  }
+
+  // Never accept customer coordinates until the assigned delivery partner has
+  // explicitly accepted this order. Check the canonical tracking record too.
+  const trackingDoc = await firestoreGetDocument(env, "orderTracking/" + encodeURIComponent(trackingToken));
+  const tracking = trackingDoc.exists ? firestoreDocumentData(trackingDoc.data) : {};
+  if (!trackingDoc.exists || tracking.deliveryPartnerAccepted !== true ||
+      typeof order.deliveryPartnerUid !== "string" ||
+      tracking.deliveryPartnerUid !== order.deliveryPartnerUid) {
+    return json({ ok: false, error: "Delivery partner has not accepted this order yet" }, 409);
   }
 
   const previousUpdate = order.customerLocationUpdatedAt
