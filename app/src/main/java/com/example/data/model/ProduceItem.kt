@@ -33,10 +33,13 @@ data class ProduceItem(
     val isOutOfStock: Boolean get() = stockQuantity <= 0.0
     private fun languageCode(): String = java.util.Locale.getDefault().language
 
-    fun displayName(): String = when (languageCode()) {
-        "hi" -> hindiName.ifBlank { marathiName }
-        "en" -> englishName.ifBlank { englishKeywords.ifBlank { marathiName } }
-        else -> marathiName
+    fun displayName(): String {
+        val translations = ProduceNameTranslations.find(marathiName, englishKeywords, englishName, hindiName)
+        return when (languageCode()) {
+            "hi" -> hindiName.ifBlank { translations?.second ?: marathiName }
+            "en" -> englishName.ifBlank { translations?.third ?: englishKeywords.ifBlank { marathiName } }
+            else -> marathiName
+        }
     }
 
     fun displayDescription(): String = when (languageCode()) {
@@ -61,6 +64,30 @@ data class ProduceItem(
     }
 }
 
+
+/** Fallback translations for existing catalog entries that predate multilingual Admin fields. */
+private object ProduceNameTranslations {
+    private val rows = listOf(
+        listOf("कांदा", "प्याज", "Onion", "kanda"), listOf("बटाटा", "आलू", "Potato", "batata"),
+        listOf("टोमॅटो", "टमाटर", "Tomato"), listOf("लसूण", "लहसुन", "Garlic"), listOf("आले", "अदरक", "Ginger"),
+        listOf("हिरवी मिरची", "हरी मिर्च", "Green chilli"), listOf("कोथिंबीर", "हरा धनिया", "Coriander", "धनिया"),
+        listOf("पालक", "पालक", "Spinach"), listOf("वांगी", "बैंगन", "Brinjal", "Eggplant"),
+        listOf("फुलकोबी", "फूलगोभी", "Cauliflower"), listOf("कोबी", "पत्ता गोभी", "Cabbage"),
+        listOf("गाजर", "गाजर", "Carrot"), listOf("काकडी", "खीरा", "Cucumber"), listOf("लिंबू", "नींबू", "Lemon"),
+        listOf("भेंडी", "भिंडी", "Okra", "Lady finger"), listOf("दोडका", "तुरई", "Ridge gourd"),
+        listOf("कारले", "करेला", "Bitter gourd"), listOf("मेथी", "मेथी", "Fenugreek"),
+        listOf("शेवगा", "सहजन", "Drumstick"), listOf("भोपळा", "कद्दू", "Pumpkin"),
+        listOf("दुधी भोपळा", "लौकी", "Bottle gourd"), listOf("मटार", "मटर", "Green peas"),
+        listOf("सफरचंद", "सेब", "Apple"), listOf("केळी", "केला", "Banana"), listOf("द्राक्षे", "अंगूर", "Grapes"),
+        listOf("संत्रे", "संतरा", "Orange"), listOf("डाळिंब", "अनार", "Pomegranate"), listOf("आंबा", "आम", "Mango"),
+        listOf("पेरू", "अमरूद", "Guava"), listOf("पपई", "पपीता", "Papaya"), listOf("कलिंगड", "तरबूज", "Watermelon")
+    )
+    fun find(vararg candidates: String): Triple<String, String, String>? {
+        val keys = candidates.filter { it.isNotBlank() }.map { it.trim().lowercase() }
+        val row = rows.firstOrNull { item -> item.any { it.lowercase() in keys } } ?: return null
+        return Triple(row[0], row[1], row[2])
+    }
+}
 object ProduceCatalog {
     @Volatile
     var items: List<ProduceItem> = emptyList()
