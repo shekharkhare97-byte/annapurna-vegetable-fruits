@@ -133,6 +133,7 @@ dependencies {
   implementation("com.razorpay:checkout:1.6.41")
   implementation(libs.play.services.location)
   implementation("com.google.maps.android:maps-compose:6.4.1")
+  implementation("org.osmdroid:osmdroid-android:6.1.20")
   implementation(libs.retrofit)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
