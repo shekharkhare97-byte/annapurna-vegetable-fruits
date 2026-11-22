@@ -600,7 +600,12 @@ private fun SearchAndFilterBar(
             )
             items(categoriesWithCounts) { (category, count) ->
                 val isSelected = selectedCategory == category
-                val chipLabel = "${category.marathiLabel} (${MarathiFormatters.toMarathiNumber(count)})"
+                val categoryLabel = when (category) {
+                    ProduceCategory.ALL -> customerText("सर्व", "सभी", "All")
+                    ProduceCategory.VEGETABLE -> customerText("भाज्या", "सब्ज़ियाँ", "Vegetables")
+                    ProduceCategory.FRUIT -> customerText("फळे", "फल", "Fruits")
+                }
+                val chipLabel = "$categoryLabel (${MarathiFormatters.toMarathiNumber(count)})"
                 FilterChip(
                     selected = isSelected,
                     onClick = { onSelectCategory(category) },
@@ -736,7 +741,7 @@ private fun ProduceGridCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (item.isPieceBased) "/ नग किंवा जुडी" else "/ किलो",
+                        text = if (item.isPieceBased) customerText("/ नग किंवा जुडी", "/ नग या गट्ठा", "/ piece or bunch") else customerText("/ किलो", "/ किलो", "/ kg"),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 3.dp)
