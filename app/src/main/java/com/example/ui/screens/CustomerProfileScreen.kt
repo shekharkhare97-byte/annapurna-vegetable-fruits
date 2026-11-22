@@ -50,7 +50,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import org.osmdroid.util.GeoPoint
 import com.example.ui.components.OpenStreetMapView
 import com.example.data.local.OrderEntity
 import com.example.data.model.ProduceItem
