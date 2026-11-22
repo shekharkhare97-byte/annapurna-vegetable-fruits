@@ -73,6 +73,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -236,7 +237,7 @@ fun BazaarHomeScreen(
                     ProduceGridCard(
                         item = item,
                         quantityInCart = qtyMap[item.id] ?: 0,
-                        onCardClick = { onOpenDetail(item) },
+                        onCardClick = { if (!item.isOutOfStock) onOpenDetail(item) },
                         isFavorite = item.id in favoriteIds,
                         onToggleFavorite = { toggleFavorite(item.id) },
                         onAdd = { weightDialogItem = item },
@@ -656,15 +657,30 @@ private fun ProduceGridCard(
                         painter = painterResource(id = item.imageRes),
                         contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
                     )
                 } else {
                     AsyncImage(
                         model = item.imageUrl,
                         contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
                     )
+                }
+                if (item.isOutOfStock) {
+                    Surface(
+                        color = Color.Black.copy(alpha = 0.68f),
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        Text(
+                            text = customerText("माल संपला", "माल खत्म", "Out of Stock"),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
                 }
                 Surface(
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
@@ -728,7 +744,21 @@ private fun ProduceGridCard(
                 }
                 Spacer(modifier = Modifier.height(10.dp))
 
-                if (quantityInCart == 0) {
+                if (item.isOutOfStock) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = customerText("माल संपला", "माल खत्म", "Out of Stock"),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                } else if (quantityInCart == 0) {
                     Button(
                         onClick = onAdd,
                         shape = MaterialTheme.shapes.small,
