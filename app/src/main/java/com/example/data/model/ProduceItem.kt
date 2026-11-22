@@ -27,8 +27,10 @@ data class ProduceItem(
     val hindiName: String = "",
     val englishName: String = "",
     val hindiDescription: String = "",
-    val englishDescription: String = ""
+    val englishDescription: String = "",
+    val stockQuantity: Double = 0.0
 ) {
+    val isOutOfStock: Boolean get() = stockQuantity <= 0.0
     private fun languageCode(): String = java.util.Locale.getDefault().language
 
     fun displayName(): String = when (languageCode()) {
