@@ -67,22 +67,69 @@ private val produceSearchAliasGroups = listOf(
     listOf("डाळिंब", "dalimb", "anar", "pomegranate")
 )
 
+private fun normalizeProduceSearchText(value: String): String =
+    java.text.Normalizer.normalize(value.lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD)
+        .replace(Regex("\\p{Mn}+"), "")
+        .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
+        .trim()
+
+private fun isCloseSearchToken(query: String, candidate: String): Boolean {
+    if (query.isBlank() || candidate.isBlank()) return false
+    if (candidate.startsWith(query) || candidate.contains(query)) return true
+    // Tolerate one mistyped character for longer Latin-script product names.
+    if (query.length < 5 || candidate.length < 5 ||
+        !query.all { it in 'a'..'z' } || !candidate.all { it in 'a'..'z' }) return false
+    if (kotlin.math.abs(query.length - candidate.length) > 1) return false
+    var i = 0
+    var j = 0
+    var edits = 0
+    while (i < query.length && j < candidate.length) {
+        if (query[i] == candidate[j]) {
+            i++
+            j++
+        } else {
+            edits++
+            if (edits > 1) return false
+            if (query.length > candidate.length) i++
+            else if (candidate.length > query.length) j++
+            else { i++; j++ }
+        }
+    }
+    if (i < query.length || j < candidate.length) edits++
+    return edits <= 1
+}
+
 private fun matchesProduceSearch(item: ProduceItem, query: String): Boolean {
     if (query.isBlank()) return true
-    val searchableText = listOf(
-        item.marathiName, item.hindiName, item.englishName, item.englishKeywords,
-        item.descriptionMarathi, item.hindiDescription, item.englishDescription
-    ).joinToString(" ").lowercase(java.util.Locale.ROOT)
+    val searchableText = normalizeProduceSearchText(
+        listOf(
+            item.marathiName, item.hindiName, item.englishName, item.englishKeywords,
+            item.descriptionMarathi, item.hindiDescription, item.englishDescription
+        ).joinToString(" ")
+    )
+    val queryTokens = normalizeProduceSearchText(query).split(Regex("\\s+")).filter { it.isNotBlank() }
+    if (queryTokens.isEmpty()) return true
+    val searchableTokens = searchableText.split(Regex("\\s+")).filter { it.isNotBlank() }
 
-    if (searchableText.contains(query)) return true
+    // Every typed word must match somewhere in the product's names, keywords or description.
+    val allWordsMatch = queryTokens.all { word ->
+        searchableTokens.any { candidate -> isCloseSearchToken(word, candidate) }
+    }
+    if (allWordsMatch) return true
 
-    val aliases = produceSearchAliasGroups.firstOrNull { group ->
-        group.any { alias ->
-            query.contains(alias) || (query.length >= 3 && alias.contains(query))
+    // Search common Marathi, Hindi and English names as equivalent aliases.
+    return produceSearchAliasGroups.any { group ->
+        val normalizedAliases = group.map(::normalizeProduceSearchText)
+        queryTokens.all { word ->
+            normalizedAliases.any { alias ->
+                alias.split(Regex("\\s+")).any { aliasWord -> isCloseSearchToken(word, aliasWord) }
+            }
+        } && normalizedAliases.any { alias ->
+            searchableTokens.any { productWord ->
+                alias.split(Regex("\\s+")).any { aliasWord -> isCloseSearchToken(aliasWord, productWord) }
+            }
         }
-    } ?: return false
-
-    return aliases.any { searchableText.contains(it) }
+    }
 }
 
 data class CustomerFormState(
