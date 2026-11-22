@@ -20,7 +20,6 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    manifestPlaceholders["MAPS_API_KEY"] = System.getenv("MAPS_API_KEY") ?: ""
   }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
@@ -132,7 +131,6 @@ dependencies {
   implementation(libs.okhttp)
   implementation("com.razorpay:checkout:1.6.41")
   implementation(libs.play.services.location)
-  implementation("com.google.maps.android:maps-compose:6.4.1")
   implementation("org.osmdroid:osmdroid-android:6.1.20")
   implementation(libs.retrofit)
   testImplementation(libs.androidx.compose.ui.test.junit4)
