@@ -182,7 +182,6 @@ class StoreViewModel(
                     val imageUrl = doc.getString("imageUrl")?.takeIf { it.isNotBlank() }
                     if (doc.getBoolean("isVisible") != true) return@mapNotNull null
                     val stock = doc.getDouble("stock") ?: (doc.getLong("stock")?.toDouble() ?: 0.0)
-                    if (stock <= 0.0) return@mapNotNull null
                     val unitText = sequenceOf("unit", "stockUnit", "sellUnit", "unitMarathi", "measurementUnit")
                         .mapNotNull { doc.getString(it) }
                         .firstOrNull { it.isNotBlank() }
@@ -232,7 +231,8 @@ class StoreViewModel(
                         hindiName = hindiName,
                         englishName = englishName,
                         hindiDescription = descriptionHi,
-                        englishDescription = descriptionEn
+                        englishDescription = descriptionEn,
+                        stockQuantity = stock
                     )
                 }
                 ProduceCatalog.replaceFromAdmin(products)
