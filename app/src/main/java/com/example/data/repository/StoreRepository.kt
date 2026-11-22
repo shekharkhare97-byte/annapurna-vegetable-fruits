@@ -42,7 +42,7 @@ class StoreRepository(private val storeDao: StoreDao) {
     ) { entities, products ->
         entities.mapNotNull { entity ->
             val produce = products.firstOrNull { it.id == entity.produceId }
-            if (produce != null && entity.quantity > 0) {
+            if (produce != null && entity.quantity > 0 && !produce.isOutOfStock) {
                 CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = entity.weightGrams)
             } else {
                 null
