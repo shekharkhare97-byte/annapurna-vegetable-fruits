@@ -44,6 +44,46 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private val produceSearchAliasGroups = listOf(
+    listOf("कांदा", "कांदे", "कांद्याचा", "kanda", "kaanda", "pyaaz", "pyaz", "onion", "onions"),
+    listOf("बटाटा", "बटाटे", "batata", "aloo", "alu", "potato", "potatoes"),
+    listOf("टोमॅटो", "tomato", "tomatoes", "tamatar"),
+    listOf("लसूण", "lasun", "lahsun", "garlic"),
+    listOf("आलं", "अद्रक", "adrak", "ginger"),
+    listOf("मिरची", "मिरच्या", "mirchi", "chilli", "chili", "green chilli"),
+    listOf("कोथिंबीर", "धनिया", "kothimbir", "dhaniya", "coriander", "cilantro"),
+    listOf("पालक", "palak", "spinach"),
+    listOf("वांगी", "वांगे", "vangi", "baingan", "brinjal", "eggplant"),
+    listOf("फ्लॉवर", "फुलकोबी", "phool gobi", "cauliflower"),
+    listOf("कोबी", "kobi", "patta gobi", "cabbage"),
+    listOf("गाजर", "gajar", "carrot"),
+    listOf("काकडी", "kakdi", "cucumber"),
+    listOf("लिंबू", "limbu", "nimbu", "lemon"),
+    listOf("सफरचंद", "seb", "apple", "apples"),
+    listOf("केळी", "केळे", "keli", "banana", "bananas"),
+    listOf("द्राक्ष", "draksha", "grapes"),
+    listOf("संत्रे", "संत्री", "santra", "orange", "oranges"),
+    listOf("डाळिंब", "dalimb", "anar", "pomegranate")
+)
+
+private fun matchesProduceSearch(item: ProduceItem, query: String): Boolean {
+    if (query.isBlank()) return true
+    val searchableText = listOf(
+        item.marathiName, item.hindiName, item.englishName, item.englishKeywords,
+        item.descriptionMarathi, item.hindiDescription, item.englishDescription
+    ).joinToString(" ").lowercase(java.util.Locale.ROOT)
+
+    if (searchableText.contains(query)) return true
+
+    val aliases = produceSearchAliasGroups.firstOrNull { group ->
+        group.any { alias ->
+            query.contains(alias) || (query.length >= 3 && alias.contains(query))
+        }
+    } ?: return false
+
+    return aliases.any { searchableText.contains(it) }
+}
+
 data class CustomerFormState(
     val customerName: String = "",
     val mobileNumber: String = "",
@@ -93,18 +133,13 @@ class StoreViewModel(
         _searchQuery,
         _adminProducts
     ) { category, rawQuery, products ->
-        val query = rawQuery.trim().lowercase()
+        val query = rawQuery.trim().lowercase(java.util.Locale.ROOT)
         products.filter { item ->
-            val matchesCategory = category == ProduceCategory.ALL || item.category == category
-            val matchesQuery = query.isEmpty() ||
-                item.marathiName.lowercase().contains(query) ||
-                item.hindiName.lowercase().contains(query) ||
-                item.englishName.lowercase().contains(query) ||
-                item.englishKeywords.lowercase().contains(query) ||
-                item.descriptionMarathi.lowercase().contains(query) ||
-                item.hindiDescription.lowercase().contains(query) ||
-                item.englishDescription.lowercase().contains(query)
-            matchesCategory && matchesQuery
+            // A search spans vegetables and fruits even if the customer previously
+            // selected only one category. Category chips still apply when search is empty.
+            val matchesCategory = query.isNotEmpty() ||
+                category == ProduceCategory.ALL || item.category == category
+            matchesCategory && matchesProduceSearch(item, query)
         }
     }.stateIn(
         scope = viewModelScope,
