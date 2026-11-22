@@ -1,12 +1,4 @@
 package com.example.ui.screens
-import kotlinx.coroutines.delay
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import androidx.compose.ui.geometry.Offset
-import android.graphics.Typeface
-import android.graphics.Paint
-import android.graphics.Canvas
-import android.graphics.Bitmap
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -15,7 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.location.Location
-import android.location.Geocoder
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.gms.tasks.Tasks
 import android.net.Uri
@@ -94,6 +85,7 @@ import com.example.data.repository.CartLineItem
 import com.example.data.payment.RazorpayPaymentGateway
 import com.example.data.model.WeightPricing
 import com.example.ui.components.OpenStreetMapView
+import org.osmdroid.util.GeoPoint
 import com.example.ui.viewmodel.CustomerFormState
 import com.example.util.MarathiFormatters
 import com.google.android.gms.location.LocationServices
@@ -105,41 +97,6 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.math.roundToLong
 import org.json.JSONObject
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
-
-private fun decodeGooglePolyline(encoded: String): List<LatLng> {
-    val points = ArrayList<LatLng>()
-    var index = 0
-    var latitude = 0
-    var longitude = 0
-    while (index < encoded.length) {
-        var result = 0
-        var shift = 0
-        var value: Int
-        do {
-            value = encoded[index++].code - 63
-            result = result or ((value and 0x1f) shl shift)
-            shift += 5
-        } while (value >= 0x20 && index < encoded.length)
-        latitude += if ((result and 1) != 0) (result shr 1).inv() else result shr 1
-
-        result = 0
-        shift = 0
-        do {
-            value = encoded[index++].code - 63
-            result = result or ((value and 0x1f) shl shift)
-            shift += 5
-        } while (value >= 0x20 && index < encoded.length)
-        longitude += if ((result and 1) != 0) (result shr 1).inv() else result shr 1
-        points.add(LatLng(latitude / 1E5, longitude / 1E5))
-    }
-    return points
-}
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -171,7 +128,7 @@ fun CartAndOrderScreen(
     BackHandler(onBack = onBackToBazaar)
 
     val context = LocalContext.current
-    var shopMapPosition by remember { mutableStateOf<LatLng?>(null) }
+    var shopMapPosition by remember { mutableStateOf<GeoPoint?>(null) }
     LaunchedEffect(Unit) {
         shopMapPosition = withContext(Dispatchers.IO) {
             runCatching {
@@ -183,7 +140,7 @@ fun CartAndOrderScreen(
                 if (latitude != null && longitude != null &&
                     latitude.isFinite() && longitude.isFinite() &&
                     latitude in -90.0..90.0 && longitude in -180.0..180.0
-                ) LatLng(latitude, longitude) else null
+                ) GeoPoint(latitude, longitude) else null
             }.getOrNull()
         }
     }
