@@ -50,13 +50,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import org.osmdroid.util.GeoPoint
+import com.example.ui.components.OpenStreetMapView
 import com.example.data.local.OrderEntity
 import com.example.data.model.ProduceItem
 import com.example.ui.viewmodel.CustomerFormState
@@ -221,33 +216,21 @@ fun CustomerProfileScreen(
                             val latitude = coordinates.getOrNull(0)?.toDoubleOrNull()
                             val longitude = coordinates.getOrNull(1)?.toDoubleOrNull()
                             if (latitude != null && longitude != null) {
-                                val deliveryPartnerPosition = LatLng(latitude, longitude)
-                                val cameraPositionState = rememberCameraPositionState {
-                                    position = CameraPosition.fromLatLngZoom(deliveryPartnerPosition, 15f)
-                                }
-                                Box(
+                                OpenStreetMapView(
+                                    latitude = latitude,
+                                    longitude = longitude,
+                                    markerTitle = tr("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner"),
+                                    markerSnippet = tr("तुमच्या ऑर्डरचे Live लोकेशन", "आपके ऑर्डर की Live Location", "Live location of your order"),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(230.dp)
                                         .clip(RoundedCornerShape(16.dp))
-                                ) {
-                                    GoogleMap(
-                                        modifier = Modifier.fillMaxSize(),
-                                        cameraPositionState = cameraPositionState,
-                                        uiSettings = MapUiSettings(zoomControlsEnabled = true)
-                                    ) {
-                                        Marker(
-                                            state = MarkerState(position = deliveryPartnerPosition),
-                                            title = tr("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner"),
-                                            snippet = tr("तुमच्या ऑर्डरचे Live लोकेशन", "आपके ऑर्डर की Live Location", "Live location of your order")
-                                        )
-                                    }
-                                }
+                                )
                                 Button(onClick = {
                                     val mapUri = Uri.parse("geo:$latitude,$longitude?q=$latitude,$longitude")
                                     context.startActivity(Intent(Intent.ACTION_VIEW, mapUri))
                                 }, modifier = Modifier.fillMaxWidth()) {
-                                    Text(tr("Google Maps मध्ये मोठा नकाशा उघडा", "Google Maps में बड़ा नक्शा खोलें", "Open larger map in Google Maps"))
+                                    Text(tr("मोठा नकाशा उघडा", "बड़ा नक्शा खोलें", "Open larger map"))
                                 }
                             }
                         }
