@@ -93,6 +93,7 @@ import com.example.data.local.OrderEntity
 import com.example.data.repository.CartLineItem
 import com.example.data.payment.RazorpayPaymentGateway
 import com.example.data.model.WeightPricing
+import com.example.ui.components.OpenStreetMapView
 import com.example.ui.viewmodel.CustomerFormState
 import com.example.util.MarathiFormatters
 import com.google.android.gms.location.LocationServices
@@ -546,20 +547,6 @@ fun CartAndOrderScreen(
                         if (trackingLocation.isBlank()) {
                             val shopPosition = shopMapPosition
                             if (shopPosition != null) {
-                                val shopCamera = rememberCameraPositionState {
-                                    position = CameraPosition.fromLatLngZoom(shopPosition, 15f)
-                                }
-                                val shopVehicleIcon = remember {
-                                    val bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
-                                    val canvas = Canvas(bitmap)
-                                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                                        textSize = 94f
-                                        textAlign = Paint.Align.CENTER
-                                        typeface = Typeface.DEFAULT
-                                    }
-                                    canvas.drawText("🛵", 64f, 100f, paint)
-                                    BitmapDescriptorFactory.fromBitmap(bitmap)
-                                }
                                 Text(
                                     if (trackingPartnerAccepted)
                                         "🛵 ${trackingPartnerName.ifBlank { "Delivery Partner" }} दुकानातून Pickup करण्याच्या तयारीत आहे."
@@ -568,20 +555,15 @@ fun CartAndOrderScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                GoogleMap(
+                                OpenStreetMapView(
+                                    latitude = shopPosition.latitude,
+                                    longitude = shopPosition.longitude,
+                                    markerTitle = "Annapurna Shop",
+                                    markerSnippet = "Shop location",
                                     modifier = Modifier.fillMaxWidth().height(220.dp)
                                         .clip(RoundedCornerShape(18.dp))
-                                        .testTag("customer_live_delivery_map"),
-                                    cameraPositionState = shopCamera
-                                ) {
-                                    Marker(
-                                        state = MarkerState(position = shopPosition),
-                                        title = "Annapurna Shop",
-                                        snippet = "Delivery vehicle waiting at shop",
-                                        icon = shopVehicleIcon,
-                                        anchor = Offset(0.5f, 0.5f)
-                                    )
-                                }
+                                        .testTag("customer_live_delivery_map")
+                                )
                                 Text(
                                     if (trackingPartnerAccepted)
                                         "Pickup झाल्यावर गाडीचे Live Location येथे दिसेल."
@@ -606,143 +588,31 @@ fun CartAndOrderScreen(
                                 if (driverLatitude != null && driverLongitude != null &&
                                     driverLatitude in -90.0..90.0 && driverLongitude in -180.0..180.0
                                 ) {
-                                    val driverPosition = LatLng(driverLatitude, driverLongitude)
-                                    val cameraPositionState = rememberCameraPositionState {
-                                        position = CameraPosition.fromLatLngZoom(driverPosition, 15f)
-                                    }
-                                    val riderMarkerState = remember { MarkerState(position = driverPosition) }
-                                    var riderBearing by remember { mutableStateOf(0f) }
-                                    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
-                                    var routeEta by remember { mutableStateOf<String?>(null) }
-                                    val riderIcon = remember {
-                                        val bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
-                                        val canvas = Canvas(bitmap)
-                                        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                                            textSize = 94f
-                                            textAlign = Paint.Align.CENTER
-                                            typeface = Typeface.DEFAULT
-                                        }
-                                        canvas.drawText("🛵", 64f, 100f, paint)
-                                        BitmapDescriptorFactory.fromBitmap(bitmap)
-                                    }
-                                    LaunchedEffect(driverPosition, confirmedOrder?.deliveryAddress) {
-                                        val destinationAddress = confirmedOrder?.deliveryAddress?.trim().orEmpty()
-                                        if (destinationAddress.length >= 8) {
-                                            val routeResult = withContext(Dispatchers.IO) {
-                                                runCatching {
-                                                    val destination = if (!Geocoder.isPresent()) null else {
-                                                        @Suppress("DEPRECATION")
-                                                        Geocoder(context, Locale("en", "IN"))
-                                                            .getFromLocationName("$destinationAddress, Nashik, Maharashtra, India", 1)
-                                                            ?.firstOrNull()
-                                                    }
-                                                    if (destination == null) null else {
-                                                        val appInfo = context.packageManager.getApplicationInfo(
-                                                            context.packageName,
-                                                            android.content.pm.PackageManager.GET_META_DATA
-                                                        )
-                                                        val mapsKey = appInfo.metaData?.getString("com.google.android.geo.API_KEY").orEmpty()
-                                                        if (mapsKey.isBlank()) null else {
-                                                            val requestUrl = "https://maps.googleapis.com/maps/api/directions/json" +
-                                                                "?origin=${driverPosition.latitude},${driverPosition.longitude}" +
-                                                                "&destination=${destination.latitude},${destination.longitude}" +
-                                                                "&mode=driving&key=${android.net.Uri.encode(mapsKey)}"
-                                                            val request = okhttp3.Request.Builder().url(requestUrl).build()
-                                                            okhttp3.OkHttpClient().newCall(request).execute().use { response ->
-                                                                if (!response.isSuccessful) null else {
-                                                                    val body = response.body?.string().orEmpty()
-                                                                    val json = JSONObject(body)
-                                                                    val route = json.optJSONArray("routes")?.optJSONObject(0)
-                                                                    val overview = route?.optJSONObject("overview_polyline")?.optString("points")
-                                                                    val leg = route?.optJSONArray("legs")?.optJSONObject(0)
-                                                                    val duration = leg?.optJSONObject("duration")?.optString("text")
-                                                                    if (json.optString("status") != "OK" || overview.isNullOrBlank()) null
-                                                                    else {
-                                                                        val decoded = decodeGooglePolyline(overview)
-                                                                        if (decoded.isEmpty()) null else decoded to duration
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }.getOrNull()
-                                            }
-                                            routePoints = routeResult?.first ?: emptyList()
-                                            routeEta = routeResult?.second
-                                        } else {
-                                            routePoints = emptyList()
-                                            routeEta = null
-                                        }
-                                        val start = riderMarkerState.position
-                                        val from = Location("annapurna-start").apply {
-                                            latitude = start.latitude
-                                            longitude = start.longitude
-                                        }
-                                        val to = Location("annapurna-end").apply {
-                                            latitude = driverPosition.latitude
-                                            longitude = driverPosition.longitude
-                                        }
-                                        if (from.distanceTo(to) > 2f) riderBearing = from.bearingTo(to)
-                                        repeat(20) { step ->
-                                            val fraction = (step + 1) / 20.0
-                                            val interpolated = LatLng(
-                                                start.latitude + (driverPosition.latitude - start.latitude) * fraction,
-                                                start.longitude + (driverPosition.longitude - start.longitude) * fraction
-                                            )
-                                            riderMarkerState.position = interpolated
-                                            cameraPositionState.position = CameraPosition.fromLatLngZoom(interpolated, 16f)
-                                            delay(50)
-                                        }
-                                        cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngZoom(driverPosition, 16f),
-                                            500
-                                        )
-                                    }
                                     Text(
                                         text = "${customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner")}: ${trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner") }}",
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = if (routeEta != null)
-                                            "🛵 " + customerText("अंदाजे पोहोचण्याची वेळ", "पहुँचने का अनुमानित समय", "Estimated arrival") + ": " + routeEta
-                                        else
-                                            stringResource(R.string.tracking_live_location_available),
+                                        text = stringResource(R.string.tracking_live_location_available),
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.SemiBold
                                     )
-                                    GoogleMap(
+                                    OpenStreetMapView(
+                                        latitude = driverLatitude,
+                                        longitude = driverLongitude,
+                                        markerTitle = trackingPartnerName.ifBlank { "Delivery Partner" },
+                                        markerSnippet = "Live location",
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(300.dp)
                                             .clip(RoundedCornerShape(18.dp))
-                                            .testTag("customer_live_delivery_map"),
-                                        cameraPositionState = cameraPositionState
-                                    ) {
-                                        if (routePoints.size >= 2) {
-                                            com.google.maps.android.compose.Polyline(
-                                                points = routePoints,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                width = 12f
-                                            )
-                                        }
-                                        Marker(
-                                            state = riderMarkerState,
-                                            title = trackingPartnerName.ifBlank { "Delivery Partner" },
-                                            snippet = "Live location",
-                                            icon = riderIcon,
-                                            anchor = Offset(0.5f, 0.5f),
-                                            rotation = riderBearing
-                                        )
-                                    }
+                                            .testTag("customer_live_delivery_map")
+                                    )
                                     trackingUpdatedAtMillis?.let { updatedAt ->
                                         val updatedTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(updatedAt))
                                         Text("${customerText("शेवटचे लोकेशन अपडेट", "आखिरी लोकेशन अपडेट", "Last location update")}: $updatedTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
-                                    TextButton(onClick = {
-                                        val uri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${parts[0]},${parts[1]}")
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                                    }) { Text(stringResource(R.string.tracking_open_google_maps)) }
                                 }
                             }
                         }
