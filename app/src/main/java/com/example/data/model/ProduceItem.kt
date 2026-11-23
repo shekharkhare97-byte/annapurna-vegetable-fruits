@@ -36,15 +36,15 @@ data class ProduceItem(
     fun displayName(): String {
         val translations = ProduceNameTranslations.find(marathiName, englishKeywords, englishName, hindiName)
         return when (languageCode()) {
-            "hi" -> hindiName.ifBlank { translations?.second ?: marathiName }
-            "en" -> englishName.ifBlank { translations?.third ?: englishKeywords.ifBlank { marathiName } }
+            "hi" -> hindiName.ifBlank { translations?.second ?: "अनुवाद उपलब्ध नहीं" }
+            "en" -> englishName.ifBlank { translations?.third ?: "Translation unavailable" }
             else -> marathiName
         }
     }
 
     fun displayDescription(): String = when (languageCode()) {
-        "hi" -> hindiDescription.ifBlank { descriptionMarathi }
-        "en" -> englishDescription.ifBlank { englishName.ifBlank { descriptionMarathi } }
+        "hi" -> hindiDescription.ifBlank { "विवरण उपलब्ध नहीं है" }
+        "en" -> englishDescription.ifBlank { "Description unavailable" }
         else -> descriptionMarathi
     }
 
