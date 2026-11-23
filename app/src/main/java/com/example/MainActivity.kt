@@ -180,11 +180,18 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         // Preload Razorpay checkout resources before the customer starts payment.
         Checkout.preload(applicationContext)
         enableEdgeToEdge()
+        val settingsPrefs = getSharedPreferences("annapurna_settings", MODE_PRIVATE)
+        val darkModeState = androidx.compose.runtime.mutableStateOf(settingsPrefs.getBoolean("dark_mode", false))
         setContent {
-            AnnapurnaTheme {
+            AnnapurnaTheme(darkTheme = darkModeState.value) {
                 CustomerStartupPermissions {
                     CustomerWelcomeFlow {
-                        AnnapurnaRootApp()
+                        AnnapurnaRootApp(
+                            onDarkModeChange = { enabled ->
+                                darkModeState.value = enabled
+                                settingsPrefs.edit().putBoolean("dark_mode", enabled).apply()
+                            }
+                        )
                     }
                 }
             }
@@ -233,8 +240,10 @@ private fun CustomerStartupPermissions(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnnapurnaRootApp() {
+fun AnnapurnaRootApp(onDarkModeChange: (Boolean) -> Unit = {}) {
     val context = LocalContext.current
+    val darkModeEnabled = context.getSharedPreferences("annapurna_settings", android.content.Context.MODE_PRIVATE)
+        .getBoolean("dark_mode", false)
     val storeViewModel: StoreViewModel = viewModel(
         factory = StoreViewModel.provideFactory(context)
     )
@@ -530,6 +539,8 @@ fun AnnapurnaRootApp() {
 
                         AnnapurnaTab.PROFILE -> {
                             CustomerProfileScreen(
+                                isDarkTheme = darkModeEnabled,
+                                onDarkThemeChange = onDarkModeChange,
                                 formState = formState,
                                 recentOrders = recentOrders,
                                 produceItems = produceItems,
