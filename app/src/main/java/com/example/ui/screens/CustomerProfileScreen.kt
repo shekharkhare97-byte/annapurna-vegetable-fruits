@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.content.Intent
 import android.net.Uri
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,8 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.outlined.AddLocationAlt
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -51,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.R
 import com.example.ui.components.OpenStreetMapView
 import com.example.data.local.OrderEntity
 import com.example.data.model.ProduceItem
@@ -91,9 +94,14 @@ fun CustomerProfileScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                    Icon(Icons.Filled.Eco, contentDescription = tr("अन्नपूर्णा लोगो", "अन्नपूर्णा लोगो", "Annapurna logo"), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(18.dp))
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.img_launcher_logo),
+                    contentDescription = tr("अन्नपूर्णा लोगो", "अन्नपूर्णा लोगो", "Annapurna logo"),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(58.dp)
+                        .clip(CircleShape)
+                )
                 Column {
                     Text(tr("अन्नपूर्णा", "अन्नपूर्णा", "Annapurna"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(formState.customerName.ifBlank { tr("अन्नपूर्णा ग्राहक", "अन्नपूर्णा ग्राहक", "Annapurna Customer") }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
