@@ -164,7 +164,7 @@ fun CustomerProfileScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            listOf(tr("ऑर्डर", "ऑर्डर", "Order"), tr("तयारी", "तैयारी", "Preparing"), "Pickup", tr("डिलिव्हरी", "डिलीवरी", "Delivery")).forEachIndexed { index, label ->
+                            listOf(tr("ऑर्डर", "ऑर्डर", "Order"), tr("तयारी", "तैयारी", "Preparing"), tr("पिकअप", "पिकअप", "Pickup"), tr("डिलिव्हरी", "डिलीवरी", "Delivery")).forEachIndexed { index, label ->
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -203,7 +203,7 @@ fun CustomerProfileScreen(
                             "accepted" -> tr("दुकानाने ऑर्डर स्वीकारली आहे.", "दुकान ने ऑर्डर स्वीकार कर ली है।", "The shop has accepted your order.")
                             "preparing" -> tr("तुमची ऑर्डर निवडून पॅक केली जात आहे.", "आपका ऑर्डर चुना और पैक किया जा रहा है।", "Your order is being picked and packed.")
                             "ready_for_pickup" -> tr("ऑर्डर तयार आहे. डिलिव्हरी पार्टनर येत आहे.", "ऑर्डर तैयार है। डिलीवरी पार्टनर आ रहा है।", "Your order is ready. The delivery partner is on the way.")
-                            "claimed_pending_shop_otp" -> tr("डिलिव्हरी पार्टनर दुकानात पोहोचला आहे. दुकानाकडून Pickup OTP पुष्टी बाकी आहे.", "डिलीवरी पार्टनर दुकान पहुँच गया है। दुकान से Pickup OTP की पुष्टि बाकी है।", "The delivery partner has reached the shop. Shop confirmation of the pickup OTP is pending.")
+                            "claimed_pending_shop_otp" -> tr("डिलिव्हरी पार्टनर दुकानात पोहोचला आहे. दुकानाकडून पिकअप OTP ची पुष्टी बाकी आहे.", "डिलीवरी पार्टनर दुकान पहुँच गया है। दुकान से पिकअप OTP की पुष्टि बाकी है।", "The delivery partner has reached the shop. Shop confirmation of the pickup OTP is pending.")
                             "picked_up" -> tr("डिलिव्हरी पार्टनरने दुकानातून तुमची ऑर्डर घेतली आहे.", "डिलीवरी पार्टनर ने दुकान से आपका ऑर्डर ले लिया है।", "The delivery partner has picked up your order from the shop.")
                             "out_for_delivery" -> tr("तुमची ऑर्डर डिलिव्हरीसाठी निघाली आहे.", "आपका ऑर्डर डिलीवरी के लिए निकल गया है।", "Your order is out for delivery.")
                             "completed" -> tr("ऑर्डर यशस्वीपणे पोहोचवली आहे.", "ऑर्डर सफलतापूर्वक पहुँचा दिया गया है।", "Your order has been delivered successfully.")
@@ -364,7 +364,7 @@ fun CustomerProfileScreen(
                     Text(tr("SOS / पोलीस: 112", "SOS / पुलिस: 112", "SOS / Police: 112"))
                     TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))) }) { Text(tr("SOS • Police 112 वर कॉल करा", "SOS • Police 112 पर कॉल करें", "Call SOS • Police 112")) }
                     Text(tr("ग्राहक मदत: 8530011324", "ग्राहक सहायता: 8530011324", "Customer Help: 8530011324"))
-                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8530011324"))) }) { Text(tr("Customer Help ला कॉल करा", "Customer Help पर कॉल करें", "Call Customer Help")) }
+                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8530011324"))) }) { Text(tr("ग्राहक मदत केंद्राला कॉल करा", "ग्राहक सहायता केंद्र पर कॉल करें", "Call Customer Help")) }
                     Text(tr("ईमेल: annpurnavegitablesandfruits@gmail.com", "ईमेल: annpurnavegitablesandfruits@gmail.com", "Email: annpurnavegitablesandfruits@gmail.com"))
                     TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:annpurnavegitablesandfruits@gmail.com"))) }) { Text(tr("ईमेल पाठवा", "ईमेल भेजें", "Send email")) }
                 }
