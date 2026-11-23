@@ -49,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
@@ -371,7 +372,8 @@ fun AnnapurnaRootApp() {
             bottomBar = {
                 if (!isWideScreen) {
                     NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        containerColor = Color.White,
+                        tonalElevation = 8.dp
                     ) {
                         AnnapurnaTab.entries.forEach { tab ->
                             val selected = currentTab == tab
@@ -389,9 +391,17 @@ fun AnnapurnaRootApp() {
                                     Text(
                                         text = stringResource(tab.labelRes),
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                                     )
                                 },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f),
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
                                 modifier = Modifier.testTag(tab.tag)
                             )
                         }
