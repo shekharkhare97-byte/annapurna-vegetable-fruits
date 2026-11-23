@@ -381,7 +381,7 @@ fun AnnapurnaRootApp(onDarkModeChange: (Boolean) -> Unit = {}) {
             bottomBar = {
                 if (!isWideScreen) {
                     NavigationBar(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         tonalElevation = 8.dp
                     ) {
                         AnnapurnaTab.entries.forEach { tab ->
