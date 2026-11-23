@@ -396,7 +396,7 @@ private fun StoreBrandHeader() {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
-                    tint = Color(0xFF16843B),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -535,13 +535,13 @@ private fun SearchAndFilterBar(
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFFFFFFFF),
-                unfocusedContainerColor = Color(0xFFFFFFFF),
-                focusedBorderColor = Color(0xFF16843B),
-                unfocusedBorderColor = Color(0xFFDCEBDD),
-                cursorColor = Color(0xFF16843B),
-                focusedLeadingIconColor = Color(0xFF16843B),
-                unfocusedLeadingIconColor = Color(0xFF66836C)
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+                unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -624,16 +624,16 @@ private fun SearchAndFilterBar(
                     },
                     shape = RoundedCornerShape(16.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF16843B),
-                        selectedLabelColor = Color.White,
-                        containerColor = Color(0xFFF2F8F1),
-                        labelColor = Color(0xFF315C3A)
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     border = FilterChipDefaults.filterChipBorder(
                         enabled = true,
                         selected = isSelected,
-                        borderColor = Color(0xFFDCEBDD),
-                        selectedBorderColor = Color(0xFF16843B)
+                        borderColor = MaterialTheme.colorScheme.outlineVariant,
+                        selectedBorderColor = MaterialTheme.colorScheme.primary
                     ),
                     modifier = Modifier
                         .minimumInteractiveComponentSize()
@@ -1161,12 +1161,12 @@ private fun CustomerOffersStrip() {
                     )
                 }
                 Surface(
-                    color = Color(0xFFE8F5E9),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = RoundedCornerShape(50)
                 ) {
                     Text(
                         customerText("खास ऑफर्स", "खास ऑफ़र", "SPECIAL OFFERS"),
-                        color = Color(0xFF16843B),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
