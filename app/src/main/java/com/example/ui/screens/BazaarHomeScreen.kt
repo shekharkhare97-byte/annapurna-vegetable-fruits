@@ -311,34 +311,34 @@ private fun StoreBrandHeader() {
             ) {
                 Surface(
                     shape = RoundedCornerShape(15.dp),
-                    color = Color(0xFFE8F5E9),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.size(48.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Eco,
-                            contentDescription = "Annapurna",
-                            tint = Color(0xFF16843B),
-                            modifier = Modifier.size(31.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.img_launcher_logo),
+                        contentDescription = stringResource(R.string.brand_name),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(15.dp))
+                    )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
                         text = stringResource(R.string.brand_name),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF12652F)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = stringResource(R.string.brand_tagline),
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF52745B)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             Surface(
-                color = Color(0xFFE8F5E9),
+                color = MaterialTheme.colorScheme.secondaryContainer,
                 shape = CircleShape
             ) {
                 Row(
@@ -349,20 +349,20 @@ private fun StoreBrandHeader() {
                     Icon(
                         imageVector = Icons.Default.Eco,
                         contentDescription = null,
-                        tint = Color(0xFF16843B),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(15.dp)
                     )
                     Text(
                         text = stringResource(R.string.brand_fresh_daily),
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF12652F),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
         Surface(
-            color = Color(0xFFF0F8EF),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -374,7 +374,7 @@ private fun StoreBrandHeader() {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
-                    tint = Color(0xFF16843B),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(21.dp)
                 )
                 Column(
@@ -384,19 +384,19 @@ private fun StoreBrandHeader() {
                     Text(
                         customerText("डिलिव्हरी कुठे हवी आहे?", "डिलीवरी कहाँ चाहिए?", "Delivering to"),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF52745B)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         customerText("तुमचा पत्ता ऑर्डर करताना भरा", "ऑर्डर करते समय अपना पता भरें", "Add your address at checkout"),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF174B29)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
-                    tint = Color(0xFF16843B),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -535,13 +535,13 @@ private fun SearchAndFilterBar(
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFFFFFFFF),
-                unfocusedContainerColor = Color(0xFFFFFFFF),
-                focusedBorderColor = Color(0xFF16843B),
-                unfocusedBorderColor = Color(0xFFDCEBDD),
-                cursorColor = Color(0xFF16843B),
-                focusedLeadingIconColor = Color(0xFF16843B),
-                unfocusedLeadingIconColor = Color(0xFF66836C)
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+                unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -624,16 +624,16 @@ private fun SearchAndFilterBar(
                     },
                     shape = RoundedCornerShape(16.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF16843B),
-                        selectedLabelColor = Color.White,
-                        containerColor = Color(0xFFF2F8F1),
-                        labelColor = Color(0xFF315C3A)
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     border = FilterChipDefaults.filterChipBorder(
                         enabled = true,
                         selected = isSelected,
-                        borderColor = Color(0xFFDCEBDD),
-                        selectedBorderColor = Color(0xFF16843B)
+                        borderColor = MaterialTheme.colorScheme.outlineVariant,
+                        selectedBorderColor = MaterialTheme.colorScheme.primary
                     ),
                     modifier = Modifier
                         .minimumInteractiveComponentSize()
@@ -1161,12 +1161,12 @@ private fun CustomerOffersStrip() {
                     )
                 }
                 Surface(
-                    color = Color(0xFFE8F5E9),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = RoundedCornerShape(50)
                 ) {
                     Text(
                         customerText("खास ऑफर्स", "खास ऑफ़र", "SPECIAL OFFERS"),
-                        color = Color(0xFF16843B),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)

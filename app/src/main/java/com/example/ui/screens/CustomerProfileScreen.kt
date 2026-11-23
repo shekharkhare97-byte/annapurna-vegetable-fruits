@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.content.Intent
 import android.net.Uri
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,11 +13,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddLocationAlt
 import androidx.compose.material.icons.outlined.CardGiftcard
@@ -37,6 +41,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,10 +51,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.R
 import com.example.ui.components.OpenStreetMapView
 import com.example.data.local.OrderEntity
 import com.example.data.model.ProduceItem
@@ -57,6 +62,8 @@ import com.example.ui.viewmodel.CustomerFormState
 
 @Composable
 fun CustomerProfileScreen(
+    isDarkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
     formState: CustomerFormState,
     recentOrders: List<OrderEntity>,
     produceItems: List<ProduceItem>,
@@ -88,10 +95,16 @@ fun CustomerProfileScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Surface(shape = CircleShape, color = Color(0xFFE8F5E9)) {
-                    Icon(Icons.Outlined.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(18.dp))
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.img_launcher_logo),
+                    contentDescription = tr("अन्नपूर्णा लोगो", "अन्नपूर्णा लोगो", "Annapurna logo"),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(58.dp)
+                        .clip(CircleShape)
+                )
                 Column {
+                    Text(tr("अन्नपूर्णा", "अन्नपूर्णा", "Annapurna"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(formState.customerName.ifBlank { tr("अन्नपूर्णा ग्राहक", "अन्नपूर्णा ग्राहक", "Annapurna Customer") }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text(formState.mobileNumber.ifBlank { tr("मोबाईल नंबर जोडा", "मोबाइल नंबर जोड़ें", "Add mobile number") }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -101,7 +114,7 @@ fun CustomerProfileScreen(
             Card(
                 shape = RoundedCornerShape(22.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -136,7 +149,7 @@ fun CustomerProfileScreen(
             Card(
                 shape = RoundedCornerShape(22.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF6EA))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -260,7 +273,7 @@ fun CustomerProfileScreen(
                 Card(
                     shape = RoundedCornerShape(18.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("${tr("ऑर्डर #", "ऑर्डर #", "Order #")}${order.orderId}", fontWeight = FontWeight.Bold)
@@ -274,7 +287,7 @@ fun CustomerProfileScreen(
             Card(
                 shape = RoundedCornerShape(22.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -306,7 +319,7 @@ fun CustomerProfileScreen(
             Card(
                 shape = RoundedCornerShape(22.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -336,6 +349,14 @@ fun CustomerProfileScreen(
                         enabled = addressDraft.isNotBlank(),
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(tr("पत्ता सेव्ह करा", "पता सेव करें", "Save address")) }
+                    HorizontalDivider()
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.weight(1f)) {
+                            Text(tr("डार्क मोड", "डार्क मोड", "Dark mode"), fontWeight = FontWeight.SemiBold)
+                            Text(tr("रात्री वापरण्यासाठी गडद थीम", "रात में उपयोग के लिए गहरी थीम", "A comfortable darker theme for night use"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(checked = isDarkTheme, onCheckedChange = onDarkThemeChange)
+                    }
                     HorizontalDivider()
                     ProfileShortcut(Icons.Outlined.FavoriteBorder, tr("आवडती उत्पादने", "पसंदीदा उत्पाद", "Favorite products"), tr("आवडते पदार्थ लवकर शोधा", "पसंदीदा चीज़ें जल्दी खोजें", "Find favorite items quickly"))
                     HorizontalDivider()
