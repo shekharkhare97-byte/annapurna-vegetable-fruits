@@ -18,13 +18,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,7 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -55,9 +52,7 @@ fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
     val selectedLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
     val prefs = remember { context.getSharedPreferences("annapurna_customer_entry", Context.MODE_PRIVATE) }
     var completed by remember { mutableStateOf(prefs.getBoolean("onboarding_complete", false)) }
-    var phone by remember { mutableStateOf(prefs.getString("customer_mobile", "") ?: "") }
-    var stage by remember { mutableStateOf(if (completed) "done" else "phone") }
-    var error by remember { mutableStateOf<String?>(null) }
+    var stage by remember { mutableStateOf(if (completed) "done" else "splash") }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -112,41 +107,13 @@ fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
                     modifier = Modifier.size(112.dp)
                 )
                 Text(
-                    "अन्नपूर्णा Vegetables and Fruits",
+                    customerText(selectedLanguage, "अन्नपूर्णा भाजीपाला आणि फळे", "अन्नपूर्णा सब्ज़ियाँ और फल", "Annapurna Vegetables and Fruits"),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = AnnapurnaGreen,
                     textAlign = TextAlign.Center
                 )
                 when (stage) {
-                    "phone" -> {
-                        Text(customerText(selectedLanguage, "पुढे जाण्यासाठी मोबाइल नंबर टाका", "आगे बढ़ने के लिए मोबाइल नंबर दर्ज करें", "Enter your mobile number to continue"), fontWeight = FontWeight.SemiBold)
-                        OutlinedTextField(
-                            value = phone,
-                            onValueChange = { phone = it.filter(Char::isDigit).takeLast(10); error = null },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            label = { Text(customerText(selectedLanguage, "मोबाइल नंबर", "मोबाइल नंबर", "Mobile number")) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                            placeholder = { Text(customerText(selectedLanguage, "१० अंकी मोबाइल नंबर", "10 अंकों का मोबाइल नंबर", "10-digit mobile number")) }
-                        )
-                        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                        Button(
-                            onClick = {
-                                val normalized = phone.filter(Char::isDigit).takeLast(10)
-                                if (!normalized.matches(Regex("^[6-9][0-9]{9}$"))) {
-                                    error = customerText(selectedLanguage, "योग्य १० अंकी मोबाइल नंबर टाका", "सही 10 अंकों का मोबाइल नंबर दर्ज करें", "Enter a valid 10-digit mobile number")
-                                } else {
-                                    prefs.edit().putString("customer_mobile", normalized).apply()
-                                    phone = normalized
-                                    stage = "splash"
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = AnnapurnaGreen)
-                        ) { Text(customerText(selectedLanguage, "पुढे जा", "आगे बढ़ें", "Continue"), fontWeight = FontWeight.Bold) }
-                        Text(customerText(selectedLanguage, "OTP किंवा पासवर्डची गरज नाही.", "OTP या पासवर्ड की ज़रूरत नहीं है।", "No OTP or password required."), color = Color.DarkGray, style = MaterialTheme.typography.bodySmall)
-                    }
                     "splash" -> {
                         Spacer(Modifier.height(8.dp))
                         Text(customerText(selectedLanguage, "ताज्या भाज्या आणि फळे आता घरपोच!", "ताज़ी सब्ज़ियाँ और फल अब घर पर!", "Fresh vegetables and fruits delivered to your home!"), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
