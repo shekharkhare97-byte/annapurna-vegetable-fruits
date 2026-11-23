@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.outlined.AddLocationAlt
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -91,9 +92,10 @@ fun CustomerProfileScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                    Icon(Icons.Outlined.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(18.dp))
+                    Icon(Icons.Filled.Eco, contentDescription = tr("अन्नपूर्णा लोगो", "अन्नपूर्णा लोगो", "Annapurna logo"), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(18.dp))
                 }
                 Column {
+                    Text(tr("अन्नपूर्णा", "अन्नपूर्णा", "Annapurna"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(formState.customerName.ifBlank { tr("अन्नपूर्णा ग्राहक", "अन्नपूर्णा ग्राहक", "Annapurna Customer") }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text(formState.mobileNumber.ifBlank { tr("मोबाईल नंबर जोडा", "मोबाइल नंबर जोड़ें", "Add mobile number") }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
