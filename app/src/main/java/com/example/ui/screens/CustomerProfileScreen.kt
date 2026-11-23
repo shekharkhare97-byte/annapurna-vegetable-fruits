@@ -37,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +58,8 @@ import com.example.ui.viewmodel.CustomerFormState
 
 @Composable
 fun CustomerProfileScreen(
+    isDarkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
     formState: CustomerFormState,
     recentOrders: List<OrderEntity>,
     produceItems: List<ProduceItem>,
@@ -336,6 +339,14 @@ fun CustomerProfileScreen(
                         enabled = addressDraft.isNotBlank(),
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(tr("पत्ता सेव्ह करा", "पता सेव करें", "Save address")) }
+                    HorizontalDivider()
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.weight(1f)) {
+                            Text(tr("डार्क मोड", "डार्क मोड", "Dark mode"), fontWeight = FontWeight.SemiBold)
+                            Text(tr("रात्री वापरण्यासाठी गडद थीम", "रात में उपयोग के लिए गहरी थीम", "A comfortable darker theme for night use"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(checked = isDarkTheme, onCheckedChange = onDarkThemeChange)
+                    }
                     HorizontalDivider()
                     ProfileShortcut(Icons.Outlined.FavoriteBorder, tr("आवडती उत्पादने", "पसंदीदा उत्पाद", "Favorite products"), tr("आवडते पदार्थ लवकर शोधा", "पसंदीदा चीज़ें जल्दी खोजें", "Find favorite items quickly"))
                     HorizontalDivider()
