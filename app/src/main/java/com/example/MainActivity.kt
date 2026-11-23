@@ -14,6 +14,7 @@ import com.google.firebase.initialize
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -67,6 +68,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -290,19 +293,12 @@ fun AnnapurnaRootApp(onDarkModeChange: (Boolean) -> Unit = {}) {
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = MaterialTheme.shapes.small
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Eco,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier
-                                        .padding(7.dp)
-                                        .size(22.dp)
-                                )
-                            }
+                            Image(
+                                painter = painterResource(id = R.drawable.img_launcher_logo),
+                                contentDescription = stringResource(R.string.app_name),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(38.dp)
+                            )
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
