@@ -314,14 +314,14 @@ private fun StoreBrandHeader() {
                     color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.size(48.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Eco,
-                            contentDescription = "Annapurna",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(31.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.img_launcher_logo),
+                        contentDescription = stringResource(R.string.brand_name),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(15.dp))
+                    )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
