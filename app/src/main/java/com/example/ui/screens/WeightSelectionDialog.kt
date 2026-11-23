@@ -57,7 +57,15 @@ fun WeightSelectionDialog(
         shape = MaterialTheme.shapes.extraLarge,
         title = {
             Text(
-                if (item.isPieceBased) "${item.unitMarathi.removePrefix("१ ")} निवडा — ${item.marathiName}" else "वजन निवडा — ${item.marathiName}",
+                if (item.isPieceBased) customerText(
+                    "${item.displayUnit().removePrefix("1 ")} निवडा — ${item.displayName()}",
+                    "${item.displayUnit().removePrefix("1 ")} चुनें — ${item.displayName()}",
+                    "Choose ${item.displayUnit().removePrefix("1 ")} — ${item.displayName()}"
+                ) else customerText(
+                    "वजन निवडा — ${item.displayName()}",
+                    "वज़न चुनें — ${item.displayName()}",
+                    "Choose weight — ${item.displayName()}"
+                ),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
@@ -70,7 +78,15 @@ fun WeightSelectionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (item.isPieceBased) "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.unitMarathi.removePrefix("१ ")}" else "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / किलो",
+                        text = if (item.isPieceBased) customerText(
+                            "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.displayUnit().removePrefix("1 ")}",
+                            "कीमत: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.displayUnit().removePrefix("1 ")}",
+                            "Price: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.displayUnit().removePrefix("1 ")}"
+                        ) else customerText(
+                            "दर: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / किलो",
+                            "कीमत: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / किलो",
+                            "Price: ₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / kg"
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(12.dp)
                     )
