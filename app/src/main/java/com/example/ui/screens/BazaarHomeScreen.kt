@@ -696,7 +696,7 @@ private fun ProduceGridCard(
                         modifier = Modifier.align(Alignment.Center)
                     ) {
                         Text(
-                            text = customerText("माल संपला", "माल खत्म", "Out of Stock"),
+                            text = customerText("संपला आहे", "माल खत्म", "Out of Stock"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -773,7 +773,7 @@ private fun ProduceGridCard(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = customerText("माल संपला", "माल खत्म", "Out of Stock"),
+                                text = customerText("संपला आहे", "माल खत्म", "Out of Stock"),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
