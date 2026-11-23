@@ -296,107 +296,109 @@ fun BazaarHomeScreen(
 
 @Composable
 private fun StoreBrandHeader() {
-    Surface(
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = Color.White,
-        shape = RoundedCornerShape(22.dp),
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 15.dp),
-            verticalArrangement = Arrangement.spacedBy(13.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(11.dp)
+                Surface(
+                    shape = RoundedCornerShape(15.dp),
+                    color = Color(0xFFE8F5E9),
+                    modifier = Modifier.size(48.dp)
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(15.dp),
-                        color = Color.White,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Eco,
-                                contentDescription = "Annapurna",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(30.dp)
-                            )
-                        }
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Text(
-                            text = stringResource(R.string.brand_name),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = stringResource(R.string.brand_tagline),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White.copy(alpha = 0.88f)
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Eco,
+                            contentDescription = "Annapurna",
+                            tint = Color(0xFF16843B),
+                            modifier = Modifier.size(31.dp)
                         )
                     }
                 }
-                Surface(
-                    color = Color.White.copy(alpha = 0.16f),
-                    shape = CircleShape
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Eco,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.brand_fresh_daily),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text = stringResource(R.string.brand_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF12652F)
+                    )
+                    Text(
+                        text = stringResource(R.string.brand_tagline),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF52745B)
+                    )
                 }
             }
             Surface(
-                color = Color.White.copy(alpha = 0.14f),
-                shape = RoundedCornerShape(13.dp),
-                modifier = Modifier.fillMaxWidth()
+                color = Color(0xFFE8F5E9),
+                shape = CircleShape
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.LocationOn,
+                        imageVector = Icons.Default.Eco,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                        tint = Color(0xFF16843B),
+                        modifier = Modifier.size(15.dp)
                     )
-                    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Text(
-                            customerText("डिलिव्हरी कुठे हवी आहे?", "डिलीवरी कहाँ चाहिए?", "Where should we deliver?"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.82f)
-                        )
-                        Text(
-                            customerText("तुमचा पत्ता ऑर्डर करताना भरा", "ऑर्डर करते समय अपना पता भरें", "Enter your address when placing the order"),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.brand_fresh_daily),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF12652F),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
+            }
+        }
+        Surface(
+            color = Color(0xFFF0F8EF),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 13.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = Color(0xFF16843B),
+                    modifier = Modifier.size(21.dp)
+                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(1.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        customerText("डिलिव्हरी कुठे हवी आहे?", "डिलीवरी कहाँ चाहिए?", "Delivering to"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF52745B)
+                    )
+                    Text(
+                        customerText("तुमचा पत्ता ऑर्डर करताना भरा", "ऑर्डर करते समय अपना पता भरें", "Add your address at checkout"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF174B29)
+                    )
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = Color(0xFF16843B),
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
