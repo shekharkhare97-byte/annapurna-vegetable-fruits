@@ -1183,8 +1183,17 @@ private fun CustomerOffersStrip() {
                     }
                 ) { offer ->
                     val imageUrl = offer["imageUrl"]?.toString().orEmpty()
-                    val offerTitle = offer["title"]?.toString().orEmpty()
-                    val offerDescription = offer["description"]?.toString().orEmpty()
+                    val offerLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+                    val offerTitle = when (offerLanguage) {
+                        "hi" -> offer["titleHi"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+                        "en" -> offer["titleEn"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+                        else -> offer["titleMr"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+                    }
+                    val offerDescription = when (offerLanguage) {
+                        "hi" -> offer["descriptionHi"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+                        "en" -> offer["descriptionEn"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+                        else -> offer["descriptionMr"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+                    }
 
                     Box(
                         modifier = Modifier
