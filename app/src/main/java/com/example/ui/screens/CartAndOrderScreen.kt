@@ -793,13 +793,13 @@ private fun CartLineCard(
     onRemove: () -> Unit
 ) {
     Card(
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth().testTag("cart_line_${line.cartLineId}")
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -808,7 +808,7 @@ private fun CartLineCard(
                         painter = painterResource(id = line.produce.imageRes),
                         contentDescription = line.produce.displayName(),
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(76.dp).clip(MaterialTheme.shapes.medium)
+                        modifier = Modifier.size(88.dp).clip(RoundedCornerShape(16.dp))
                     )
                 } else {
                     AsyncImage(
@@ -892,11 +892,11 @@ private fun CartLineCard(
 @Composable
 private fun BillSummaryCard(itemsTotal: Double, deliveryCharge: Int?, deliveryTip: Int, grandTotal: Double) {
     Card(
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth().testTag("bill_summary_card")
     ) {
         Column(
@@ -1015,11 +1015,11 @@ private fun CustomerOrderFormCard(
     onSubmitOrder: () -> Unit
 ) {
     Card(
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier
             .fillMaxWidth()
             .testTag("customer_order_form_card")
