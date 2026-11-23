@@ -88,7 +88,7 @@ fun CustomerProfileScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                Surface(shape = CircleShape, color = Color(0xFFE8F5E9)) {
                     Icon(Icons.Outlined.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(18.dp))
                 }
                 Column {
@@ -98,7 +98,11 @@ fun CustomerProfileScreen(
             }
         }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF))
+            ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.Person, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
@@ -129,7 +133,11 @@ fun CustomerProfileScreen(
             }
         }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF6EA))
+            ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.LocationOn, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
@@ -249,8 +257,12 @@ fun CustomerProfileScreen(
             item { Text(tr("अजून कोणतीही ऑर्डर नाही. तुमची पहिली खरेदी सुरू करा!", "अभी कोई ऑर्डर नहीं है। अपनी पहली खरीदारी शुरू करें!", "No orders yet. Start your first purchase!")) }
         } else {
             items(recentOrders.take(5)) { order ->
-                Card {
-                    Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Card(
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("${tr("ऑर्डर #", "ऑर्डर #", "Order #")}${order.orderId}", fontWeight = FontWeight.Bold)
                         Text(order.itemsSummaryMarathi, maxLines = 3, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("₹${order.totalAmountRupeesDecimal}  •  ${java.text.DateFormat.getDateInstance().format(java.util.Date(order.createdAtMillis))}", fontWeight = FontWeight.SemiBold)
@@ -259,8 +271,12 @@ fun CustomerProfileScreen(
             }
         }
         item {
-            Card {
-                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.FavoriteBorder, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
                         Text("  " + tr("माझी आवडती उत्पादने", "मेरे पसंदीदा उत्पाद", "My favorite products"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -287,8 +303,12 @@ fun CustomerProfileScreen(
             }
         }
         item {
-            Card {
-                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.AddLocationAlt, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
                         Text("  " + tr("माझे सेव्ह केलेले पत्ते", "मेरे सेव किए गए पते", "My saved addresses"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
