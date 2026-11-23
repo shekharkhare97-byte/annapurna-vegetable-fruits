@@ -641,11 +641,11 @@ private fun ProduceGridCard(
     onDecrease: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onCardClick)
@@ -656,7 +656,7 @@ private fun ProduceGridCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.98f)
-                    .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                    .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 if (item.imageUrl.isNullOrBlank()) {
@@ -717,7 +717,7 @@ private fun ProduceGridCard(
             }
 
             Column(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 11.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
                 Text(
                     text = item.displayName(),
@@ -1151,7 +1151,7 @@ private fun CustomerOffersStrip() {
                     shape = RoundedCornerShape(50)
                 ) {
                     Text(
-                        "SPECIAL",
+                        customerText("खास ऑफर्स", "खास ऑफ़र", "SPECIAL OFFERS"),
                         color = Color(0xFF16843B),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
@@ -1174,9 +1174,9 @@ private fun CustomerOffersStrip() {
 
                     Box(
                         modifier = Modifier
-                            .width(300.dp)
-                            .height(176.dp)
-                            .clip(RoundedCornerShape(20.dp))
+                            .width(284.dp)
+                            .height(170.dp)
+                            .clip(RoundedCornerShape(22.dp))
                             .background(
                                 Brush.linearGradient(
                                     colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))
