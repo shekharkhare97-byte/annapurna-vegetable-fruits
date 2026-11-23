@@ -711,7 +711,7 @@ private fun ProduceGridCard(
                     IconButton(onClick = onToggleFavorite, modifier = Modifier.size(38.dp)) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (isFavorite) "आवडीतून काढा" else "आवडीत जोडा",
+                            contentDescription = if (isFavorite) customerText("आवडीतून काढा", "पसंदीदा से हटाएँ", "Remove from favorites") else customerText("आवडीत जोडा", "पसंदीदा में जोड़ें", "Add to favorites"),
                             tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.primary
                         )
                     }
