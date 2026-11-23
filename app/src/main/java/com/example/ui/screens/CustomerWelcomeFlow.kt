@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,9 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.R
 import kotlinx.coroutines.delay
-
-private val AnnapurnaGreen = Color(0xFF168447)
-private val AnnapurnaPale = Color(0xFFF1F8F2)
 
 @Composable
 fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
@@ -84,14 +80,14 @@ fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(AnnapurnaPale).padding(22.dp),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
         ) {
             Column(
@@ -108,7 +104,7 @@ fun CustomerWelcomeFlow(content: @Composable () -> Unit) {
                     customerText(selectedLanguage, "अन्नपूर्णा भाजीपाला आणि फळे", "अन्नपूर्णा सब्ज़ियाँ और फल", "Annapurna Vegetables and Fruits"),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
-                    color = AnnapurnaGreen,
+                    color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center
                 )
                 when (stage) {
@@ -141,7 +137,7 @@ private fun CategoryChoice(emoji: String, title: String, subtitle: String, onCli
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE7F4EA))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(18.dp),
@@ -151,7 +147,7 @@ private fun CategoryChoice(emoji: String, title: String, subtitle: String, onCli
             Text(emoji, style = MaterialTheme.typography.headlineLarge)
             Column {
                 Text(title, fontWeight = FontWeight.Bold, color = AnnapurnaGreen)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
