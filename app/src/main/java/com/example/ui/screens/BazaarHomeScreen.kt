@@ -311,14 +311,14 @@ private fun StoreBrandHeader() {
             ) {
                 Surface(
                     shape = RoundedCornerShape(15.dp),
-                    color = Color(0xFFE8F5E9),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.size(48.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.Eco,
                             contentDescription = "Annapurna",
-                            tint = Color(0xFF16843B),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(31.dp)
                         )
                     }
@@ -328,17 +328,17 @@ private fun StoreBrandHeader() {
                         text = stringResource(R.string.brand_name),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF12652F)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = stringResource(R.string.brand_tagline),
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF52745B)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             Surface(
-                color = Color(0xFFE8F5E9),
+                color = MaterialTheme.colorScheme.secondaryContainer,
                 shape = CircleShape
             ) {
                 Row(
@@ -349,20 +349,20 @@ private fun StoreBrandHeader() {
                     Icon(
                         imageVector = Icons.Default.Eco,
                         contentDescription = null,
-                        tint = Color(0xFF16843B),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(15.dp)
                     )
                     Text(
                         text = stringResource(R.string.brand_fresh_daily),
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF12652F),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
         Surface(
-            color = Color(0xFFF0F8EF),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -374,7 +374,7 @@ private fun StoreBrandHeader() {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
-                    tint = Color(0xFF16843B),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(21.dp)
                 )
                 Column(
@@ -384,13 +384,13 @@ private fun StoreBrandHeader() {
                     Text(
                         customerText("डिलिव्हरी कुठे हवी आहे?", "डिलीवरी कहाँ चाहिए?", "Delivering to"),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF52745B)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         customerText("तुमचा पत्ता ऑर्डर करताना भरा", "ऑर्डर करते समय अपना पता भरें", "Add your address at checkout"),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF174B29)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Icon(
