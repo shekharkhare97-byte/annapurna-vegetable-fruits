@@ -146,7 +146,7 @@ private fun CategoryChoice(emoji: String, title: String, subtitle: String, onCli
         ) {
             Text(emoji, style = MaterialTheme.typography.headlineLarge)
             Column {
-                Text(title, fontWeight = FontWeight.Bold, color = AnnapurnaGreen)
+                Text(title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
