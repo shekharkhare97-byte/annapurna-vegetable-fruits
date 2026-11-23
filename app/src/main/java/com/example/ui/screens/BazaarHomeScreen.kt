@@ -535,8 +535,13 @@ private fun SearchAndFilterBar(
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                focusedContainerColor = Color(0xFFFFFFFF),
+                unfocusedContainerColor = Color(0xFFFFFFFF),
+                focusedBorderColor = Color(0xFF16843B),
+                unfocusedBorderColor = Color(0xFFDCEBDD),
+                cursorColor = Color(0xFF16843B),
+                focusedLeadingIconColor = Color(0xFF16843B),
+                unfocusedLeadingIconColor = Color(0xFF66836C)
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -617,9 +622,18 @@ private fun SearchAndFilterBar(
                             style = MaterialTheme.typography.labelLarge
                         )
                     },
+                    shape = RoundedCornerShape(16.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        selectedContainerColor = Color(0xFF16843B),
+                        selectedLabelColor = Color.White,
+                        containerColor = Color(0xFFF2F8F1),
+                        labelColor = Color(0xFF315C3A)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = isSelected,
+                        borderColor = Color(0xFFDCEBDD),
+                        selectedBorderColor = Color(0xFF16843B)
                     ),
                     modifier = Modifier
                         .minimumInteractiveComponentSize()
