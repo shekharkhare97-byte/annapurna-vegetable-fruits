@@ -201,6 +201,7 @@ fun BazaarHomeScreen(
                 )
             }
 
+            if (selectedCategory != ProduceCategory.ALL || searchQuery.isNotBlank() || showFavoritesOnly) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 1.dp),
@@ -259,6 +260,8 @@ fun BazaarHomeScreen(
                 }
             }
         }
+            }
+
 
         AnimatedVisibility(
             visible = totalCartQty > 0,
