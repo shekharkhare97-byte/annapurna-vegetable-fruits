@@ -30,12 +30,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingBag
@@ -106,11 +110,23 @@ enum class AnnapurnaTab(
         unselectedIcon = Icons.Outlined.Storefront,
         tag = "nav_tab_bazaar"
     ),
+    CATEGORIES(
+        labelRes = R.string.nav_categories,
+        selectedIcon = Icons.Filled.Category,
+        unselectedIcon = Icons.Outlined.Category,
+        tag = "nav_tab_categories"
+    ),
     CART(
         labelRes = R.string.nav_cart,
         selectedIcon = Icons.Filled.ShoppingBag,
         unselectedIcon = Icons.Outlined.ShoppingBag,
         tag = "nav_tab_cart"
+    ),
+    ORDERS(
+        labelRes = R.string.nav_orders,
+        selectedIcon = Icons.Filled.ReceiptLong,
+        unselectedIcon = Icons.Outlined.ReceiptLong,
+        tag = "nav_tab_orders"
     ),
     ASSISTANT(
         labelRes = R.string.nav_assistant,
@@ -467,7 +483,7 @@ fun AnnapurnaRootApp() {
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
                                 onOpenAssistant = { currentTab = AnnapurnaTab.ASSISTANT },
                                 onOpenLanguageSettings = { languageMenuExpanded = true },
-                                onOpenOrders = { currentTab = AnnapurnaTab.CART },
+                                onOpenOrders = { currentTab = AnnapurnaTab.ORDERS },
                                 onShareApp = {
                                     val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                         type = "text/plain"
