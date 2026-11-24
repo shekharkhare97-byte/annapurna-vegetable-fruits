@@ -162,6 +162,8 @@ class StoreViewModel(
     val trackingLocation: StateFlow<String> = _trackingLocation.asStateFlow()
     private val _trackingUpdatedAtMillis = MutableStateFlow<Long?>(null)
     val trackingUpdatedAtMillis: StateFlow<Long?> = _trackingUpdatedAtMillis.asStateFlow()
+    private val _customerDestination = MutableStateFlow("")
+    val customerDestination: StateFlow<String> = _customerDestination.asStateFlow()
     private val _trackingPartnerAccepted = MutableStateFlow(false)
     val trackingPartnerAccepted: StateFlow<Boolean> = _trackingPartnerAccepted.asStateFlow()
     private val _trackingPartnerName = MutableStateFlow("")
@@ -506,6 +508,11 @@ class StoreViewModel(
                     _trackingLocation.value = if (snapshot.getBoolean("deliveryLocationSharing") == true && latitude != null && longitude != null) "$latitude,$longitude" else ""
                     _trackingUpdatedAtMillis.value = (snapshot.getTimestamp("deliveryLocationUpdatedAt")
                         ?: snapshot.getTimestamp("updatedAt"))?.toDate()?.time
+                    val customerLatitude = snapshot.getDouble("customerLatitude")
+                    val customerLongitude = snapshot.getDouble("customerLongitude")
+                    _customerDestination.value = if (customerLatitude != null && customerLongitude != null &&
+                        customerLatitude in -90.0..90.0 && customerLongitude in -180.0..180.0
+                    ) "$customerLatitude,$customerLongitude" else ""
                 }
             }
     }
