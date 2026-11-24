@@ -187,8 +187,18 @@ class StoreViewModel(
         products.filter { item ->
             // A search spans vegetables and fruits even if the customer previously
             // selected only one category. Category chips still apply when search is empty.
-            val matchesCategory = query.isNotEmpty() ||
-                category == ProduceCategory.ALL || item.category == category
+            val matchesCategory = query.isNotEmpty() || when (category) {
+                ProduceCategory.ALL -> true
+                ProduceCategory.VEGETABLE -> item.category == ProduceCategory.VEGETABLE &&
+                    item.catalogSection !in setOf("leafy_greens", "organic", "daily_needs", "combo_packs")
+                ProduceCategory.FRUIT -> item.category == ProduceCategory.FRUIT
+                ProduceCategory.LEAFY_GREENS -> item.catalogSection == "leafy_greens" ||
+                    listOf("पालक", "मेथी", "कोथिंबीर", "शेपू", "चाकवत", "spinach", "fenugreek", "coriander", "dill")
+                        .any { item.englishKeywords.contains(it.lowercase()) }
+                ProduceCategory.ORGANIC -> item.catalogSection == "organic"
+                ProduceCategory.DAILY_NEEDS -> item.catalogSection == "daily_needs"
+                ProduceCategory.COMBO_PACKS -> item.catalogSection == "combo_packs"
+            }
             matchesCategory && matchesProduceSearch(item, query)
         }
     }.flowOn(Dispatchers.Default).stateIn(
@@ -261,6 +271,8 @@ class StoreViewModel(
                     val descriptionHi = doc.getString("descriptionHi")?.takeIf { it.isNotBlank() }.orEmpty()
                     val descriptionEn = doc.getString("descriptionEn")?.takeIf { it.isNotBlank() }.orEmpty()
                     val category = if (doc.getString("category") == "fruit") ProduceCategory.FRUIT else ProduceCategory.VEGETABLE
+                    val catalogSection = doc.getString("catalogSection")?.takeIf { it.isNotBlank() }
+                        ?: if (category == ProduceCategory.FRUIT) "fruits" else "vegetables"
                     ProduceItem(
                         id = doc.id,
                         marathiName = name,
@@ -281,7 +293,8 @@ class StoreViewModel(
                         englishName = englishName,
                         hindiDescription = descriptionHi,
                         englishDescription = descriptionEn,
-                        stockQuantity = stock
+                        stockQuantity = stock,
+                        catalogSection = catalogSection
                     )
                 }
                 ProduceCatalog.replaceFromAdmin(products)
