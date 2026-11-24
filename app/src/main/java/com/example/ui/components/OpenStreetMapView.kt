@@ -2,6 +2,13 @@ package com.example.ui.components
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +40,39 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import java.util.concurrent.TimeUnit
+
+
+private fun createAnnapurnaRiderIcon(context: Context): Drawable {
+    val size = 144
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    fun fill(color: Int) { paint.color = color; paint.style = Paint.Style.FILL }
+    fun stroke(color: Int, width: Float) { paint.color = color; paint.style = Paint.Style.STROKE; paint.strokeWidth = width; paint.strokeCap = Paint.Cap.ROUND; paint.strokeJoin = Paint.Join.ROUND }
+    // White circular badge with Annapurna green border.
+    fill(Color.WHITE); canvas.drawCircle(72f, 72f, 66f, paint)
+    stroke(Color.rgb(18, 101, 47), 7f); canvas.drawCircle(72f, 72f, 63f, paint)
+    // Scooter wheels and body.
+    fill(Color.rgb(25, 35, 31)); canvas.drawCircle(39f, 103f, 15f, paint); canvas.drawCircle(105f, 103f, 15f, paint)
+    fill(Color.LTGRAY); canvas.drawCircle(39f, 103f, 6f, paint); canvas.drawCircle(105f, 103f, 6f, paint)
+    fill(Color.rgb(31, 145, 77))
+    val scooter = Path().apply { moveTo(34f, 91f); lineTo(48f, 79f); lineTo(83f, 81f); lineTo(105f, 93f); lineTo(98f, 100f); lineTo(56f, 100f); close() }
+    canvas.drawPath(scooter, paint)
+    stroke(Color.rgb(25, 35, 31), 5f); canvas.drawLine(88f, 79f, 98f, 62f, paint); canvas.drawLine(98f, 62f, 111f, 62f, paint)
+    // Rider legs and dark trousers.
+    fill(Color.rgb(30, 52, 82)); canvas.drawRoundRect(RectF(62f, 67f, 91f, 91f), 8f, 8f, paint)
+    // Green Annapurna polo torso.
+    fill(Color.rgb(0, 105, 55)); val torso = Path().apply { moveTo(53f, 38f); lineTo(83f, 39f); lineTo(95f, 67f); lineTo(82f, 77f); lineTo(54f, 68f); lineTo(45f, 53f); close() }; canvas.drawPath(torso, paint)
+    stroke(Color.rgb(190, 235, 92), 3f); canvas.drawLine(68f, 41f, 69f, 61f, paint)
+    // Arms reaching the handlebar.
+    stroke(Color.rgb(188, 130, 91), 8f); canvas.drawLine(83f, 49f, 101f, 62f, paint); canvas.drawLine(55f, 50f, 42f, 65f, paint)
+    // Head and green delivery cap/helmet.
+    fill(Color.rgb(188, 130, 91)); canvas.drawCircle(68f, 27f, 15f, paint)
+    fill(Color.rgb(0, 105, 55)); canvas.drawArc(RectF(51f, 8f, 84f, 39f), 180f, 180f, true, paint); canvas.drawRoundRect(RectF(64f, 22f, 88f, 28f), 4f, 4f, paint)
+    // Small bright-green shirt mark.
+    fill(Color.rgb(190, 235, 92)); canvas.drawCircle(78f, 49f, 4f, paint)
+    return BitmapDrawable(context.resources, bitmap).apply { setBounds(0, 0, size, size) }
+}
 
 private data class DeliveryRoute(
     val points: List<GeoPoint>,
@@ -153,7 +193,8 @@ fun OpenStreetMapView(
                     position = driverPoint
                     title = markerTitle
                     snippet = markerSnippet
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    icon = createAnnapurnaRiderIcon(map.context)
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 }
                 map.overlays.add(driverMarker)
                 if (destinationLatitude != null && destinationLongitude != null) {
