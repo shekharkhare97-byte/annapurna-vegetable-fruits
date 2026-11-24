@@ -288,6 +288,7 @@ fun AnnapurnaRootApp() {
     }
 
     var currentTab by remember { mutableStateOf(AnnapurnaTab.BAZAAR) }
+    var assistantStartAction by rememberSaveable { mutableStateOf<String?>(null) }
 
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
     val selectedCategory by storeViewModel.selectedCategory.collectAsStateWithLifecycle()
@@ -699,7 +700,9 @@ fun AnnapurnaRootApp() {
                                 onDecreaseQty = storeViewModel::decreaseProductQuantity,
                                 onOpenDetail = storeViewModel::openProduceDetail,
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
-                                onOpenAssistant = { currentTab = AnnapurnaTab.ASSISTANT },
+                                onOpenAssistant = { assistantStartAction = null; currentTab = AnnapurnaTab.ASSISTANT },
+                                onOpenVoiceSearch = { assistantStartAction = "voice"; currentTab = AnnapurnaTab.ASSISTANT },
+                                onOpenPhotoSearch = { assistantStartAction = "photo"; currentTab = AnnapurnaTab.ASSISTANT },
                                 onOpenOffers = { currentTab = AnnapurnaTab.OFFERS },
                                 onOpenNewArrivals = { currentTab = AnnapurnaTab.NEW_ARRIVALS },
                                 onOpenLanguageSettings = { languageMenuExpanded = true },
@@ -764,6 +767,8 @@ fun AnnapurnaRootApp() {
                         AnnapurnaTab.ASSISTANT -> {
                             MarathiChatScreen(
                                 chatState = chatState,
+                                startAction = assistantStartAction,
+                                onStartActionConsumed = { assistantStartAction = null },
                                 onSelectModelTier = aiViewModel::selectModelTier,
                                 onInputChange = aiViewModel::updateChatInput,
                                 onSendMessage = { overridePrompt, imageBase64, mimeType ->
