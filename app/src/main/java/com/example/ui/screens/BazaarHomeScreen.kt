@@ -655,11 +655,11 @@ private fun ProduceGridCard(
     onDecrease: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onCardClick)
@@ -731,7 +731,7 @@ private fun ProduceGridCard(
             }
 
             Column(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
             ) {
                 Text(
                     text = item.displayName(),
