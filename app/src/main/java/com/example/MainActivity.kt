@@ -468,6 +468,33 @@ fun AnnapurnaRootApp() {
                         .fillMaxSize()
 
                     when (currentTab) {
+                        AnnapurnaTab.CATEGORIES -> {
+                            Column(
+                                modifier = contentModifier.padding(20.dp),
+                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text("श्रेणीनुसार खरेदी", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                Text("ताज्या भाज्या आणि फळांची श्रेणी निवडा", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                FilledTonalButton(onClick = { storeViewModel.selectCategory(ProduceCategory.VEGETABLE); currentTab = AnnapurnaTab.BAZAAR }, modifier = Modifier.fillMaxWidth()) { Text("🥦  ताज्या भाज्या") }
+                                FilledTonalButton(onClick = { storeViewModel.selectCategory(ProduceCategory.FRUIT); currentTab = AnnapurnaTab.BAZAAR }, modifier = Modifier.fillMaxWidth()) { Text("🍎  रसाळ फळे") }
+                            }
+                        }
+                        AnnapurnaTab.ORDERS -> {
+                            CustomerProfileScreen(
+                                formState = formState,
+                                recentOrders = recentOrders,
+                                produceItems = produceItems,
+                                trackingStatus = trackingStatus,
+                                trackingLocation = trackingLocation,
+                                trackingUpdatedAtMillis = trackingUpdatedAtMillis,
+                                onNameChange = storeViewModel::updateCustomerName,
+                                onMobileChange = storeViewModel::updateMobileNumber,
+                                onAddressChange = storeViewModel::updateDeliveryAddress,
+                                onSaveProfile = storeViewModel::saveCustomerProfileForEntry,
+                                onOpenOrders = { currentTab = AnnapurnaTab.ORDERS },
+                                modifier = contentModifier
+                            )
+                        }
                         AnnapurnaTab.BAZAAR -> {
                             BazaarHomeScreen(
                                 produceItems = produceItems,
