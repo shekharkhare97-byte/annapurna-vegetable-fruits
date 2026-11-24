@@ -173,6 +173,13 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                CategoryFilterRow(
+                    selectedCategory = selectedCategory,
+                    onSelectCategory = onSelectCategory
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
                     shape = RoundedCornerShape(18.dp),
@@ -781,53 +788,68 @@ private fun SearchAndFilterBar(
             }
         }
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(vertical = 2.dp)
-        ) {
-            val categoriesWithCounts = listOf(
-                ProduceCategory.ALL to allCount,
-                ProduceCategory.VEGETABLE to vegCount,
-                ProduceCategory.FRUIT to fruitCount
-            )
-            items(categoriesWithCounts) { (category, count) ->
-                val isSelected = selectedCategory == category
-                val categoryLabel = when (category) {
-                    ProduceCategory.ALL -> customerText("सर्व", "सभी", "All")
-                    ProduceCategory.VEGETABLE -> customerText("भाज्या", "सब्ज़ियाँ", "Vegetables")
-                    ProduceCategory.FRUIT -> customerText("फळे", "फल", "Fruits")
-                }
-                val chipLabel = "$categoryLabel (${MarathiFormatters.toMarathiNumber(count)})"
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onSelectCategory(category) },
-                    label = {
-                        Text(
-                            text = chipLabel,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF16843B),
-                        selectedLabelColor = Color.White,
-                        containerColor = Color(0xFFF2F8F1),
-                        labelColor = Color(0xFF315C3A)
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = isSelected,
-                        borderColor = Color(0xFFDCEBDD),
-                        selectedBorderColor = Color(0xFF16843B)
-                    ),
-                    modifier = Modifier
-                        .minimumInteractiveComponentSize()
-                        .testTag("category_chip_${category.name.lowercase()}")
-                )
-            }
-        }
+
     }
 }
+
+
+@Composable
+private fun CategoryFilterRow(
+    selectedCategory: ProduceCategory,
+    onSelectCategory: (ProduceCategory) -> Unit
+) {
+    val allCount = ProduceCatalog.items.size
+    val vegCount = ProduceCatalog.items.count { it.category == ProduceCategory.VEGETABLE }
+    val fruitCount = ProduceCatalog.items.count { it.category == ProduceCategory.FRUIT }
+    Column {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(vertical = 2.dp)
+            ) {
+                val categoriesWithCounts = listOf(
+                    ProduceCategory.ALL to allCount,
+                    ProduceCategory.VEGETABLE to vegCount,
+                    ProduceCategory.FRUIT to fruitCount
+                )
+                items(categoriesWithCounts) { (category, count) ->
+                    val isSelected = selectedCategory == category
+                    val categoryLabel = when (category) {
+                        ProduceCategory.ALL -> customerText("सर्व", "सभी", "All")
+                        ProduceCategory.VEGETABLE -> customerText("भाज्या", "सब्ज़ियाँ", "Vegetables")
+                        ProduceCategory.FRUIT -> customerText("फळे", "फल", "Fruits")
+                    }
+                    val chipLabel = "$categoryLabel (${MarathiFormatters.toMarathiNumber(count)})"
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onSelectCategory(category) },
+                        label = {
+                            Text(
+                                text = chipLabel,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFF16843B),
+                            selectedLabelColor = Color.White,
+                            containerColor = Color(0xFFF2F8F1),
+                            labelColor = Color(0xFF315C3A)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = Color(0xFFDCEBDD),
+                            selectedBorderColor = Color(0xFF16843B)
+                        ),
+                        modifier = Modifier
+                            .minimumInteractiveComponentSize()
+                            .testTag("category_chip_${category.name.lowercase()}")
+                    )
+                }
+            }
+    }
+}
+
 
 @Composable
 private fun ProduceGridCard(
