@@ -109,6 +109,7 @@ fun BazaarHomeScreen(
     onGoToCart: () -> Unit,
     onAskRecipeInChat: (ProduceItem) -> Unit,
     onOpenAssistant: () -> Unit,
+    onOpenOffers: () -> Unit,
     onOpenLanguageSettings: () -> Unit,
     onOpenOrders: () -> Unit,
     onShareApp: () -> Unit,
@@ -169,10 +170,7 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                LiveOffersHeroBanner(onOfferClick = {
-                    onSelectCategory(ProduceCategory.ALL)
-                    onSearchQueryChange("")
-                })
+                LiveOffersHeroBanner(onOfferClick = onOpenOffers)
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -189,8 +187,8 @@ fun BazaarHomeScreen(
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 CustomerFeatureShortcuts(
-                    onOffers = { onSelectCategory(ProduceCategory.ALL) },
-                    onNewArrivals = { onSelectCategory(ProduceCategory.ALL) },
+                    onOffers = onOpenOffers,
+                    onNewArrivals = onOpenOffers,
                     onLanguage = onOpenLanguageSettings,
                     onVoiceSearch = onOpenAssistant,
                     onPhotoSearch = onOpenAssistant,
