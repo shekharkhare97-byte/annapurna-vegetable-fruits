@@ -188,6 +188,20 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                CustomerFeatureShortcuts(
+                    onOffers = { onSelectCategory(ProduceCategory.ALL) },
+                    onNewArrivals = { onSelectCategory(ProduceCategory.ALL) },
+                    onLanguage = onOpenLanguageSettings,
+                    onVoiceSearch = onOpenAssistant,
+                    onPhotoSearch = onOpenAssistant,
+                    onRefer = onShareApp,
+                    onWishlist = { showFavoritesOnly = !showFavoritesOnly },
+                    onNotifications = onOpenOrders,
+                    wishlistSelected = showFavoritesOnly
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 1.dp),
                     verticalAlignment = Alignment.CenterVertically,
