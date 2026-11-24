@@ -208,11 +208,15 @@ class StoreRepository(private val storeDao: StoreDao) {
             remoteOrderData["customerLongitude"] = longitude
             remoteOrderData["locationSource"] = "customer_location"
         }
-        val trackingData = mapOf(
+        val trackingData = mutableMapOf<String, Any>(
             "status" to "new",
             "createdAtMillis" to now,
             "orderId" to remoteOrder.id
         )
+        if (latitude != null && longitude != null) {
+            trackingData["customerLatitude"] = latitude
+            trackingData["customerLongitude"] = longitude
+        }
         if (paymentMethod == "COD") {
             val batch = firestore.batch()
             batch.set(remoteOrder, remoteOrderData)
