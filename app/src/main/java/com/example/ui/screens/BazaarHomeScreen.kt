@@ -293,6 +293,11 @@ fun BazaarHomeScreen(
         }
     }
 
+    val productRequestFailureText = customerText(
+        "विनंती पाठवता आली नाही. कृपया पुन्हा प्रयत्न करा.",
+        "अनुरोध नहीं भेजा जा सका। कृपया फिर कोशिश करें।",
+        "Could not send request. Please try again."
+    )
     if (showProductRequest) {
         AlertDialog(
             onDismissRequest = { if (!productRequestSending) showProductRequest = false },
@@ -347,11 +352,7 @@ fun BazaarHomeScreen(
                             }
                             .addOnFailureListener { error ->
                                 productRequestSending = false
-                                productRequestMessage = customerText(
-                                    "विनंती पाठवता आली नाही. कृपया पुन्हा प्रयत्न करा.",
-                                    "अनुरोध नहीं भेजा जा सका। कृपया फिर कोशिश करें।",
-                                    "Could not send request. Please try again."
-                                )
+                                productRequestMessage = productRequestFailureText
                             }
                     }
                 ) { Text(if (productRequestSending) customerText("पाठवत आहे…", "भेज रहे हैं…", "Sending…") else customerText("विनंती पाठवा", "अनुरोध भेजें", "Send request")) }
