@@ -548,11 +548,43 @@ fun CartAndOrderScreen(
                                 if (driverLatitude != null && driverLongitude != null &&
                                     driverLatitude in -90.0..90.0 && driverLongitude in -180.0..180.0
                                 ) {
-                                    Text(
-                                        text = "${customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner")}: ${trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner") }}",
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
+                                    Surface(
+                                        color = Color(0xFFE8F5E9),
+                                        shape = RoundedCornerShape(18.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Surface(
+                                                color = Color(0xFF075B32),
+                                                shape = RoundedCornerShape(50),
+                                                modifier = Modifier.size(54.dp)
+                                            ) {
+                                                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+                                                    Text("🛵", style = MaterialTheme.typography.headlineMedium)
+                                                }
+                                            }
+                                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                                Text(
+                                                    trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner") },
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF075B32),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                                Text(
+                                                    customerText("Annapurna गणवेशात तुमची ऑर्डर घेऊन येत आहेत", "Annapurna यूनिफॉर्म में आपका ऑर्डर ला रहे हैं", "Your order is on the way in Annapurna uniform"),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color(0xFF315B40)
+                                                )
+                                            }
+                                            Surface(color = Color(0xFF159447), shape = RoundedCornerShape(50)) {
+                                                Text("LIVE", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                                            }
+                                        }
+                                    }
                                     Text(
                                         text = stringResource(R.string.tracking_live_location_available),
                                         color = MaterialTheme.colorScheme.primary,
@@ -570,7 +602,7 @@ fun CartAndOrderScreen(
                                         destinationLongitude = customerLon,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(300.dp)
+                                            .height(420.dp)
                                             .clip(RoundedCornerShape(18.dp))
                                             .testTag("customer_live_delivery_map")
                                     )
