@@ -243,7 +243,9 @@ fun CartAndOrderScreen(
         "CUSTOM" -> customTipText.toIntOrNull()?.coerceAtLeast(0) ?: 0
         else -> 0
     }
-    val grandTotal = itemsTotal + (deliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
+    // Orders above ₹250 get free delivery; ₹250 exactly still pays ₹10 per chargeable km.
+    val payableDeliveryCharge = if (itemsTotal > 250.0) 0 else deliveryCharge
+    val grandTotal = itemsTotal + (payableDeliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
 
     fun startRazorpayPayment() {
         val activity = context as? com.example.MainActivity
@@ -295,7 +297,7 @@ fun CartAndOrderScreen(
                                 // could capture money and then leave no order if the app closes
                                 // before the second request.
                                 onSubmitOrder(
-                                    deliveryLatitude, deliveryLongitude, deliveryCharge!!,
+                                    deliveryLatitude, deliveryLongitude, payableDeliveryCharge!!,
                                     deliveryDistanceKm, paymentMethod, paymentId, deliveryTipAmount, created.orderId, signature
                                 )
                                 paymentInProgress = false
@@ -396,7 +398,7 @@ fun CartAndOrderScreen(
             }
 
             item {
-                BillSummaryCard(itemsTotal = itemsTotal, deliveryCharge = deliveryCharge, deliveryTip = deliveryTipAmount, grandTotal = grandTotal)
+                BillSummaryCard(itemsTotal = itemsTotal, deliveryCharge = payableDeliveryCharge, deliveryTip = deliveryTipAmount, grandTotal = grandTotal)
             }
         }
 
@@ -421,7 +423,7 @@ fun CartAndOrderScreen(
             CustomerOrderFormCard(
                 formState = formState,
                 grandTotal = grandTotal,
-                deliveryCharge = deliveryCharge,
+                deliveryCharge = payableDeliveryCharge,
                 deliveryMessage = deliveryMessage,
                 isCartEmpty = cartItems.isEmpty(),
                 onCustomerNameChange = onCustomerNameChange,
@@ -445,7 +447,7 @@ fun CartAndOrderScreen(
                     } else if (paymentMethod != "COD") {
                         startRazorpayPayment()
                     } else {
-                        onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
+                        onSubmitOrder(deliveryLatitude, deliveryLongitude, payableDeliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
                     }
                 }
             )
