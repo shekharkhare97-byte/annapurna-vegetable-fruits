@@ -512,11 +512,11 @@ fun AnnapurnaRootApp() {
                             val categoryTiles = listOf(
                                 CategoryTile("🥬", "भाज्या", "सब्ज़ियाँ", "Vegetables", ProduceCategory.VEGETABLE),
                                 CategoryTile("🍎", "फळे", "फल", "Fruits", ProduceCategory.FRUIT),
-                                CategoryTile("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.VEGETABLE),
+                                CategoryTile("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.LEAFY_GREENS),
                                 CategoryTile("🎁", "ऑफर्स", "ऑफ़र", "Offers", ProduceCategory.ALL),
-                                CategoryTile("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ALL),
-                                CategoryTile("🧺", "दैनंदिन गरजा", "दैनिक ज़रूरतें", "Daily Needs", ProduceCategory.ALL),
-                                CategoryTile("📦", "कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs", ProduceCategory.ALL),
+                                CategoryTile("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ORGANIC),
+                                CategoryTile("🧺", "दैनंदिन गरजा", "दैनिक ज़रूरतें", "Daily Needs", ProduceCategory.DAILY_NEEDS),
+                                CategoryTile("📦", "कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs", ProduceCategory.COMBO_PACKS),
                                 CategoryTile("＋", "अधिक", "और", "More", null)
                             )
                             Column(
