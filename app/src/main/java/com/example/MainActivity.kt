@@ -473,9 +473,26 @@ fun AnnapurnaRootApp() {
 
                     when (currentTab) {
                         AnnapurnaTab.CATEGORIES -> {
+                            data class CategoryTile(
+                                val emoji: String,
+                                val mr: String,
+                                val hi: String,
+                                val en: String,
+                                val category: ProduceCategory?
+                            )
+                            val categoryTiles = listOf(
+                                CategoryTile("🥬", "भाज्या", "सब्ज़ियाँ", "Vegetables", ProduceCategory.VEGETABLE),
+                                CategoryTile("🍎", "फळे", "फल", "Fruits", ProduceCategory.FRUIT),
+                                CategoryTile("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.VEGETABLE),
+                                CategoryTile("🎁", "ऑफर्स", "ऑफ़र", "Offers", ProduceCategory.ALL),
+                                CategoryTile("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ALL),
+                                CategoryTile("🧺", "दैनंदिन गरजा", "दैनिक ज़रूरतें", "Daily Needs", ProduceCategory.ALL),
+                                CategoryTile("📦", "कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs", ProduceCategory.ALL),
+                                CategoryTile("＋", "अधिक", "और", "More", null)
+                            )
                             Column(
                                 modifier = contentModifier.padding(16.dp),
-                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)
+                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
                             ) {
                                 Surface(
                                     color = Color(0xFFE8F5E9),
@@ -483,48 +500,75 @@ fun AnnapurnaRootApp() {
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Column(modifier = Modifier.padding(18.dp)) {
-                                        Text(when (currentLanguage) { "hi" -> "ताज़ा और चुनिंदा"; "en" -> "Fresh & Handpicked"; else -> "ताजे आणि निवडक" }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF12652F))
-                                        Text(when (currentLanguage) { "hi" -> "अपनी पसंद की श्रेणी चुनें"; "en" -> "Choose a category you love"; else -> "तुमच्या आवडीची श्रेणी निवडा" }, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF52745B))
+                                        Text(
+                                            when (currentLanguage) { "hi" -> "ताज़ा और चुनिंदा"; "en" -> "Fresh & Handpicked"; else -> "ताजे आणि निवडक" },
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF12652F)
+                                        )
+                                        Text(
+                                            when (currentLanguage) { "hi" -> "अपनी पसंद की श्रेणी चुनें"; "en" -> "Choose a category you love"; else -> "तुमच्या आवडीची श्रेणी निवडा" },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color(0xFF52745B)
+                                        )
                                     }
                                 }
-                                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                                    Surface(
-                                        onClick = { storeViewModel.selectCategory(ProduceCategory.VEGETABLE); currentTab = AnnapurnaTab.BAZAAR },
-                                        color = Color(0xFFF2F8F1),
-                                        shape = RoundedCornerShape(18.dp),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDCEBDD)),
-                                        modifier = Modifier.weight(1f).height(154.dp)
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-                                            modifier = Modifier.padding(12.dp)
-                                        ) {
-                                            Text("🥦", style = MaterialTheme.typography.displaySmall)
-                                            Text(when (currentLanguage) { "hi" -> "ताज़ी सब्ज़ियाँ"; "en" -> "Fresh Vegetables"; else -> "ताज्या भाज्या" }, fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
-                                            Text(when (currentLanguage) { "hi" -> "रोज़मर्रा के लिए"; "en" -> "For everyday cooking"; else -> "रोजच्या वापरासाठी" }, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    when (currentLanguage) { "hi" -> "सभी श्रेणियाँ"; "en" -> "All Categories"; else -> "सर्व कॅटेगरी" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                                    columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(4),
+                                    userScrollEnabled = false,
+                                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(9.dp),
+                                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(9.dp),
+                                    modifier = Modifier.height(190.dp)
+                                ) {
+                                    items(categoryTiles.size) { index ->
+                                        val tile = categoryTiles[index]
+                                        val label = when (currentLanguage) {
+                                            "hi" -> tile.hi
+                                            "en" -> tile.en
+                                            else -> tile.mr
                                         }
-                                    }
-                                    Surface(
-                                        onClick = { storeViewModel.selectCategory(ProduceCategory.FRUIT); currentTab = AnnapurnaTab.BAZAAR },
-                                        color = Color(0xFFFFF7ED),
-                                        shape = RoundedCornerShape(18.dp),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1E3D2)),
-                                        modifier = Modifier.weight(1f).height(154.dp)
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-                                            modifier = Modifier.padding(12.dp)
+                                        Surface(
+                                            onClick = {
+                                                if (tile.category == null) {
+                                                    currentTab = AnnapurnaTab.PROFILE
+                                                } else {
+                                                    storeViewModel.selectCategory(tile.category)
+                                                    currentTab = AnnapurnaTab.BAZAAR
+                                                }
+                                            },
+                                            color = Color(0xFFF3F8F2),
+                                            shape = RoundedCornerShape(15.dp),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE1ECE1)),
+                                            modifier = Modifier.fillMaxWidth().height(88.dp)
                                         ) {
-                                            Text("🍎", style = MaterialTheme.typography.displaySmall)
-                                            Text(when (currentLanguage) { "hi" -> "ताज़े फल"; "en" -> "Fresh Fruits"; else -> "ताजी फळे" }, fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
-                                            Text(when (currentLanguage) { "hi" -> "मीठे और रसीले"; "en" -> "Sweet & juicy"; else -> "गोड आणि रसाळ" }, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                                                modifier = Modifier.padding(horizontal = 2.dp, vertical = 6.dp)
+                                            ) {
+                                                Text(tile.emoji, style = MaterialTheme.typography.titleLarge)
+                                                Text(
+                                                    label,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF12652F),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    maxLines = 2,
+                                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                                )
+                                            }
                                         }
                                     }
                                 }
                                 FilledTonalButton(
-                                    onClick = { storeViewModel.selectCategory(ProduceCategory.ALL); currentTab = AnnapurnaTab.BAZAAR },
+                                    onClick = {
+                                        storeViewModel.selectCategory(ProduceCategory.ALL)
+                                        currentTab = AnnapurnaTab.BAZAAR
+                                    },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(when (currentLanguage) { "hi" -> "🛍️  सभी उत्पाद देखें"; "en" -> "🛍️  Browse all products"; else -> "🛍️  सर्व उत्पादने पहा" })
