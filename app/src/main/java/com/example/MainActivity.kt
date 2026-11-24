@@ -308,6 +308,12 @@ fun AnnapurnaRootApp() {
 
     val totalCartItems = remember(cartItems) { cartItems.sumOf { it.quantity } }
     var languageMenuExpanded by remember { mutableStateOf(false) }
+    var showMoreRequestDialog by rememberSaveable { mutableStateOf(false) }
+    var moreRequestName by rememberSaveable { mutableStateOf("") }
+    var moreRequestQuantity by rememberSaveable { mutableStateOf("") }
+    var moreRequestNote by rememberSaveable { mutableStateOf("") }
+    var moreRequestSending by remember { mutableStateOf(false) }
+    var moreRequestFeedback by remember { mutableStateOf<String?>(null) }
     val currentLanguage = context.resources.configuration.locales[0].language
     val languageLabel = when (currentLanguage) { "hi" -> "हिन्दी"; "en" -> "English"; else -> "मराठी" }
 
@@ -558,7 +564,7 @@ fun AnnapurnaRootApp() {
                                             onClick = {
                                                 when {
                                                     tile.en == "Offers" -> currentTab = AnnapurnaTab.OFFERS
-                                                    tile.category == null -> currentTab = AnnapurnaTab.BAZAAR
+                                                    tile.category == null -> showMoreRequestDialog = true
                                                     else -> {
                                                         storeViewModel.selectCategory(tile.category)
                                                         currentTab = AnnapurnaTab.BAZAAR
@@ -597,6 +603,81 @@ fun AnnapurnaRootApp() {
                                 ) {
                                     Text(when (currentLanguage) { "hi" -> "🛍️  सभी उत्पाद देखें"; "en" -> "🛍️  Browse all products"; else -> "🛍️  सर्व उत्पादने पहा" })
                                 }
+                            }
+                            if (showMoreRequestDialog) {
+                                androidx.compose.material3.AlertDialog(
+                                    onDismissRequest = { if (!moreRequestSending) showMoreRequestDialog = false },
+                                    title = { Text(when (currentLanguage) { "hi" -> "नया उत्पाद मँगवाएँ"; "en" -> "Request an item"; else -> "नवीन वस्तू मागवा" }) },
+                                    text = {
+                                        Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)) {
+                                            androidx.compose.material3.OutlinedTextField(
+                                                value = moreRequestName,
+                                                onValueChange = { moreRequestName = it },
+                                                label = { Text(when (currentLanguage) { "hi" -> "उत्पाद का नाम"; "en" -> "Item name"; else -> "वस्तूचे नाव" }) },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            androidx.compose.material3.OutlinedTextField(
+                                                value = moreRequestQuantity,
+                                                onValueChange = { moreRequestQuantity = it },
+                                                label = { Text(when (currentLanguage) { "hi" -> "मात्रा"; "en" -> "Quantity"; else -> "प्रमाण" }) },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            androidx.compose.material3.OutlinedTextField(
+                                                value = moreRequestNote,
+                                                onValueChange = { moreRequestNote = it },
+                                                label = { Text(when (currentLanguage) { "hi" -> "अतिरिक्त जानकारी (वैकल्पिक)"; "en" -> "Extra details (optional)"; else -> "अधिक माहिती (ऐच्छिक)" }) },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            moreRequestFeedback?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                                        }
+                                    },
+                                    confirmButton = {
+                                        FilledTonalButton(
+                                            enabled = moreRequestName.isNotBlank() && !moreRequestSending,
+                                            onClick = {
+                                                moreRequestSending = true
+                                                val payload = hashMapOf<String, Any>(
+                                                    "productName" to moreRequestName.trim(),
+                                                    "quantity" to moreRequestQuantity.trim(),
+                                                    "note" to moreRequestNote.trim(),
+                                                    "status" to "pending",
+                                                    "source" to "customer_app_categories",
+                                                    "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                                                    "createdAtMillis" to System.currentTimeMillis()
+                                                )
+                                                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                                    .collection("productRequests").add(payload)
+                                                    .addOnSuccessListener {
+                                                        moreRequestSending = false
+                                                        showMoreRequestDialog = false
+                                                        moreRequestName = ""
+                                                        moreRequestQuantity = ""
+                                                        moreRequestNote = ""
+                                                        moreRequestFeedback = null
+                                                    }
+                                                    .addOnFailureListener {
+                                                        moreRequestSending = false
+                                                        moreRequestFeedback = when (currentLanguage) {
+                                                            "hi" -> "अनुरोध नहीं भेजा गया। फिर कोशिश करें।"
+                                                            "en" -> "Request failed. Please try again."
+                                                            else -> "विनंती पाठवता आली नाही. पुन्हा प्रयत्न करा."
+                                                        }
+                                                    }
+                                            }
+                                        ) {
+                                            Text(if (moreRequestSending) "…" else when (currentLanguage) { "hi" -> "अनुरोध भेजें"; "en" -> "Send request"; else -> "विनंती पाठवा" })
+                                        }
+                                    },
+                                    dismissButton = {
+                                        androidx.compose.material3.TextButton(
+                                            onClick = { if (!moreRequestSending) showMoreRequestDialog = false }
+                                        ) {
+                                            Text(when (currentLanguage) { "hi" -> "रद्द करें"; "en" -> "Cancel"; else -> "रद्द करा" })
+                                        }
+                                    }
+                                )
                             }
                         }
                         AnnapurnaTab.ORDERS -> {
