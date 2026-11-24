@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -44,6 +45,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -360,21 +363,61 @@ fun BazaarHomeScreen(
     }
 
     if (selectedDetailItem != null) {
-        ModalBottomSheet(
+        Dialog(
             onDismissRequest = { onOpenDetail(null) },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            ProduceDetailSheetContent(
-                item = selectedDetailItem,
-                quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
-                onAdd = { weightDialogItem = selectedDetailItem },
-                onDecrease = { onDecreaseQty(selectedDetailItem.id) },
-                onAskAiRecipe = {
-                    val chosen = selectedDetailItem
-                    onOpenDetail(null)
-                    onAskRecipeInChat(chosen)
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(customerText("उत्पादनाची माहिती", "उत्पाद की जानकारी", "Product details"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        IconButton(onClick = { onOpenDetail(null) }) { Icon(Icons.Default.Clear, contentDescription = customerText("बंद करा", "बंद करें", "Close")) }
+                    }
+                    ProduceDetailSheetContent(
+                        item = selectedDetailItem,
+                        quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
+                        isFavorite = selectedDetailItem.id in favoriteIds,
+                        onToggleFavorite = { toggleFavorite(selectedDetailItem.id) },
+                        onAdd = { weightDialogItem = selectedDetailItem },
+                        onDecrease = { onDecreaseQty(selectedDetailItem.id) },
+                        onAskAiRecipe = {
+                            val chosen = selectedDetailItem
+                            onOpenDetail(null)
+                            onAskRecipeInChat(chosen)
+                        }
+                    )
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(customerText("इतर उत्पादने", "अन्य उत्पाद", "Other products"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(produceItems.filter { it.id != selectedDetailItem.id }.take(12), key = { it.id }) { other ->
+                                Card(
+                                    modifier = Modifier.width(142.dp).clickable { onOpenDetail(other) },
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        if (other.imageUrl.isNullOrBlank()) {
+                                            Image(painter = painterResource(id = other.imageRes), contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
+                                        } else {
+                                            AsyncImage(model = other.imageUrl, contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
+                                        }
+                                        Text(other.displayName(), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text("₹${MarathiFormatters.formatRupees(other.priceRupees)}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-            )
+            }
         }
     }
 }
@@ -1228,6 +1271,8 @@ private fun EmptyProduceState(onResetFilter: () -> Unit) {
 private fun ProduceDetailSheetContent(
     item: ProduceItem,
     quantityInCart: Int,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     onAdd: () -> Unit,
     onDecrease: () -> Unit,
     onAskAiRecipe: () -> Unit
@@ -1301,6 +1346,33 @@ private fun ProduceDetailSheetContent(
         )
         Spacer(modifier = Modifier.height(18.dp))
 
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = onAdd,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.weight(1f).height(50.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.btn_add_to_cart))
+            }
+            OutlinedButton(
+                onClick = onToggleFavorite,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.weight(1f).height(50.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = null,
+                    tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(if (isFavorite) customerText("आवडत्या यादीत", "पसंदीदा में", "Wishlisted") else customerText("आवडतीत जोडा", "पसंदीदा में जोड़ें", "Add Favourite"))
+            }
+        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
