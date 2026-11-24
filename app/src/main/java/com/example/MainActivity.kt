@@ -463,6 +463,16 @@ fun AnnapurnaRootApp() {
                                 onDecreaseQty = storeViewModel::decreaseProductQuantity,
                                 onOpenDetail = storeViewModel::openProduceDetail,
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
+                                onOpenAssistant = { currentTab = AnnapurnaTab.ASSISTANT },
+                                onOpenLanguageSettings = { languageMenuExpanded = true },
+                                onOpenOrders = { currentTab = AnnapurnaTab.CART },
+                                onShareApp = {
+                                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(android.content.Intent.EXTRA_TEXT, "Annapurna Vegetables and Fruits — ताज्या भाज्या आणि फळे सहज मागवा!")
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Annapurna share"))
+                                },
                                 onAskRecipeInChat = { produce ->
                                     currentTab = AnnapurnaTab.ASSISTANT
                                     val recipePrompt = when (currentLanguage) {
