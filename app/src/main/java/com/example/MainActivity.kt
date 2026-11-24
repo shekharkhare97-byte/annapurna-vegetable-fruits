@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -472,13 +473,61 @@ fun AnnapurnaRootApp() {
                     when (currentTab) {
                         AnnapurnaTab.CATEGORIES -> {
                             Column(
-                                modifier = contentModifier.padding(20.dp),
-                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+                                modifier = contentModifier.padding(16.dp),
+                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)
                             ) {
-                                Text("श्रेणीनुसार खरेदी", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                                Text("ताज्या भाज्या आणि फळांची श्रेणी निवडा", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                FilledTonalButton(onClick = { storeViewModel.selectCategory(ProduceCategory.VEGETABLE); currentTab = AnnapurnaTab.BAZAAR }, modifier = Modifier.fillMaxWidth()) { Text("🥦  ताज्या भाज्या") }
-                                FilledTonalButton(onClick = { storeViewModel.selectCategory(ProduceCategory.FRUIT); currentTab = AnnapurnaTab.BAZAAR }, modifier = Modifier.fillMaxWidth()) { Text("🍎  रसाळ फळे") }
+                                Surface(
+                                    color = Color(0xFFE8F5E9),
+                                    shape = RoundedCornerShape(20.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(18.dp)) {
+                                        Text("ताजे आणि निवडक", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF12652F))
+                                        Text("तुमच्या आवडीची श्रेणी निवडा", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF52745B))
+                                    }
+                                }
+                                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Surface(
+                                        onClick = { storeViewModel.selectCategory(ProduceCategory.VEGETABLE); currentTab = AnnapurnaTab.BAZAAR },
+                                        color = Color(0xFFF2F8F1),
+                                        shape = RoundedCornerShape(18.dp),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDCEBDD)),
+                                        modifier = Modifier.weight(1f).height(154.dp)
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                                            modifier = Modifier.padding(12.dp)
+                                        ) {
+                                            Text("🥦", style = MaterialTheme.typography.displaySmall)
+                                            Text("ताज्या भाज्या", fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
+                                            Text("रोजच्या वापरासाठी", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                    Surface(
+                                        onClick = { storeViewModel.selectCategory(ProduceCategory.FRUIT); currentTab = AnnapurnaTab.BAZAAR },
+                                        color = Color(0xFFFFF7ED),
+                                        shape = RoundedCornerShape(18.dp),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1E3D2)),
+                                        modifier = Modifier.weight(1f).height(154.dp)
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                                            modifier = Modifier.padding(12.dp)
+                                        ) {
+                                            Text("🍎", style = MaterialTheme.typography.displaySmall)
+                                            Text("ताजी फळे", fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
+                                            Text("गोड आणि रसाळ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                }
+                                FilledTonalButton(
+                                    onClick = { storeViewModel.selectCategory(ProduceCategory.ALL); currentTab = AnnapurnaTab.BAZAAR },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("🛍️  सर्व उत्पादने पहा")
+                                }
                             }
                         }
                         AnnapurnaTab.ORDERS -> {
