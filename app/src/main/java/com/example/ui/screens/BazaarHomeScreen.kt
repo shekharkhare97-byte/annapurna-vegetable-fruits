@@ -184,6 +184,10 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                AnnapurnaAiHomeCard(onClick = onOpenAssistant)
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 CustomerFeatureShortcuts(
                     onOffers = { onSelectCategory(ProduceCategory.ALL) },
                     onNewArrivals = { onSelectCategory(ProduceCategory.ALL) },
@@ -368,6 +372,66 @@ fun BazaarHomeScreen(
                     onOpenDetail(null)
                     onAskRecipeInChat(chosen)
                 }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnnapurnaAiHomeCard(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = Color(0xFFEAF6EC),
+        contentColor = Color(0xFF145C2C),
+        shape = RoundedCornerShape(20.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD5EAD8)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                color = Color(0xFFD4EED9),
+                shape = RoundedCornerShape(15.dp),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "Annapurna AI",
+                        tint = Color(0xFF14743A),
+                        modifier = Modifier.size(27.dp)
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = "Annapurna AI",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF145C2C)
+                )
+                Text(
+                    text = customerText(
+                        "भाजी-फळांची माहिती, पाककृती आणि शोधासाठी AI ला विचारा",
+                        "सब्ज़ियों-फलों की जानकारी, रेसिपी और खोज के लिए AI से पूछें",
+                        "Ask AI about produce, recipes and finding products"
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF416B4D),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = Color(0xFF14743A)
             )
         }
     }
