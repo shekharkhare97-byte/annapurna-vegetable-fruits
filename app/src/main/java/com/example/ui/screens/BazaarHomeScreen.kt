@@ -175,7 +175,8 @@ fun BazaarHomeScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 CategoryFilterRow(
                     selectedCategory = selectedCategory,
-                    onSelectCategory = onSelectCategory
+                    onSelectCategory = onSelectCategory,
+                    onRequestProduct = { showProductRequest = true }
                 )
             }
 
@@ -732,60 +733,79 @@ private fun SearchAndFilterBar(
 @Composable
 private fun CategoryFilterRow(
     selectedCategory: ProduceCategory,
-    onSelectCategory: (ProduceCategory) -> Unit
+    onSelectCategory: (ProduceCategory) -> Unit,
+    onRequestProduct: () -> Unit
 ) {
-    val allCount = ProduceCatalog.items.size
-    val vegCount = ProduceCatalog.items.count { it.category == ProduceCategory.VEGETABLE }
-    val fruitCount = ProduceCatalog.items.count { it.category == ProduceCategory.FRUIT }
-    Column {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 2.dp)
-            ) {
-                val categoriesWithCounts = listOf(
-                    ProduceCategory.ALL to allCount,
-                    ProduceCategory.VEGETABLE to vegCount,
-                    ProduceCategory.FRUIT to fruitCount
-                )
-                items(categoriesWithCounts) { (category, count) ->
-                    val isSelected = selectedCategory == category
-                    val categoryLabel = when (category) {
-                        ProduceCategory.ALL -> customerText("सर्व", "सभी", "All")
-                        ProduceCategory.VEGETABLE -> customerText("भाज्या", "सब्ज़ियाँ", "Vegetables")
-                        ProduceCategory.FRUIT -> customerText("फळे", "फल", "Fruits")
+    data class HomeCategory(val emoji: String, val mr: String, val hi: String, val en: String, val category: ProduceCategory?, val request: Boolean = false)
+    val categories = listOf(
+        HomeCategory("🥬", "भाज्या", "सब्ज़ियाँ", "Vegetables", ProduceCategory.VEGETABLE),
+        HomeCategory("🍎", "फळे", "फल", "Fruits", ProduceCategory.FRUIT),
+        HomeCategory("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.VEGETABLE),
+        HomeCategory("🎁", "ऑफर्स", "ऑफर", "Offers", ProduceCategory.ALL),
+        HomeCategory("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ALL),
+        HomeCategory("🧺", "दैनंदिन गरजा", "रोज़मर्रा", "Daily Needs", ProduceCategory.ALL),
+        HomeCategory("📦", "कॉम्बो पॅक", "कॉम्बो पैक", "Combo Packs", ProduceCategory.ALL),
+        HomeCategory("＋", "अधिक", "और", "More", null, request = true)
+    )
+    val language = androidx.compose.ui.platform.LocalContext.current.resources.configuration.locales[0].language
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            customerText("कॅटेगरी निवडा", "श्रेणी चुनें", "Shop by category"),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            userScrollEnabled = false,
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+            modifier = Modifier.height(174.dp)
+        ) {
+            items(categories.size) { index ->
+                val item = categories[index]
+                val label = when (language) {
+                    "hi" -> item.hi
+                    "en" -> item.en
+                    else -> item.mr
+                }
+                val selected = item.category != null && selectedCategory == item.category &&
+                    (item.category != ProduceCategory.ALL)
+                Surface(
+                    onClick = {
+                        if (item.request) onRequestProduct()
+                        else item.category?.let(onSelectCategory)
+                    },
+                    color = if (selected) Color(0xFFE1F2E4) else Color(0xFFF3F8F2),
+                    shape = RoundedCornerShape(15.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (selected) Color(0xFF16843B) else Color(0xFFE1ECE1)
+                    ),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp)
+                    ) {
+                        Text(item.emoji, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            color = Color(0xFF315C3A)
+                        )
                     }
-                    val chipLabel = "$categoryLabel (${MarathiFormatters.toMarathiNumber(count)})"
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { onSelectCategory(category) },
-                        label = {
-                            Text(
-                                text = chipLabel,
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF16843B),
-                            selectedLabelColor = Color.White,
-                            containerColor = Color(0xFFF2F8F1),
-                            labelColor = Color(0xFF315C3A)
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = Color(0xFFDCEBDD),
-                            selectedBorderColor = Color(0xFF16843B)
-                        ),
-                        modifier = Modifier
-                            .minimumInteractiveComponentSize()
-                            .testTag("category_chip_${category.name.lowercase()}")
-                    )
                 }
             }
+        }
     }
 }
-
 
 @Composable
 private fun ProduceGridCard(
