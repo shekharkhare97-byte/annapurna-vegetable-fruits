@@ -401,7 +401,7 @@ fun AnnapurnaRootApp() {
                         containerColor = Color.White,
                         tonalElevation = 8.dp
                     ) {
-                        AnnapurnaTab.entries.forEach { tab ->
+                        AnnapurnaTab.entries.filter { it != AnnapurnaTab.ASSISTANT }.forEach { tab ->
                             val selected = currentTab == tab
                             NavigationBarItem(
                                 selected = selected,
@@ -445,7 +445,7 @@ fun AnnapurnaRootApp() {
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         modifier = Modifier.fillMaxHeight()
                     ) {
-                        AnnapurnaTab.entries.forEach { tab ->
+                        AnnapurnaTab.entries.filter { it != AnnapurnaTab.ASSISTANT }.forEach { tab ->
                             val selected = currentTab == tab
                             NavigationRailItem(
                                 selected = selected,
