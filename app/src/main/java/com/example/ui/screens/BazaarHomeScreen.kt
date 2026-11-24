@@ -169,7 +169,10 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                HeroMarketBanner()
+                HeroMarketBanner(onShopNow = {
+                    onSelectCategory(ProduceCategory.ALL)
+                    onSearchQueryChange("")
+                })
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -534,7 +537,7 @@ private fun StoreBrandHeader() {
 }
 
 @Composable
-private fun HeroMarketBanner() {
+private fun HeroMarketBanner(onShopNow: () -> Unit) {
     Card(
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -608,6 +611,22 @@ private fun HeroMarketBanner() {
                         color = Color.White.copy(alpha = 0.92f),
                         maxLines = 2
                     )
+                    Spacer(modifier = Modifier.height(9.dp))
+                    Button(
+                        onClick = onShopNow,
+                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF12652F)
+                        ),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(
+                            customerText("आत्ताच खरेदी करा", "अभी खरीदें", "Shop Now"),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
             }
         }
