@@ -108,6 +108,7 @@ fun CartAndOrderScreen(
     trackingStatus: String,
     trackingLocation: String,
     trackingUpdatedAtMillis: Long?,
+    customerDestination: String,
     trackingPartnerAccepted: Boolean,
     trackingPartnerName: String,
     onIncreaseQty: (String) -> Unit,
@@ -557,11 +558,16 @@ fun CartAndOrderScreen(
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.SemiBold
                                     )
+                                    val destinationParts = customerDestination.split(",")
+                                    val customerLat = destinationParts.getOrNull(0)?.toDoubleOrNull()
+                                    val customerLon = destinationParts.getOrNull(1)?.toDoubleOrNull()
                                     OpenStreetMapView(
                                         latitude = driverLatitude,
                                         longitude = driverLongitude,
                                         markerTitle = trackingPartnerName.ifBlank { "Delivery Partner" },
                                         markerSnippet = "Live location",
+                                        destinationLatitude = customerLat,
+                                        destinationLongitude = customerLon,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(300.dp)
