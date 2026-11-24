@@ -259,8 +259,8 @@ fun BazaarHomeScreen(
                     )
                 }
             }
-        }
             }
+        }
 
 
         AnimatedVisibility(
