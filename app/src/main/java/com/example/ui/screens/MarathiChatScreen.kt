@@ -86,6 +86,8 @@ private val marathiChatSuggestions = listOf(
 @Composable
 fun MarathiChatScreen(
     chatState: ChatUiState,
+    startAction: String? = null,
+    onStartActionConsumed: () -> Unit = {},
     onSelectModelTier: (ChatModelTier) -> Unit,
     onInputChange: (String) -> Unit,
     onSendMessage: (String?, String?, String?) -> Unit,
@@ -167,6 +169,36 @@ fun MarathiChatScreen(
             recognizer?.destroy()
             recognizer = null
             listening = false
+        }
+    }
+
+    // Home-screen shortcuts open the exact input tool instead of leaving the
+    // customer to find the microphone or photo button inside the chat.
+    LaunchedEffect(startAction) {
+        when (startAction) {
+            "photo" -> {
+                speechError = null
+                photoPicker.launch("image/*")
+                onStartActionConsumed()
+            }
+            "voice" -> {
+                speechError = null
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    val speechIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, speechLanguage)
+                    }
+                    try {
+                        recognizer?.startListening(speechIntent)
+                        listening = true
+                    } catch (_: Exception) {
+                        speechError = "माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा."
+                    }
+                } else {
+                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+                onStartActionConsumed()
+            }
         }
     }
 
