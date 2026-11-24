@@ -110,6 +110,7 @@ fun BazaarHomeScreen(
     onAskRecipeInChat: (ProduceItem) -> Unit,
     onOpenAssistant: () -> Unit,
     onOpenOffers: () -> Unit,
+    onOpenNewArrivals: () -> Unit,
     onOpenLanguageSettings: () -> Unit,
     onOpenOrders: () -> Unit,
     onShareApp: () -> Unit,
@@ -188,7 +189,7 @@ fun BazaarHomeScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 CustomerFeatureShortcuts(
                     onOffers = onOpenOffers,
-                    onNewArrivals = onOpenOffers,
+                    onNewArrivals = onOpenNewArrivals,
                     onLanguage = onOpenLanguageSettings,
                     onVoiceSearch = onOpenAssistant,
                     onPhotoSearch = onOpenAssistant,
