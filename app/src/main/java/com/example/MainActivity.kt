@@ -90,6 +90,7 @@ import com.example.ui.screens.CustomerWelcomeFlow
 import com.example.ui.screens.CartAndOrderScreen
 import com.example.ui.screens.MarathiChatScreen
 import com.example.ui.screens.CustomerProfileScreen
+import com.example.ui.screens.CustomerOrdersScreen
 import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
 import com.example.ui.viewmodel.StoreViewModel
@@ -481,18 +482,8 @@ fun AnnapurnaRootApp() {
                             }
                         }
                         AnnapurnaTab.ORDERS -> {
-                            CustomerProfileScreen(
-                                formState = formState,
-                                recentOrders = recentOrders,
-                                produceItems = produceItems,
-                                trackingStatus = trackingStatus,
-                                trackingLocation = trackingLocation,
-                                trackingUpdatedAtMillis = trackingUpdatedAtMillis,
-                                onNameChange = storeViewModel::updateCustomerName,
-                                onMobileChange = storeViewModel::updateMobileNumber,
-                                onAddressChange = storeViewModel::updateDeliveryAddress,
-                                onSaveProfile = storeViewModel::saveCustomerProfileForEntry,
-                                onOpenOrders = { currentTab = AnnapurnaTab.ORDERS },
+                            CustomerOrdersScreen(
+                                orders = recentOrders,
                                 modifier = contentModifier
                             )
                         }
