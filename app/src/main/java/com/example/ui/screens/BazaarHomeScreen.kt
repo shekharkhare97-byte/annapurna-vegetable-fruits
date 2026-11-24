@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,6 +61,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -114,6 +116,12 @@ fun BazaarHomeScreen(
     val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
     var weightDialogItem by remember { mutableStateOf<ProduceItem?>(null) }
+    var showProductRequest by remember { mutableStateOf(false) }
+    var requestedProductName by remember { mutableStateOf("") }
+    var requestedProductQuantity by remember { mutableStateOf("") }
+    var requestedProductNote by remember { mutableStateOf("") }
+    var productRequestSending by remember { mutableStateOf(false) }
+    var productRequestMessage by remember { mutableStateOf<String?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val favoritePrefs = remember { context.getSharedPreferences("annapurna_favorites", android.content.Context.MODE_PRIVATE) }
     val favoriteIds = remember { mutableStateListOf<String>().apply {
@@ -154,6 +162,28 @@ fun BazaarHomeScreen(
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 HeroMarketBanner()
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(customerText("नवीन वस्तू मागवा", "नई चीज़ मँगवाएँ", "Request a new item"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                            Text(customerText("दुकानात नसलेली वस्तूही मागवू शकता", "दुकान में न होने वाली चीज़ भी माँगें", "Ask us to source an item not listed"), style = MaterialTheme.typography.bodySmall)
+                        }
+                        Button(onClick = { showProductRequest = true }) {
+                            Text(customerText("मागवा", "मँगवाएँ", "Request"))
+                        }
+                    }
+                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -261,6 +291,75 @@ fun BazaarHomeScreen(
                 onGoToCart = onGoToCart
             )
         }
+    }
+
+    if (showProductRequest) {
+        AlertDialog(
+            onDismissRequest = { if (!productRequestSending) showProductRequest = false },
+            title = { Text(customerText("नवीन वस्तू मागवा", "नई चीज़ मँगवाएँ", "Request a new item")) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = requestedProductName,
+                        onValueChange = { requestedProductName = it },
+                        label = { Text(customerText("वस्तूचे नाव", "वस्तु का नाम", "Item name")) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = requestedProductQuantity,
+                        onValueChange = { requestedProductQuantity = it },
+                        label = { Text(customerText("प्रमाण (उदा. २ किलो)", "मात्रा (जैसे २ किलो)", "Quantity (e.g. 2 kg)")) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = requestedProductNote,
+                        onValueChange = { requestedProductNote = it },
+                        label = { Text(customerText("अधिक माहिती (ऐच्छिक)", "अधिक जानकारी (वैकल्पिक)", "Extra details (optional)")) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    productRequestMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = requestedProductName.isNotBlank() && !productRequestSending,
+                    onClick = {
+                        productRequestSending = true
+                        val request = hashMapOf<String, Any>(
+                            "productName" to requestedProductName.trim(),
+                            "quantity" to requestedProductQuantity.trim(),
+                            "note" to requestedProductNote.trim(),
+                            "status" to "pending",
+                            "source" to "customer_app",
+                            "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                            "createdAtMillis" to System.currentTimeMillis()
+                        )
+                        FirebaseFirestore.getInstance().collection("productRequests").add(request)
+                            .addOnSuccessListener {
+                                productRequestSending = false
+                                showProductRequest = false
+                                requestedProductName = ""
+                                requestedProductQuantity = ""
+                                requestedProductNote = ""
+                                productRequestMessage = null
+                            }
+                            .addOnFailureListener { error ->
+                                productRequestSending = false
+                                productRequestMessage = customerText(
+                                    "विनंती पाठवता आली नाही. कृपया पुन्हा प्रयत्न करा.",
+                                    "अनुरोध नहीं भेजा जा सका। कृपया फिर कोशिश करें।",
+                                    "Could not send request. Please try again."
+                                )
+                            }
+                    }
+                ) { Text(if (productRequestSending) customerText("पाठवत आहे…", "भेज रहे हैं…", "Sending…") else customerText("विनंती पाठवा", "अनुरोध भेजें", "Send request")) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showProductRequest = false }) { Text(customerText("रद्द करा", "रद्द करें", "Cancel")) }
+            }
+        )
     }
 
     if (weightDialogItem != null) {
