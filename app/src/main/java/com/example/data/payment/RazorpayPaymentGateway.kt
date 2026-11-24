@@ -102,6 +102,31 @@ object RazorpayPaymentGateway {
         }
         throw lastError ?: IOException("Payment capture could not be confirmed. Please check the payment status before retrying.")
     }
+    /** Saves a COD order and decrements product stock in one trusted Firestore commit. */
+    suspend fun submitCodOrder(
+        order: Map<String, Any>,
+        tracking: Map<String, Any>
+    ): Boolean = withContext(Dispatchers.IO) {
+        val payload = JSONObject()
+            .put("order", JSONObject(order))
+            .put("tracking", JSONObject(tracking))
+        val request = Request.Builder()
+            .url("$BASE_URL/submit-cod-order")
+            .post(payload.toString().toRequestBody(jsonMediaType))
+            .build()
+        val response = client.newCall(request).execute()
+        response.use {
+            val body = it.body?.string().orEmpty()
+            val data = runCatching { JSONObject(body) }.getOrElse {
+                throw IOException("Order server returned an invalid response.")
+            }
+            if (!it.isSuccessful || !data.optBoolean("saved", false)) {
+                throw IOException(data.optString("error").ifBlank { "COD order could not be saved." })
+            }
+            true
+        }
+    }
+
     /** Verifies a captured Razorpay payment and atomically saves its order + public tracking record. */
     suspend fun submitPaidOrder(
         orderId: String,
