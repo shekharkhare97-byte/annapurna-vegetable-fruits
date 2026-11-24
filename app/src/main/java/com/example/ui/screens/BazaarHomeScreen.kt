@@ -383,16 +383,9 @@ fun BazaarHomeScreen(
                     }
                     ProduceDetailSheetContent(
                         item = selectedDetailItem,
-                        quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
                         isFavorite = selectedDetailItem.id in favoriteIds,
                         onToggleFavorite = { toggleFavorite(selectedDetailItem.id) },
-                        onAdd = { weightDialogItem = selectedDetailItem },
-                        onDecrease = { onDecreaseQty(selectedDetailItem.id) },
-                        onAskAiRecipe = {
-                            val chosen = selectedDetailItem
-                            onOpenDetail(null)
-                            onAskRecipeInChat(chosen)
-                        }
+                        onAdd = { weightDialogItem = selectedDetailItem }
                     )
                     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(customerText("इतर उत्पादने", "अन्य उत्पाद", "Other products"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -1270,12 +1263,9 @@ private fun EmptyProduceState(onResetFilter: () -> Unit) {
 @Composable
 private fun ProduceDetailSheetContent(
     item: ProduceItem,
-    quantityInCart: Int,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    onAdd: () -> Unit,
-    onDecrease: () -> Unit,
-    onAskAiRecipe: () -> Unit
+    onAdd: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -1371,73 +1361,6 @@ private fun ProduceDetailSheetContent(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(if (isFavorite) customerText("आवडत्या यादीत", "पसंदीदा में", "Wishlisted") else customerText("आवडतीत जोडा", "पसंदीदा में जोड़ें", "Add Favourite"))
-            }
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedButton(
-                onClick = onAskAiRecipe,
-                shape = MaterialTheme.shapes.small,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp)
-                    .testTag("ask_ai_recipe_button")
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ask_ai_recipe))
-            }
-
-            if (quantityInCart == 0) {
-                Button(
-                    onClick = onAdd,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.btn_add_to_cart))
-                }
-            } else {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        IconButton(onClick = onDecrease) {
-                            Icon(
-                                imageVector = Icons.Default.Remove,
-                                contentDescription = stringResource(R.string.cd_decrease_qty)
-                            )
-                        }
-                        Text(
-                            text = MarathiFormatters.toMarathiNumber(quantityInCart),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        IconButton(onClick = onAdd) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = stringResource(R.string.cd_increase_qty)
-                            )
-                        }
-                    }
-                }
             }
         }
     }
