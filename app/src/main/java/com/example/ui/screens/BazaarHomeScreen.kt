@@ -169,7 +169,7 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                HeroMarketBanner(onShopNow = {
+                LiveOffersHeroBanner(onOfferClick = {
                     onSelectCategory(ProduceCategory.ALL)
                     onSearchQueryChange("")
                 })
@@ -181,10 +181,6 @@ fun BazaarHomeScreen(
                     onSelectCategory = onSelectCategory,
                     onRequestProduct = { showProductRequest = true }
                 )
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                CustomerOffersStrip()
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
