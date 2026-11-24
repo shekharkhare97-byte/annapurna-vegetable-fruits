@@ -130,11 +130,11 @@ fun BazaarHomeScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 8.dp,
-                bottom = if (totalCartQty > 0) 104.dp else 24.dp
+                top = 14.dp,
+                bottom = if (totalCartQty > 0) 104.dp else 28.dp
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .testTag("produce_grid")
@@ -297,7 +297,7 @@ fun BazaarHomeScreen(
 @Composable
 private fun StoreBrandHeader() {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -312,7 +312,7 @@ private fun StoreBrandHeader() {
                 Surface(
                     shape = RoundedCornerShape(15.dp),
                     color = Color(0xFFE8F5E9),
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(56.dp)
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_launcher_logo),
@@ -416,7 +416,7 @@ private fun HeroMarketBanner() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(142.dp)
+                .height(178.dp)
         ) {
             Image(
                 painter = painterResource(id = R.drawable.img_hero_banner),
@@ -669,7 +669,7 @@ private fun ProduceGridCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.98f)
+                    .aspectRatio(1.08f)
                     .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
