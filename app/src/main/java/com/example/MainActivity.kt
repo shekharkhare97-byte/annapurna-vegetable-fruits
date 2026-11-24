@@ -252,7 +252,7 @@ fun AnnapurnaRootApp() {
         }
     }
 
-    var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
+    var currentTab by remember { mutableStateOf(AnnapurnaTab.BAZAAR) }
 
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
     val selectedCategory by storeViewModel.selectedCategory.collectAsStateWithLifecycle()
@@ -281,7 +281,8 @@ fun AnnapurnaRootApp() {
         Scaffold(
             contentWindowInsets = WindowInsets.safeDrawing,
             topBar = {
-                TopAppBar(
+                if (currentTab != AnnapurnaTab.BAZAAR) {
+                    TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
@@ -370,7 +371,8 @@ fun AnnapurnaRootApp() {
                         titleContentColor = Color.White,
                         actionIconContentColor = Color.White
                     )
-                )
+                    )
+                }
             },
             bottomBar = {
                 if (!isWideScreen) {
