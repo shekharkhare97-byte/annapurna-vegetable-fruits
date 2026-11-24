@@ -108,6 +108,10 @@ fun BazaarHomeScreen(
     onOpenDetail: (ProduceItem?) -> Unit,
     onGoToCart: () -> Unit,
     onAskRecipeInChat: (ProduceItem) -> Unit,
+    onOpenAssistant: () -> Unit,
+    onOpenLanguageSettings: () -> Unit,
+    onOpenOrders: () -> Unit,
+    onShareApp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val qtyMap = remember(cartItems) {
@@ -130,6 +134,10 @@ fun BazaarHomeScreen(
     fun toggleFavorite(id: String) {
         if (id in favoriteIds) favoriteIds.remove(id) else favoriteIds.add(id)
         favoritePrefs.edit().putStringSet("ids", favoriteIds.toSet()).apply()
+    }
+    var showFavoritesOnly by remember { mutableStateOf(false) }
+    val visibleItems = remember(produceItems, favoriteIds.toList(), showFavoritesOnly) {
+        if (showFavoritesOnly) produceItems.filter { it.id in favoriteIds } else produceItems
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -191,6 +199,20 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                CustomerFeatureShortcuts(
+                    onOffers = { onSelectCategory(ProduceCategory.ALL); onSearchQueryChange("") },
+                    onNewArrivals = { showFavoritesOnly = false; onSelectCategory(ProduceCategory.ALL); onSearchQueryChange("") },
+                    onLanguage = onOpenLanguageSettings,
+                    onVoiceSearch = onOpenAssistant,
+                    onPhotoSearch = onOpenAssistant,
+                    onRefer = onShareApp,
+                    onWishlist = { showFavoritesOnly = !showFavoritesOnly },
+                    onNotifications = onOpenOrders,
+                    wishlistSelected = showFavoritesOnly
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -242,7 +264,7 @@ fun BazaarHomeScreen(
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(
-                            text = MarathiFormatters.toMarathiNumber(produceItems.size),
+                            text = MarathiFormatters.toMarathiNumber(visibleItems.size),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             fontWeight = FontWeight.Bold,
@@ -252,7 +274,7 @@ fun BazaarHomeScreen(
                 }
             }
 
-            if (produceItems.isEmpty()) {
+            if (visibleItems.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyProduceState(onResetFilter = {
                         onSearchQueryChange("")
@@ -261,7 +283,7 @@ fun BazaarHomeScreen(
                 }
             } else {
                 items(
-                    items = produceItems,
+                    items = visibleItems,
                     key = { it.id }
                 ) { item ->
                     ProduceGridCard(
@@ -390,6 +412,69 @@ fun BazaarHomeScreen(
                     onAskRecipeInChat(chosen)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun CustomerFeatureShortcuts(
+    onOffers: () -> Unit,
+    onNewArrivals: () -> Unit,
+    onLanguage: () -> Unit,
+    onVoiceSearch: () -> Unit,
+    onPhotoSearch: () -> Unit,
+    onRefer: () -> Unit,
+    onWishlist: () -> Unit,
+    onNotifications: () -> Unit,
+    wishlistSelected: Boolean
+) {
+    val tiles = listOf(
+        Triple("🎁", customerText("Live Offers", "Live Offers", "Live Offers"), onOffers),
+        Triple("🆕", customerText("नवीन आगमन", "नए उत्पाद", "New Arrivals"), onNewArrivals),
+        Triple("🌐", customerText("भाषा", "भाषा", "Language"), onLanguage),
+        Triple("🎙️", customerText("आवाज शोध", "आवाज़ से खोजें", "Voice Search"), onVoiceSearch),
+        Triple("📷", customerText("फोटोने शोधा", "फोटो से खोजें", "Search by Photo"), onPhotoSearch),
+        Triple("👥", customerText("मित्रांना सांगा", "दोस्तों को बताएँ", "Refer & Earn"), onRefer),
+        Triple("❤️", customerText("आवडती यादी", "पसंदीदा सूची", "Wishlist"), onWishlist),
+        Triple("🔔", customerText("ऑर्डर सूचना", "ऑर्डर सूचनाएँ", "Notifications"), onNotifications)
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(
+            customerText("तुमच्यासाठी खास सुविधा", "आपके लिए खास सुविधाएँ", "Quick features"),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            userScrollEnabled = false,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.height(176.dp)
+        ) {
+            items(tiles.size) { index ->
+                val tile = tiles[index]
+                Surface(
+                    onClick = tile.third,
+                    color = if (index == 6 && wishlistSelected) MaterialTheme.colorScheme.primaryContainer else Color(0xFFF1F8F2),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 3.dp, vertical = 7.dp)
+                    ) {
+                        Text(tile.first, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            tile.second,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
         }
     }
 }
