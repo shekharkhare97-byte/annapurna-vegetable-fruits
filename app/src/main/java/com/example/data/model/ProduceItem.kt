@@ -9,7 +9,11 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class ProduceCategory(val marathiLabel: String) {
     ALL("सर्व"),
     VEGETABLE("ताज्या भाज्या"),
-    FRUIT("रसाळ फळे")
+    FRUIT("रसाळ फळे"),
+    LEAFY_GREENS("पालेभाज्या"),
+    ORGANIC("सेंद्रिय"),
+    DAILY_NEEDS("दैनंदिन गरजा"),
+    COMBO_PACKS("कॉम्बो पॅक्स")
 }
 
 data class ProduceItem(
@@ -28,7 +32,8 @@ data class ProduceItem(
     val englishName: String = "",
     val hindiDescription: String = "",
     val englishDescription: String = "",
-    val stockQuantity: Double = 0.0
+    val stockQuantity: Double = 0.0,
+    val catalogSection: String = ""
 ) {
     val isOutOfStock: Boolean get() = stockQuantity <= 0.0
     private fun languageCode(): String = java.util.Locale.getDefault().language
