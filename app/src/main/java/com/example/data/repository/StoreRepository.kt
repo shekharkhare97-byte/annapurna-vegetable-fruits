@@ -214,15 +214,10 @@ class StoreRepository(private val storeDao: StoreDao) {
             "orderId" to remoteOrder.id
         )
         if (paymentMethod == "COD") {
-            val batch = firestore.batch()
-            batch.set(remoteOrder, remoteOrderData)
-            batch.set(firestore.collection("orderTracking").document(trackingToken), trackingData)
-            // COD remains a customer-created pending order.
-            suspendCancellableCoroutine<Unit> { continuation ->
-                batch.commit()
-                    .addOnSuccessListener { if (continuation.isActive) continuation.resume(Unit) }
-                    .addOnFailureListener { error -> if (continuation.isActive) continuation.resumeWithException(error) }
-            }
+            // Trusted Worker checks current stock and writes the order, tracking,
+            // and stock deductions atomically to prevent overselling.
+            val saved = RazorpayPaymentGateway.submitCodOrder(remoteOrderData, trackingData)
+            check(saved) { "COD order could not be saved with stock reservation." }
         } else {
             require(paymentOrderId.isNotBlank() && paymentSignature.isNotBlank() && transactionId.isNotBlank()) {
                 "Verified Razorpay payment details are missing."
