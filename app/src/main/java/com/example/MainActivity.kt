@@ -300,6 +300,7 @@ fun AnnapurnaRootApp() {
     val trackingStatus by storeViewModel.trackingStatus.collectAsStateWithLifecycle()
     val trackingLocation by storeViewModel.trackingLocation.collectAsStateWithLifecycle()
     val trackingUpdatedAtMillis by storeViewModel.trackingUpdatedAtMillis.collectAsStateWithLifecycle()
+    val customerDestination by storeViewModel.customerDestination.collectAsStateWithLifecycle()
     val trackingPartnerAccepted by storeViewModel.trackingPartnerAccepted.collectAsStateWithLifecycle()
     val trackingPartnerName by storeViewModel.trackingPartnerName.collectAsStateWithLifecycle()
 
@@ -654,6 +655,7 @@ fun AnnapurnaRootApp() {
                                 trackingStatus = trackingStatus,
                                 trackingLocation = trackingLocation,
                                 trackingUpdatedAtMillis = trackingUpdatedAtMillis,
+                                customerDestination = customerDestination,
                                 trackingPartnerAccepted = trackingPartnerAccepted,
                                 trackingPartnerName = trackingPartnerName,
                                 onIncreaseQty = storeViewModel::increaseQuantity,
