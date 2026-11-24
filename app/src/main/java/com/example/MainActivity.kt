@@ -95,6 +95,7 @@ import com.example.ui.screens.MarathiChatScreen
 import com.example.ui.screens.CustomerProfileScreen
 import com.example.ui.screens.CustomerOrdersScreen
 import com.example.ui.screens.LiveOffersScreen
+import com.example.ui.screens.NewArrivalsScreen
 import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
 import com.example.ui.viewmodel.StoreViewModel
@@ -115,6 +116,12 @@ enum class AnnapurnaTab(
         selectedIcon = Icons.Filled.Storefront,
         unselectedIcon = Icons.Outlined.Storefront,
         tag = "nav_tab_bazaar"
+    ),
+    NEW_ARRIVALS(
+        labelRes = R.string.nav_categories,
+        selectedIcon = Icons.Filled.Eco,
+        unselectedIcon = Icons.Filled.Eco,
+        tag = "nav_tab_new_arrivals"
     ),
     OFFERS(
         labelRes = R.string.nav_categories,
@@ -408,7 +415,7 @@ fun AnnapurnaRootApp() {
                         containerColor = Color.White,
                         tonalElevation = 8.dp
                     ) {
-                        AnnapurnaTab.entries.filter { it != AnnapurnaTab.ASSISTANT && it != AnnapurnaTab.OFFERS }.forEach { tab ->
+                        AnnapurnaTab.entries.filter { it != AnnapurnaTab.ASSISTANT && it != AnnapurnaTab.OFFERS && it != AnnapurnaTab.NEW_ARRIVALS }.forEach { tab ->
                             val selected = currentTab == tab
                             NavigationBarItem(
                                 selected = selected,
@@ -480,6 +487,9 @@ fun AnnapurnaRootApp() {
                         .fillMaxSize()
 
                     when (currentTab) {
+                        AnnapurnaTab.NEW_ARRIVALS -> {
+                            NewArrivalsScreen(onBack = { currentTab = AnnapurnaTab.BAZAAR }, modifier = contentModifier)
+                        }
                         AnnapurnaTab.OFFERS -> {
                             LiveOffersScreen(onBack = { currentTab = AnnapurnaTab.BAZAAR }, modifier = contentModifier)
                         }
@@ -609,6 +619,7 @@ fun AnnapurnaRootApp() {
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
                                 onOpenAssistant = { currentTab = AnnapurnaTab.ASSISTANT },
                                 onOpenOffers = { currentTab = AnnapurnaTab.OFFERS },
+                                onOpenNewArrivals = { currentTab = AnnapurnaTab.NEW_ARRIVALS },
                                 onOpenLanguageSettings = { languageMenuExpanded = true },
                                 onOpenOrders = { currentTab = AnnapurnaTab.ORDERS },
                                 onShareApp = {
