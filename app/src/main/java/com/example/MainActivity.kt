@@ -482,8 +482,8 @@ fun AnnapurnaRootApp() {
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Column(modifier = Modifier.padding(18.dp)) {
-                                        Text("ताजे आणि निवडक", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF12652F))
-                                        Text("तुमच्या आवडीची श्रेणी निवडा", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF52745B))
+                                        Text(when (currentLanguage) { "hi" -> "ताज़ा और चुनिंदा"; "en" -> "Fresh & Handpicked"; else -> "ताजे आणि निवडक" }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF12652F))
+                                        Text(when (currentLanguage) { "hi" -> "अपनी पसंद की श्रेणी चुनें"; "en" -> "Choose a category you love"; else -> "तुमच्या आवडीची श्रेणी निवडा" }, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF52745B))
                                     }
                                 }
                                 Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
@@ -500,8 +500,8 @@ fun AnnapurnaRootApp() {
                                             modifier = Modifier.padding(12.dp)
                                         ) {
                                             Text("🥦", style = MaterialTheme.typography.displaySmall)
-                                            Text("ताज्या भाज्या", fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
-                                            Text("रोजच्या वापरासाठी", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(when (currentLanguage) { "hi" -> "ताज़ी सब्ज़ियाँ"; "en" -> "Fresh Vegetables"; else -> "ताज्या भाज्या" }, fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
+                                            Text(when (currentLanguage) { "hi" -> "रोज़मर्रा के लिए"; "en" -> "For everyday cooking"; else -> "रोजच्या वापरासाठी" }, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     }
                                     Surface(
@@ -517,8 +517,8 @@ fun AnnapurnaRootApp() {
                                             modifier = Modifier.padding(12.dp)
                                         ) {
                                             Text("🍎", style = MaterialTheme.typography.displaySmall)
-                                            Text("ताजी फळे", fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
-                                            Text("गोड आणि रसाळ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(when (currentLanguage) { "hi" -> "ताज़े फल"; "en" -> "Fresh Fruits"; else -> "ताजी फळे" }, fontWeight = FontWeight.Bold, color = Color(0xFF12652F))
+                                            Text(when (currentLanguage) { "hi" -> "मीठे और रसीले"; "en" -> "Sweet & juicy"; else -> "गोड आणि रसाळ" }, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     }
                                 }
@@ -526,7 +526,7 @@ fun AnnapurnaRootApp() {
                                     onClick = { storeViewModel.selectCategory(ProduceCategory.ALL); currentTab = AnnapurnaTab.BAZAAR },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("🛍️  सर्व उत्पादने पहा")
+                                    Text(when (currentLanguage) { "hi" -> "🛍️  सभी उत्पाद देखें"; "en" -> "🛍️  Browse all products"; else -> "🛍️  सर्व उत्पादने पहा" })
                                 }
                             }
                         }
