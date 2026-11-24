@@ -545,11 +545,13 @@ fun AnnapurnaRootApp() {
                                         }
                                         Surface(
                                             onClick = {
-                                                if (tile.category == null) {
-                                                    currentTab = AnnapurnaTab.PROFILE
-                                                } else {
-                                                    storeViewModel.selectCategory(tile.category)
-                                                    currentTab = AnnapurnaTab.BAZAAR
+                                                when {
+                                                    tile.en == "Offers" -> currentTab = AnnapurnaTab.OFFERS
+                                                    tile.category == null -> currentTab = AnnapurnaTab.BAZAAR
+                                                    else -> {
+                                                        storeViewModel.selectCategory(tile.category)
+                                                        currentTab = AnnapurnaTab.BAZAAR
+                                                    }
                                                 }
                                             },
                                             color = Color(0xFFF3F8F2),
