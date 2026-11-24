@@ -214,7 +214,15 @@ fun BazaarHomeScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            text = if (selectedCategory == ProduceCategory.ALL) stringResource(R.string.bazaar_today_title) else when (selectedCategory) { ProduceCategory.ALL -> stringResource(R.string.cat_all); ProduceCategory.VEGETABLE -> stringResource(R.string.cat_vegetables); ProduceCategory.FRUIT -> stringResource(R.string.cat_fruits) },
+                            text = if (selectedCategory == ProduceCategory.ALL) stringResource(R.string.bazaar_today_title) else when (selectedCategory) {
+                                ProduceCategory.ALL -> stringResource(R.string.cat_all)
+                                ProduceCategory.VEGETABLE -> stringResource(R.string.cat_vegetables)
+                                ProduceCategory.FRUIT -> stringResource(R.string.cat_fruits)
+                                ProduceCategory.LEAFY_GREENS -> customerText("पालेभाज्या", "हरी पत्तेदार", "Leafy Greens")
+                                ProduceCategory.ORGANIC -> customerText("सेंद्रिय उत्पादने", "ऑर्गेनिक उत्पाद", "Organic Products")
+                                ProduceCategory.DAILY_NEEDS -> customerText("दैनंदिन गरजा", "दैनिक ज़रूरतें", "Daily Needs")
+                                ProduceCategory.COMBO_PACKS -> customerText("कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs")
+                            },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
