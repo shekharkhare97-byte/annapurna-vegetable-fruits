@@ -180,71 +180,7 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Text(customerText("नवीन वस्तू मागवा", "नई चीज़ मँगवाएँ", "Request a new item"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                            Text(customerText("दुकानात नसलेली वस्तूही मागवू शकता", "दुकान में न होने वाली चीज़ भी माँगें", "Ask us to source an item not listed"), style = MaterialTheme.typography.bodySmall)
-                        }
-                        Button(onClick = { showProductRequest = true }) {
-                            Text(customerText("मागवा", "मँगवाएँ", "Request"))
-                        }
-                    }
-                }
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
                 CustomerOffersStrip()
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                CustomerFeatureShortcuts(
-                    onOffers = { onSelectCategory(ProduceCategory.ALL); onSearchQueryChange("") },
-                    onNewArrivals = { showFavoritesOnly = false; onSelectCategory(ProduceCategory.ALL); onSearchQueryChange("") },
-                    onLanguage = onOpenLanguageSettings,
-                    onVoiceSearch = onOpenAssistant,
-                    onPhotoSearch = onOpenAssistant,
-                    onRefer = onShareApp,
-                    onWishlist = { showFavoritesOnly = !showFavoritesOnly },
-                    onNotifications = onOpenOrders,
-                    wishlistSelected = showFavoritesOnly
-                )
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                customerText("अंदाजे डिलिव्हरी वेळ: ३०–६० मिनिटे", "अनुमानित डिलीवरी समय: ३०–६० मिनट", "Estimated delivery time: 30–60 minutes"),
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                            Text(
-                                customerText("अंतर आणि ऑर्डरच्या गर्दीनुसार वेळ बदलू शकतो.", "दूरी और ऑर्डर की संख्या के अनुसार समय बदल सकता है।", "Time may vary depending on distance and order volume."),
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
