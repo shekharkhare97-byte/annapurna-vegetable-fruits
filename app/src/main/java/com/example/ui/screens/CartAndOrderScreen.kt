@@ -528,7 +528,7 @@ fun CartAndOrderScreen(
                             if (shopPosition != null) {
                                 Text(
                                     if (trackingPartnerAccepted)
-                                        "🛵 ${trackingPartnerName.ifBlank { "Delivery Partner" }} " + customerText("दुकानातून Pickup करण्याच्या तयारीत आहे.", "दुकान से Pickup करने की तैयारी में है।", "is getting ready to pick up your order.")
+                                        "🛵 ${trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery Partner") }} " + customerText("दुकानातून Pickup करण्याच्या तयारीत आहे.", "दुकान से Pickup करने की तैयारी में है।", "is getting ready to pick up your order.")
                                     else
                                         customerText("🛵 तुमची ऑर्डर दुकानात तयार होत आहे. गाडी दुकानाजवळ आहे.", "🛵 आपका ऑर्डर दुकान में तैयार हो रहा है। वाहन दुकान के पास है।", "🛵 Your order is being prepared at the shop. The vehicle is nearby."),
                                     fontWeight = FontWeight.SemiBold,
@@ -537,8 +537,8 @@ fun CartAndOrderScreen(
                                 OpenStreetMapView(
                                     latitude = shopPosition.latitude,
                                     longitude = shopPosition.longitude,
-                                    markerTitle = "Annapurna Shop",
-                                    markerSnippet = "Shop location",
+                                    markerTitle = customerText("अन्नपूर्णा दुकान", "अन्नपूर्णा दुकान", "Annapurna Shop"),
+                                    markerSnippet = customerText("दुकानाचे ठिकाण", "दुकान का स्थान", "Shop location"),
                                     modifier = Modifier.fillMaxWidth().height(220.dp)
                                         .clip(RoundedCornerShape(18.dp))
                                         .testTag("customer_live_delivery_map")
@@ -615,7 +615,7 @@ fun CartAndOrderScreen(
                                     OpenStreetMapView(
                                         latitude = driverLatitude,
                                         longitude = driverLongitude,
-                                        markerTitle = trackingPartnerName.ifBlank { "Delivery Partner" },
+                                        markerTitle = trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery Partner") },
                                         markerSnippet = "Live location",
                                         destinationLatitude = customerLat,
                                         destinationLongitude = customerLon,
@@ -643,17 +643,17 @@ fun CartAndOrderScreen(
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Text(
-                                        "🛵 Delivery Partner: ${trackingPartnerName.ifBlank { "नाव मिळवत आहोत" }}",
+                                        "🛵 Delivery Partner: ${trackingPartnerName.ifBlank { customerText("नाव मिळवत आहोत", "नाम प्राप्त हो रहा है", "Getting name") }}",
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        "Delivery Partner ने ऑर्डर स्वीकारली आहे",
+                                        customerText("डिलिव्हरी पार्टनरने ऑर्डर स्वीकारली आहे", "डिलीवरी पार्टनर ने ऑर्डर स्वीकार किया है", "The delivery partner has accepted the order"),
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        "Live Location मिळवत आहोत. GPS मिळताच नकाशावर स्कूटर आपोआप दिसेल.",
+                                        customerText("Live Location मिळवत आहोत. GPS मिळताच नकाशावर स्कूटर आपोआप दिसेल.", "Live Location प्राप्त हो रही है। GPS मिलते ही नक्शे पर स्कूटर अपने आप दिखेगी।", "Getting live location. The scooter will appear on the map as soon as GPS is available."),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
