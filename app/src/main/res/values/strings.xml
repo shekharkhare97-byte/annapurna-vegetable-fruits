@@ -10,8 +10,10 @@
 
     <!-- Navigation Tabs -->
     <string name="nav_bazaar">ताजा बाजार</string>
-    <string name="nav_categories">श्रेणी</string>
-    <string name="nav_orders">ऑर्डर्स</string>
+        <string name="nav_categories">श्रेणी</string>
+    <string name="nav_new_arrivals">नवीन आवक</string>
+    <string name="nav_offers">ऑफर्स</string>
+        <string name="nav_orders">ऑर्डर्स</string>
     <string name="nav_cart">माझी पिशवी</string>
     <string name="nav_assistant">अन्नपूर्णा AI</string>
     <string name="nav_studio">फोटो स्टुडिओ</string>
