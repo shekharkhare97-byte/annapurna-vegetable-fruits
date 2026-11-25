@@ -264,7 +264,7 @@ fun CustomerProfileScreen(
                 ) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("${tr("ऑर्डर #", "ऑर्डर #", "Order #")}${order.orderId}", fontWeight = FontWeight.Bold)
-                        Text(order.itemsSummaryMarathi, maxLines = 3, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(localizedOrderItemsSummary(order, java.util.Locale.getDefault().language), maxLines = 3, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("₹${order.totalAmountRupeesDecimal}  •  ${java.text.DateFormat.getDateInstance().format(java.util.Date(order.createdAtMillis))}", fontWeight = FontWeight.SemiBold)
                     }
                 }
