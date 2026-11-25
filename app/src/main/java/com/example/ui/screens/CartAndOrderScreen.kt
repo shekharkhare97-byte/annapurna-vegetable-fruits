@@ -439,41 +439,6 @@ fun CartAndOrderScreen(
             }
         }
 
-        // Customer Name, Mobile Number & Place Order Section
-        item {
-            CustomerOrderFormCard(
-                formState = formState,
-                grandTotal = grandTotal,
-                deliveryCharge = payableDeliveryCharge,
-                deliveryMessage = deliveryMessage,
-                isCartEmpty = cartItems.isEmpty(),
-                onCustomerNameChange = onCustomerNameChange,
-                onMobileNumberChange = onMobileNumberChange,
-                onAddressChange = onAddressChange,
-                paymentMethod = paymentMethod,
-                onPaymentMethodChange = { paymentMethod = it },
-                tipOption = deliveryTipOption,
-                onTipOptionChange = { deliveryTipOption = it },
-                customTipText = customTipText,
-                onCustomTipChange = { customTipText = it.filter(Char::isDigit).take(5) },
-                paymentError = paymentError,
-                paymentInProgress = paymentInProgress,
-                onSubmitOrder = {
-                    val preciseGpsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                    if (!preciseGpsGranted) {
-                        clearCustomerGps(context.getString(R.string.gps_permission_required))
-                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    } else if (deliveryLatitude == null || deliveryLongitude == null || deliveryCharge == null || deliveryDistanceKm == null) {
-                        requestDeliveryLocation()
-                    } else if (paymentMethod != "COD") {
-                        startRazorpayPayment()
-                    } else {
-                        onSubmitOrder(deliveryLatitude, deliveryLongitude, payableDeliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
-                    }
-                }
-            )
-        }
-
         if (trackingStatus.isNotBlank()) {
             item {
                 val statusLabel = when (trackingStatus) {
@@ -622,7 +587,7 @@ fun CartAndOrderScreen(
                                         destinationLongitude = customerLon,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(420.dp)
+                                            .height(250.dp)
                                             .clip(RoundedCornerShape(18.dp))
                                             .testTag("customer_live_delivery_map")
                                     )
@@ -737,6 +702,43 @@ fun CartAndOrderScreen(
                 }
             }
         }
+
+        // Customer Name, Mobile Number & Place Order Section
+        item {
+            CustomerOrderFormCard(
+                formState = formState,
+                grandTotal = grandTotal,
+                deliveryCharge = payableDeliveryCharge,
+                deliveryMessage = deliveryMessage,
+                isCartEmpty = cartItems.isEmpty(),
+                onCustomerNameChange = onCustomerNameChange,
+                onMobileNumberChange = onMobileNumberChange,
+                onAddressChange = onAddressChange,
+                paymentMethod = paymentMethod,
+                onPaymentMethodChange = { paymentMethod = it },
+                tipOption = deliveryTipOption,
+                onTipOptionChange = { deliveryTipOption = it },
+                customTipText = customTipText,
+                onCustomTipChange = { customTipText = it.filter(Char::isDigit).take(5) },
+                paymentError = paymentError,
+                paymentInProgress = paymentInProgress,
+                onSubmitOrder = {
+                    val preciseGpsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    if (!preciseGpsGranted) {
+                        clearCustomerGps(context.getString(R.string.gps_permission_required))
+                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    } else if (deliveryLatitude == null || deliveryLongitude == null || deliveryCharge == null || deliveryDistanceKm == null) {
+                        requestDeliveryLocation()
+                    } else if (paymentMethod != "COD") {
+                        startRazorpayPayment()
+                    } else {
+                        onSubmitOrder(deliveryLatitude, deliveryLongitude, payableDeliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
+                    }
+                }
+            )
+        }
+
+
 
         if (recentOrders.isNotEmpty()) {
             item {
