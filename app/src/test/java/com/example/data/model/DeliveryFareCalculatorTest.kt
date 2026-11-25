@@ -5,20 +5,18 @@ import org.junit.Test
 
 class DeliveryFareCalculatorTest {
     @Test
-    fun chargesTenRupeesForOneStartedKilometre() {
-        assertEquals(10, DeliveryFareCalculator.fromDistanceKm(0.2).chargeRupees)
+    fun chargesTenRupeesForOneKilometre() {
         assertEquals(10, DeliveryFareCalculator.fromDistanceKm(1.0).chargeRupees)
     }
 
     @Test
-    fun roundsUpPartialKilometres() {
-        val fare = DeliveryFareCalculator.fromDistanceKm(1.01)
-        assertEquals(2, fare.chargeableKm)
-        assertEquals(20, fare.chargeRupees)
+    fun chargesProportionallyForFractionalKilometres() {
+        assertEquals(2, DeliveryFareCalculator.fromDistanceKm(0.2).chargeRupees)
+        assertEquals(42, DeliveryFareCalculator.fromDistanceKm(4.2).chargeRupees)
     }
 
     @Test
-    fun calculatesLongerDistanceAtTenRupeesPerKilometre() {
-        assertEquals(50, DeliveryFareCalculator.fromDistanceKm(4.2).chargeRupees)
+    fun roundsOnlyFractionalRupeesUpToTheNextRupee() {
+        assertEquals(11, DeliveryFareCalculator.fromDistanceKm(1.01).chargeRupees)
     }
 }
