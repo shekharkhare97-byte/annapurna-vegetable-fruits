@@ -89,7 +89,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.ProduceCategory
 import com.example.ui.screens.BazaarHomeScreen
-import com.example.ui.screens.CustomerWelcomeFlow
 import com.example.ui.screens.CartAndOrderScreen
 import com.example.ui.screens.MarathiChatScreen
 import com.example.ui.screens.CustomerProfileScreen
@@ -221,9 +220,7 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         setContent {
             AnnapurnaTheme {
                 CustomerStartupPermissions {
-                    CustomerWelcomeFlow {
-                        AnnapurnaRootApp()
-                    }
+                    AnnapurnaRootApp()
                 }
             }
         }
@@ -281,10 +278,6 @@ fun AnnapurnaRootApp() {
     LaunchedEffect(Unit) {
         val entryPrefs = context.getSharedPreferences("annapurna_customer_entry", android.content.Context.MODE_PRIVATE)
         entryPrefs.getString("customer_mobile", null)?.let(storeViewModel::updateMobileNumber)
-        when (entryPrefs.getString("selected_category", "")) {
-            "vegetables" -> storeViewModel.selectCategory(ProduceCategory.VEGETABLE)
-            "fruits" -> storeViewModel.selectCategory(ProduceCategory.FRUIT)
-        }
     }
 
     var currentTab by remember { mutableStateOf(AnnapurnaTab.BAZAAR) }
