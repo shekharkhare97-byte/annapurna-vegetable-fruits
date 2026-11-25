@@ -59,6 +59,17 @@ private fun createAnnapurnaRiderIcon(context: Context): Drawable {
     val scooter = Path().apply { moveTo(34f, 91f); lineTo(48f, 79f); lineTo(83f, 81f); lineTo(105f, 93f); lineTo(98f, 100f); lineTo(56f, 100f); close() }
     canvas.drawPath(scooter, paint)
     stroke(Color.rgb(25, 35, 31), 5f); canvas.drawLine(88f, 79f, 98f, 62f, paint); canvas.drawLine(98f, 62f, 111f, 62f, paint)
+    // Annapurna-branded delivery box behind the rider.
+    fill(Color.rgb(0, 105, 55)); canvas.drawRoundRect(RectF(87f, 38f, 128f, 77f), 7f, 7f, paint)
+    stroke(Color.rgb(190, 235, 92), 3f); canvas.drawRoundRect(RectF(89f, 40f, 126f, 75f), 5f, 5f, paint)
+    paint.style = Paint.Style.FILL
+    paint.color = Color.WHITE
+    paint.textSize = 7f
+    paint.typeface = android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.BOLD)
+    paint.textAlign = Paint.Align.CENTER
+    canvas.drawText("ANNAPURNA", 107f, 58f, paint)
+    paint.textSize = 5f
+    canvas.drawText("FRESH", 107f, 66f, paint)
     // Rider legs and dark trousers.
     fill(Color.rgb(30, 52, 82)); canvas.drawRoundRect(RectF(62f, 67f, 91f, 91f), 8f, 8f, paint)
     // Green Annapurna polo torso.
