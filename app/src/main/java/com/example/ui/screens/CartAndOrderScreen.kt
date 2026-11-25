@@ -1433,25 +1433,6 @@ private fun OrderConfirmedDialog(
                 modifier = Modifier.graphicsLayer(scaleX = sparkleScale, scaleY = sparkleScale)
             )
         },
-        
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(68.dp)
-            ) {
-                androidx.compose.foundation.layout.Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(42.dp)
-                    )
-                }
-            }
-        },
         title = {
             Text(
                 text = stringResource(R.string.order_success_title),
