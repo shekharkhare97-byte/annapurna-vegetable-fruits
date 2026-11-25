@@ -32,6 +32,12 @@ Do not ask the customer to repeat these requirements or silently change them.
 - Keep GPS permission/order and tracking behavior consistent with the already agreed requirements.
 - Prefer free-tier compatible services; do not introduce paid dependencies without approval.
 
+## When the customer asks for progress
+- Whenever the customer asks in any chat whether Customer App work is done, show the current Annapurna Customer App progress/status first.
+- Report only verified work, clearly separate completed, in-progress, and blocked items, and include the next concrete step.
+- Do not show unrelated designs, old mockups, or generic app screenshots as the approved design.
+- Do not make the customer repeat these locked requirements.
+
 ## Delivery / quality gates
 - Do not claim implementation, build, APK signing, installation, or testing until each has actually succeeded.
 - Do not distribute a debug-signed APK as a release.
