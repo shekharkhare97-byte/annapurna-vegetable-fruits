@@ -14,6 +14,12 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -1410,10 +1416,24 @@ private fun OrderConfirmedDialog(
     onDismiss: () -> Unit,
     onContinueShopping: () -> Unit
 ) {
+    val celebration = rememberInfiniteTransition(label = "order-celebration")
+    val sparkleScale by celebration.animateFloat(
+        initialValue = 0.72f,
+        targetValue = 1.18f,
+        animationSpec = infiniteRepeatable(animation = tween(650), repeatMode = RepeatMode.Reverse),
+        label = "sparkle-scale"
+    )
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = MaterialTheme.shapes.extraLarge,
         icon = {
+            Text(
+                text = "🎉 ✨ 🎊 🌟 🎆",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.graphicsLayer(scaleX = sparkleScale, scaleY = sparkleScale)
+            )
+        },
+        
             Surface(
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -1441,6 +1461,12 @@ private fun OrderConfirmedDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = customerText("ऑर्डर यशस्वीरीत्या नोंदवली! धन्यवाद! 🛍️", "ऑर्डर सफलतापूर्वक दर्ज हुआ! धन्यवाद! 🛍️", "Order Placed! Thanks for Shopping! 🛍️"),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.ExtraBold
+                )
                 Text(
                     text = stringResource(R.string.order_success_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
