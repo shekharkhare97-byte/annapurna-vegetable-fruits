@@ -29,6 +29,16 @@ object DeliveryFareCalculator {
             .build()
     }
 
+    fun fromDistanceKm(distanceKm: Double): DeliveryFare {
+        require(distanceKm.isFinite() && distanceKm > 0.0)
+        val chargeableKm = ceil(distanceKm).toInt().coerceAtLeast(1)
+        return DeliveryFare(
+            distanceKm = distanceKm,
+            chargeableKm = chargeableKm,
+            chargeRupees = chargeableKm * 10
+        )
+    }
+
     suspend fun calculate(
         shopLatitude: Double,
         shopLongitude: Double,
@@ -56,13 +66,7 @@ object DeliveryFareCalculator {
                 ?: throw IOException("या पत्त्यासाठी रस्ता सापडला नाही.")
             val meters = route.optDouble("distance", Double.NaN)
             if (!meters.isFinite() || meters <= 0.0) throw IOException("रस्त्याचे अंतर योग्य मिळाले नाही.")
-            val km = meters / 1000.0
-            val chargeableKm = ceil(km).toInt().coerceAtLeast(1)
-            DeliveryFare(
-                distanceKm = km,
-                chargeableKm = chargeableKm,
-                chargeRupees = chargeableKm * 10
-            )
+            fromDistanceKm(meters / 1000.0)
         }
     }
 }
