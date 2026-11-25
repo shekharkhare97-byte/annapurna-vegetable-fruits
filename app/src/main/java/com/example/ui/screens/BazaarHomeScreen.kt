@@ -257,7 +257,6 @@ fun BazaarHomeScreen(
                     )
                 }
             }
-            }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 AnnapurnaAiHomeCard(onClick = onOpenAssistant)
