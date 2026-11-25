@@ -11,7 +11,6 @@ import kotlin.math.ceil
 
 data class DeliveryFare(
     val distanceKm: Double,
-    val chargeableKm: Int,
     val chargeRupees: Int
 )
 
@@ -31,11 +30,9 @@ object DeliveryFareCalculator {
 
     fun fromDistanceKm(distanceKm: Double): DeliveryFare {
         require(distanceKm.isFinite() && distanceKm > 0.0)
-        val chargeableKm = ceil(distanceKm).toInt().coerceAtLeast(1)
         return DeliveryFare(
             distanceKm = distanceKm,
-            chargeableKm = chargeableKm,
-            chargeRupees = chargeableKm * 10
+            chargeRupees = ceil(distanceKm * 10.0).toInt()
         )
     }
 
