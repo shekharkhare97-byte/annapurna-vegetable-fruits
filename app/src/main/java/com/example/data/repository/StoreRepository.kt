@@ -213,10 +213,8 @@ class StoreRepository(private val storeDao: StoreDao) {
             "createdAtMillis" to now,
             "orderId" to remoteOrder.id
         )
-        if (latitude != null && longitude != null) {
-            trackingData["customerLatitude"] = latitude
-            trackingData["customerLongitude"] = longitude
-        }
+        // Keep orderTracking's public-create payload limited to the fields
+        // permitted by Firestore Rules. Customer GPS is already stored on orders.
         if (paymentMethod == "COD") {
             // Preserve the previously working COD flow: commit the order and tracking
             // record together through the existing Firebase client path. This avoids
