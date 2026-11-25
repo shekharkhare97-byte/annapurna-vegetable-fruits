@@ -877,15 +877,23 @@ private fun CategoryFilterRow(
     onSelectCategory: (ProduceCategory) -> Unit,
     onRequestProduct: () -> Unit
 ) {
-    data class HomeCategory(val emoji: String, val mr: String, val hi: String, val en: String, val category: ProduceCategory?, val request: Boolean = false)
+    data class HomeCategory(
+        val emoji: String,
+        val mr: String,
+        val hi: String,
+        val en: String,
+        val category: ProduceCategory?,
+        val request: Boolean = false,
+        val offers: Boolean = false
+    )
     val categories = listOf(
         HomeCategory("🥬", "भाज्या", "सब्ज़ियाँ", "Vegetables", ProduceCategory.VEGETABLE),
         HomeCategory("🍎", "फळे", "फल", "Fruits", ProduceCategory.FRUIT),
-        HomeCategory("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.VEGETABLE),
-        HomeCategory("🎁", "ऑफर्स", "ऑफर", "Offers", ProduceCategory.ALL),
-        HomeCategory("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ALL),
-        HomeCategory("🧺", "दैनंदिन गरजा", "रोज़मर्रा", "Daily Needs", ProduceCategory.ALL),
-        HomeCategory("📦", "कॉम्बो पॅक", "कॉम्बो पैक", "Combo Packs", ProduceCategory.ALL),
+        HomeCategory("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.LEAFY_GREENS),
+        HomeCategory("🎁", "ऑफर्स", "ऑफर", "Offers", null, offers = true),
+        HomeCategory("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ORGANIC),
+        HomeCategory("🧺", "दैनंदिन गरजा", "रोज़मर्रा", "Daily Needs", ProduceCategory.DAILY_NEEDS),
+        HomeCategory("📦", "कॉम्बो पॅक", "कॉम्बो पैक", "Combo Packs", ProduceCategory.COMBO_PACKS),
         HomeCategory("＋", "अधिक", "और", "More", null, request = true)
     )
     val language = androidx.compose.ui.platform.LocalContext.current.resources.configuration.locales[0].language
@@ -916,8 +924,11 @@ private fun CategoryFilterRow(
                     (item.category != ProduceCategory.ALL)
                 Surface(
                     onClick = {
-                        if (item.request) onRequestProduct()
-                        else item.category?.let(onSelectCategory)
+                        when {
+                            item.request -> onRequestProduct()
+                            item.offers -> onOpenOffers()
+                            else -> item.category?.let(onSelectCategory)
+                        }
                     },
                     color = if (selected) Color(0xFFE1F2E4) else Color(0xFFF3F8F2),
                     shape = RoundedCornerShape(15.dp),
