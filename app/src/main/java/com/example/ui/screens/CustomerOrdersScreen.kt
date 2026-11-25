@@ -87,7 +87,7 @@ fun CustomerOrdersScreen(
                             Spacer(Modifier.weight(1f))
                             Text(tr("नोंदवली", "दर्ज हुआ", "Placed"), color = Color(0xFF23833B), fontWeight = FontWeight.SemiBold)
                         }
-                        Text(order.itemsSummaryMarathi, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(localizedOrderItemsSummary(order, language), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("${order.totalItemsCount} " + tr("वस्तू", "वस्तुएँ", "items"))
                             Spacer(Modifier.weight(1f))
