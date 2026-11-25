@@ -34,6 +34,9 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
+      - name: Run unit tests
+        run: gradle --no-daemon testDebugUnitTest
+
       - name: Create debug key and restore permanent Annapurna signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -57,9 +60,6 @@ jobs:
           echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/my-upload-key.jks" >> "$GITHUB_ENV"
           echo "STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
-
-      - name: Run unit tests
-        run: gradle --no-daemon testDebugUnitTest
 
       - name: Build signed release APK
         run: gradle --no-daemon assembleRelease
