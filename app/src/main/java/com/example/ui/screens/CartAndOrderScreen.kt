@@ -193,12 +193,19 @@ fun CartAndOrderScreen(
                 } else null
             }.getOrNull() }
             if (shop == null) { deliveryMessage = context.getString(R.string.delivery_shop_location_missing); return@launch }
-            val meters = FloatArray(1)
-            Location.distanceBetween(shop.latitude, shop.longitude, location.latitude, location.longitude, meters)
-            val km = meters[0] / 1000.0; deliveryDistanceKm = km
-            val chargeableKm = kotlin.math.ceil(km).toInt().coerceAtLeast(1)
-            deliveryCharge = chargeableKm * 10
-            deliveryMessage = context.getString(R.string.delivery_charge_added)
+            try {
+                val fare = com.example.data.model.DeliveryFareCalculator.calculate(
+                    shop.latitude, shop.longitude, location.latitude, location.longitude
+                )
+                deliveryDistanceKm = fare.distanceKm
+                deliveryCharge = fare.chargeRupees
+                val distanceLabel = MarathiFormatters.toMarathiDigits(String.format(Locale.US, "%.1f", fare.distanceKm))
+                deliveryMessage = context.getString(R.string.delivery_charge_added_format, distanceLabel)
+            } catch (error: Exception) {
+                deliveryDistanceKm = null
+                deliveryCharge = null
+                deliveryMessage = error.message ?: context.getString(R.string.delivery_location_failed)
+            }
         }
     }
     fun clearCustomerGps(message: String) {
@@ -251,8 +258,8 @@ fun CartAndOrderScreen(
         "CUSTOM" -> customTipText.toIntOrNull()?.coerceAtLeast(0) ?: 0
         else -> 0
     }
-    // Orders above ₹250 get free delivery; ₹250 exactly still pays ₹10 per chargeable km.
-    val payableDeliveryCharge = if (itemsTotal > 250.0) 0 else deliveryCharge
+    // Orders above ₹199 get free delivery; otherwise charge ₹10 per started road-kilometre.
+    val payableDeliveryCharge = if (itemsTotal > 199.0) 0 else deliveryCharge
     val grandTotal = itemsTotal + (payableDeliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
 
     fun startRazorpayPayment() {
