@@ -289,17 +289,18 @@ fun CustomerProfileScreen(
                     Surface(color = Color.White, shape = RoundedCornerShape(12.dp)) {
                         Text(referralCode, modifier = Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = Color(0xFF176B3A))
                     }
+                    val shareMessage = tr(
+                        "Annapurna Vegetables and Fruits ॲप वापरा! माझा रेफरल कोड $referralCode वापरा.",
+                        "Annapurna Vegetables and Fruits ऐप इस्तेमाल करें! मेरा रेफरल कोड $referralCode इस्तेमाल करें।",
+                        "Try Annapurna Vegetables and Fruits! Use my referral code $referralCode."
+                    )
+                    val shareChooserTitle = tr("मित्रांना शेअर करा", "दोस्तों के साथ शेयर करें", "Share with friends")
                     Button(
                         onClick = {
-                            val message = tr(
-                                "Annapurna Vegetables and Fruits ॲप वापरा! माझा रेफरल कोड $referralCode वापरा.",
-                                "Annapurna Vegetables and Fruits ऐप इस्तेमाल करें! मेरा रेफरल कोड $referralCode इस्तेमाल करें।",
-                                "Try Annapurna Vegetables and Fruits! Use my referral code $referralCode."
-                            )
                             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, message)
-                            }, tr("मित्रांना शेअर करा", "दोस्तों के साथ शेयर करें", "Share with friends")))
+                                putExtra(Intent.EXTRA_TEXT, shareMessage)
+                            }, shareChooserTitle))
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
