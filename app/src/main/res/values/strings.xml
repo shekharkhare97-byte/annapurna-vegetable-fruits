@@ -151,6 +151,7 @@
     <string name="delivery_calculating_distance">डिलिव्हरी अंतर मोजत आहे...</string>
     <string name="delivery_shop_location_missing">दुकानाचे लोकेशन सापडले नाही. इंटरनेट सुरू करून पुन्हा प्रयत्न करा.</string>
     <string name="delivery_charge_added">डिलिव्हरी चार्ज बिलात आपोआप जोडला आहे.</string>
+    <string name="delivery_charge_added_format">दुकान ते तुमचे रस्त्याचे अंतर: %1$s किमी (₹१० प्रति किमी)</string>
     <string name="delivery_location_missing">लोकेशन मिळाले नाही. GPS सुरू करून पुन्हा प्रयत्न करा.</string>
     <string name="delivery_location_failed">लोकेशन मिळवता आले नाही. पुन्हा प्रयत्न करा.</string>
     <string name="delivery_address_checking">पत्ता तपासून डिलिव्हरी चार्ज मोजत आहे...</string>
