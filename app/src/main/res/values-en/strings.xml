@@ -120,4 +120,6 @@
     <string name="studio_prompt_hint">Choose an idea above or write your own description, then create the photo.</string>
     <string name="payment_cod_hint">Pay in cash when your order arrives.</string>
     <string name="nav_profile">Profile</string>
+    <string name="gps_permission_required">Precise GPS permission is required. You cannot place an order without it.</string>
+    <string name="gps_fetching_customer_location">Getting your precise GPS location…</string>
 </resources>
