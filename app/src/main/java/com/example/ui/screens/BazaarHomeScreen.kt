@@ -193,25 +193,6 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                AnnapurnaAiHomeCard(onClick = onOpenAssistant)
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                CustomerFeatureShortcuts(
-                    onOffers = onOpenOffers,
-                    onNewArrivals = onOpenNewArrivals,
-                    onLanguage = onOpenLanguageSettings,
-                    onVoiceSearch = onOpenVoiceSearch,
-                    onPhotoSearch = onOpenPhotoSearch,
-                    onRefer = onShareApp,
-                    onWishlist = { showFavoritesOnly = !showFavoritesOnly },
-                    onNotifications = onOpenOrders,
-                    wishlistSelected = showFavoritesOnly
-                )
-            }
-
-            if (selectedCategory != ProduceCategory.ALL || searchQuery.isNotBlank() || showFavoritesOnly) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 1.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -277,6 +258,25 @@ fun BazaarHomeScreen(
                 }
             }
             }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                AnnapurnaAiHomeCard(onClick = onOpenAssistant)
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                CustomerFeatureShortcuts(
+                    onOffers = onOpenOffers,
+                    onNewArrivals = onOpenNewArrivals,
+                    onLanguage = onOpenLanguageSettings,
+                    onVoiceSearch = onOpenVoiceSearch,
+                    onPhotoSearch = onOpenPhotoSearch,
+                    onRefer = onShareApp,
+                    onWishlist = { showFavoritesOnly = !showFavoritesOnly },
+                    onNotifications = onOpenOrders,
+                    wishlistSelected = showFavoritesOnly
+                )
+            }
+
         }
 
 
