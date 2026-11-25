@@ -75,13 +75,6 @@ import com.example.data.repository.ChatModelTier
 import com.example.data.repository.ChatTurn
 import com.example.ui.viewmodel.ChatUiState
 
-private val marathiChatSuggestions = listOf(
-    "भरली वांगी बनवण्याची सोपी पाककृती सांगा",
-    "माझ्या पिशवीतील भाज्यांपासून कोणता पदार्थ बनेल?",
-    "पालेभाज्या जास्त दिवस ताज्या कशा ठेवाव्यात?",
-    "रोगप्रतिकारशक्ती वाढवण्यासाठी कोणती फळे खावीत?"
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MarathiChatScreen(
@@ -98,6 +91,14 @@ fun MarathiChatScreen(
     BackHandler(onBack = onBackToBazaar)
 
     val context = LocalContext.current
+    val language = context.resources.configuration.locales[0]?.language ?: "mr"
+    fun tr(mr: String, hi: String, en: String) = when (language) { "hi" -> hi; "en" -> en; else -> mr }
+    val chatSuggestions = listOf(
+        tr("भरली वांगी बनवण्याची सोपी पाककृती सांगा", "भरवाँ बैंगन बनाने की आसान रेसिपी बताइए", "Tell me an easy recipe for stuffed eggplant"),
+        tr("माझ्या पिशवीतील भाज्यांपासून कोणता पदार्थ बनेल?", "मेरे पास मौजूद सब्ज़ियों से कौन-सी डिश बनेगी?", "What can I cook with the vegetables I have?"),
+        tr("पालेभाज्या जास्त दिवस ताज्या कशा ठेवाव्यात?", "पत्तेदार सब्ज़ियों को अधिक दिनों तक ताज़ा कैसे रखें?", "How can I keep leafy greens fresh longer?"),
+        tr("रोगप्रतिकारशक्ती वाढवण्यासाठी कोणती फळे खावीत?", "रोग प्रतिरोधक क्षमता के लिए कौन-से फल खाएँ?", "Which fruits support immunity?")
+    )
     val speechLanguage = context.resources.configuration.locales[0].toLanguageTag()
     var listening by remember { mutableStateOf(false) }
     var speechError by remember { mutableStateOf<String?>(null) }
@@ -106,16 +107,16 @@ fun MarathiChatScreen(
         if (uri != null) {
             try {
                 val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                    ?: throw IllegalStateException("फोटो वाचता आला नाही.")
+                    ?: throw IllegalStateException(tr("फोटो वाचता आला नाही.", "फ़ोटो पढ़ा नहीं जा सका।", "Could not read the photo."))
                 if (bytes.size > 4 * 1024 * 1024) {
-                    speechError = "कृपया 4 MB पेक्षा लहान फोटो निवडा."
+                    speechError = tr("कृपया 4 MB पेक्षा लहान फोटो निवडा.", "कृपया 4 MB से छोटी फ़ोटो चुनें।", "Please choose a photo smaller than 4 MB.")
                 } else {
                     val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
-                    val prompt = chatState.inputText.ifBlank { "या फोटोतील वस्तू/भाजी/फळ ओळखा आणि माहिती सांगा." }
+                    val prompt = chatState.inputText.ifBlank { tr("या फोटोतील वस्तू/भाजी/फळ ओळखा आणि माहिती सांगा.", "इस फ़ोटो में मौजूद वस्तु/सब्ज़ी/फल पहचानकर जानकारी दें।", "Identify the item, vegetable or fruit in this photo and describe it.") }
                     onSendMessage(prompt, Base64.encodeToString(bytes, Base64.NO_WRAP), mime)
                 }
             } catch (e: Exception) {
-                speechError = e.localizedMessage ?: "फोटो पाठवता आला नाही."
+                speechError = e.localizedMessage ?: tr("फोटो पाठवता आला नाही.", "फ़ोटो भेजा नहीं जा सका।", "Could not send the photo.")
             }
         }
     }
@@ -131,10 +132,10 @@ fun MarathiChatScreen(
                 recognizer?.startListening(speechIntent)
                 listening = true
             } catch (_: Exception) {
-                speechError = "माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा."
+                speechError = tr("माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा.", "माइक शुरू नहीं हो सका। फिर कोशिश करें।", "Could not start the microphone. Please try again.")
             }
         } else {
-            speechError = "बोलून प्रश्न विचारण्यासाठी Microphone परवानगी द्या."
+            speechError = tr("बोलून प्रश्न विचारण्यासाठी Microphone परवानगी द्या.", "बोलकर सवाल पूछने के लिए माइक्रोफ़ोन की अनुमति दें।", "Allow microphone access to ask a question by voice.")
         }
     }
 
@@ -149,7 +150,7 @@ fun MarathiChatScreen(
                 override fun onEndOfSpeech() { listening = false }
                 override fun onError(error: Int) {
                     listening = false
-                    speechError = "आवाज समजला नाही. पुन्हा बोला किंवा टाइप करा."
+                    speechError = tr("आवाज समजला नाही. पुन्हा बोला किंवा टाइप करा.", "आवाज़ समझ नहीं आई। फिर बोलें या टाइप करें।", "Speech was not understood. Speak again or type your question.")
                 }
                 override fun onResults(results: android.os.Bundle?) {
                     listening = false
@@ -163,7 +164,7 @@ fun MarathiChatScreen(
             })
             recognizer = sr
         } else {
-            speechError = "या मोबाईलमध्ये Speech Recognition उपलब्ध नाही."
+            speechError = tr("या मोबाईलमध्ये Speech Recognition उपलब्ध नाही.", "इस फ़ोन में स्पीच रिकग्निशन उपलब्ध नहीं है।", "Speech recognition is unavailable on this phone.")
         }
         onDispose {
             recognizer?.destroy()
@@ -192,7 +193,7 @@ fun MarathiChatScreen(
                         recognizer?.startListening(speechIntent)
                         listening = true
                     } catch (_: Exception) {
-                        speechError = "माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा."
+                        speechError = tr("माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा.", "माइक शुरू नहीं हो सका। फिर कोशिश करें।", "Could not start the microphone. Please try again.")
                     }
                 } else {
                     permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -437,7 +438,7 @@ fun MarathiChatScreen(
                             recognizer?.startListening(speechIntent)
                             listening = true
                         } catch (_: Exception) {
-                            speechError = "माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा."
+                            speechError = tr("माइक सुरू करता आला नाही. पुन्हा प्रयत्न करा.", "माइक शुरू नहीं हो सका। फिर कोशिश करें।", "Could not start the microphone. Please try again.")
                         }
                     } else {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -448,7 +449,7 @@ fun MarathiChatScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Mic,
-                    contentDescription = if (listening) "आवाज थांबवा" else "बोलून प्रश्न विचारा",
+                    contentDescription = if (listening) tr("आवाज थांबवा", "आवाज़ रोकें", "Stop listening") else tr("बोलून प्रश्न विचारा", "बोलकर सवाल पूछें", "Ask by voice"),
                     tint = if (listening) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                 )
             }
@@ -514,7 +515,7 @@ private fun ChatBubbleItem(turn: ChatTurn, onSpeak: (String) -> Unit) {
                         IconButton(onClick = { onSpeak(turn.text) }, modifier = Modifier.size(36.dp)) {
                             Icon(
                                 imageVector = Icons.Default.VolumeUp,
-                                contentDescription = "उत्तर ऐका",
+                                contentDescription = tr("उत्तर ऐका", "जवाब सुनें", "Listen to answer"),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
