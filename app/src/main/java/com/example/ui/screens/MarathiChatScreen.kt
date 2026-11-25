@@ -515,7 +515,7 @@ private fun ChatBubbleItem(turn: ChatTurn, onSpeak: (String) -> Unit) {
                         IconButton(onClick = { onSpeak(turn.text) }, modifier = Modifier.size(36.dp)) {
                             Icon(
                                 imageVector = Icons.Default.VolumeUp,
-                                contentDescription = tr("उत्तर ऐका", "जवाब सुनें", "Listen to answer"),
+                                contentDescription = when (androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language) { "hi" -> "जवाब सुनें"; "en" -> "Listen to answer"; else -> "उत्तर ऐका" },
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
