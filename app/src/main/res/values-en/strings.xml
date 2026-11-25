@@ -6,8 +6,10 @@
 <string name="hero_headline">From the farmer’s field straight to your kitchen!</string>
 <string name="hero_subtext">Order selected fresh vegetables and juicy fruits every morning.</string>
 <string name="nav_bazaar">Fresh Market</string><string name="nav_cart">My Cart</string><string name="nav_assistant">Annapurna AI</string><string name="nav_studio">Photo Studio</string>
-    <string name="nav_categories">Categories</string>
-    <string name="nav_orders">Orders</string>
+        <string name="nav_categories">Categories</string>
+    <string name="nav_new_arrivals">New Arrivals</string>
+    <string name="nav_offers">Offers</string>
+        <string name="nav_orders">Orders</string>
 <string name="search_placeholder">Search vegetables or fruits (e.g. tomato, mango)...</string><string name="search_clear_desc">Clear search</string><string name="cat_all">All</string><string name="cat_vegetables">Fresh Vegetables</string><string name="cat_fruits">Juicy Fruits</string><string name="empty_search_title">No products found</string><string name="empty_search_subtitle">Try another name or select all categories.</string>
 <string name="btn_add_to_cart">Add to Cart</string><string name="cd_decrease_qty">Decrease quantity</string><string name="cd_increase_qty">Increase quantity</string><string name="cd_remove_item">Remove item</string><string name="floating_cart_cta">Order Now</string><string name="cart_items_summary_format">%1$s items in cart • ₹%2$s</string>
 <string name="cart_header_title">My Shopping Cart</string><string name="cart_clear_all">Clear Cart</string><string name="cart_empty_title">Your cart is empty</string><string name="cart_empty_subtitle">Visit the Fresh Market tab to choose vegetables and fruits.</string><string name="btn_browse_bazaar">Browse Fresh Market</string><string name="bill_summary_title">Bill Summary</string><string name="bill_items_total">Items Total</string><string name="bill_delivery_label">Home Delivery Fee</string><string name="bill_delivery_free">Free (₹0)</string><string name="bill_grand_total">Grand Total</string>
