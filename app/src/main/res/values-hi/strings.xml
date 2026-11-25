@@ -70,6 +70,7 @@
     <string name="delivery_calculating_distance">डिलीवरी की दूरी मापी जा रही है...</string>
     <string name="delivery_shop_location_missing">दुकान की लोकेशन नहीं मिली। इंटरनेट चालू करके फिर कोशिश करें।</string>
     <string name="delivery_charge_added">डिलीवरी शुल्क बिल में जोड़ दिया गया है।</string>
+    <string name="delivery_charge_added_format">दुकान से आपके घर तक सड़क की दूरी: %1$s किमी (₹10 प्रति किमी)</string>
     <string name="delivery_location_missing">लोकेशन नहीं मिली। GPS चालू करके फिर कोशिश करें।</string>
     <string name="delivery_location_failed">आपकी लोकेशन नहीं मिल सकी। फिर कोशिश करें।</string>
     <string name="delivery_address_checking">पता जाँचकर डिलीवरी शुल्क निकाला जा रहा है...</string>
