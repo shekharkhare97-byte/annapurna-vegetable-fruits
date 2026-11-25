@@ -141,22 +141,9 @@ fun CartAndOrderScreen(
     BackHandler(onBack = onBackToBazaar)
 
     val context = LocalContext.current
-    var shopMapPosition by remember { mutableStateOf<GeoPoint?>(null) }
-    LaunchedEffect(Unit) {
-        shopMapPosition = withContext(Dispatchers.IO) {
-            runCatching {
-                val snapshot = Tasks.await(
-                    FirebaseFirestore.getInstance().collection("shopSettings").document("main").get()
-                )
-                val latitude = snapshot.getDouble("latitude")
-                val longitude = snapshot.getDouble("longitude")
-                if (latitude != null && longitude != null &&
-                    latitude.isFinite() && longitude.isFinite() &&
-                    latitude in -90.0..90.0 && longitude in -180.0..180.0
-                ) GeoPoint(latitude, longitude) else GeoPoint(20.053216, 73.799811)
-            }.getOrNull()
-        }
-    }
+    // The shop pin is fixed to the owner's confirmed GPS coordinates.
+    // Do not let stale Firestore shopSettings overwrite this location.
+    val shopMapPosition = remember { GeoPoint(20.053216, 73.799811) }
     var deliveryRating by rememberSaveable { mutableStateOf(5) }
     var deliveryReview by rememberSaveable { mutableStateOf("") }
     var reviewSent by rememberSaveable { mutableStateOf(false) }
@@ -183,23 +170,11 @@ fun CartAndOrderScreen(
         deliveryLatitude = location.latitude; deliveryLongitude = location.longitude
         deliveryCharge = null; deliveryDistanceKm = null; deliveryMessage = context.getString(R.string.delivery_calculating_distance)
         coroutineScope.launch {
-            val shop = withContext(Dispatchers.IO) { runCatching {
-                val snapshot = Tasks.await(
-                    FirebaseFirestore.getInstance().collection("shopSettings").document("main").get()
-                )
-                val latitude = snapshot.getDouble("latitude")
-                val longitude = snapshot.getDouble("longitude")
-                if (latitude != null && longitude != null &&
-                    latitude.isFinite() && longitude.isFinite() &&
-                    latitude in -90.0..90.0 && longitude in -180.0..180.0
-                ) Location("annapurna_shop").apply {
-                    this.latitude = latitude
-                    this.longitude = longitude
-                } else Location("annapurna_shop").apply {
-                    this.latitude = 20.053216
-                    this.longitude = 73.799811
-                }
-            }.getOrNull() }
+            val shop = Location("annapurna_shop").apply {
+                // Use the same confirmed shop coordinates for delivery-distance calculation.
+                this.latitude = 20.053216
+                this.longitude = 73.799811
+            }
             if (shop == null) { deliveryMessage = context.getString(R.string.delivery_shop_location_missing); return@launch }
             try {
                 val fare = com.example.data.model.DeliveryFareCalculator.calculate(
