@@ -59,7 +59,7 @@ jobs:
           echo "KEY_PASSWORD=annapurna-ci-temporary" >> "$GITHUB_ENV"
 
       - name: Run unit tests
-        run: gradle --no-daemon testDebugUnitTest --tests 'com.example.data.model.*' --tests 'com.example.util.*'
+        run: gradle --no-daemon testDebugUnitTest
 
       - name: Build signed release APK
         run: gradle --no-daemon assembleRelease
