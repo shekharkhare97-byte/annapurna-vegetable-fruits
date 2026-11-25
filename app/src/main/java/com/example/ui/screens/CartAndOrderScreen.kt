@@ -153,7 +153,7 @@ fun CartAndOrderScreen(
                 if (latitude != null && longitude != null &&
                     latitude.isFinite() && longitude.isFinite() &&
                     latitude in -90.0..90.0 && longitude in -180.0..180.0
-                ) GeoPoint(latitude, longitude) else null
+                ) GeoPoint(latitude, longitude) else GeoPoint(20.053216, 73.799811)
             }.getOrNull()
         }
     }
@@ -195,7 +195,10 @@ fun CartAndOrderScreen(
                 ) Location("annapurna_shop").apply {
                     this.latitude = latitude
                     this.longitude = longitude
-                } else null
+                } else Location("annapurna_shop").apply {
+                    latitude = 20.053216
+                    longitude = 73.799811
+                }
             }.getOrNull() }
             if (shop == null) { deliveryMessage = context.getString(R.string.delivery_shop_location_missing); return@launch }
             try {
