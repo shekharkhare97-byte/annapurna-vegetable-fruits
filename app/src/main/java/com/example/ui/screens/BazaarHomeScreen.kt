@@ -200,6 +200,10 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                CustomerOffersStrip()
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 1.dp),
                     verticalAlignment = Alignment.CenterVertically,
