@@ -258,7 +258,7 @@ fun CartAndOrderScreen(
         "CUSTOM" -> customTipText.toIntOrNull()?.coerceAtLeast(0) ?: 0
         else -> 0
     }
-    // Orders above ₹199 get free delivery; otherwise charge ₹10 per started road-kilometre.
+    // Orders above ₹199 get free delivery; otherwise charge ₹10 per exact road-kilometre.
     val payableDeliveryCharge = if (itemsTotal > 199.0) 0 else deliveryCharge
     val grandTotal = itemsTotal + (payableDeliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
 
