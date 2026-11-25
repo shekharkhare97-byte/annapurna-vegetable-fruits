@@ -371,7 +371,7 @@ fun MarathiChatScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
-            items(marathiChatSuggestions) { suggestion ->
+            items(chatSuggestions) { suggestion ->
                 AssistChip(
                     onClick = { onSendMessage(suggestion, null, null) },
                     enabled = !chatState.isSending,
