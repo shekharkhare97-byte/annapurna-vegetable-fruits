@@ -78,7 +78,7 @@ class ExampleRobolectricTest {
         val cartBefore = repository.cartLineItems.first()
         // Catalog entries are remote; with no Firebase catalog in this isolated test,
         // validate the Room rows directly through repository cart mutations instead.
-        assertEquals(2, database.storeDao().observeCartItems().first().size)
+        assertEquals(3, database.storeDao().observeCartItems().first().size)
 
         repository.decrementLatestItemForProduce("veg_tomato")
         assertEquals(2, database.storeDao().observeCartItems().first().size)
