@@ -460,7 +460,7 @@ fun CartAndOrderScreen(
                 onSubmitOrder = {
                     val preciseGpsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                     if (!preciseGpsGranted) {
-                        clearCustomerGps("अचूक GPS परवानगी द्या. GPS शिवाय ऑर्डर स्वीकारली जाणार नाही.")
+                        clearCustomerGps(context.getString(R.string.gps_permission_required))
                         locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     } else if (deliveryLatitude == null || deliveryLongitude == null || deliveryCharge == null || deliveryDistanceKm == null) {
                         requestDeliveryLocation()
