@@ -418,6 +418,21 @@ class StoreViewModel(
     }
 
     fun submitOrder(latitude: Double? = null, longitude: Double? = null, deliveryChargeRupees: Int = 0, deliveryDistanceKm: Double? = null, paymentMethod: String = "COD", transactionId: String = "", paymentOrderId: String = "", paymentSignature: String = "", deliveryTipRupees: Int = 0) {
+        val hasPreciseLocationPermission = ContextCompat.checkSelfPermission(
+            appContext, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasPreciseLocationPermission) {
+            _formState.update { it.copy(cartErrorMarathi = appContext.getString(R.string.gps_permission_required)) }
+            return
+        }
+        val hasValidCustomerCoordinates = latitude != null && longitude != null &&
+            latitude.isFinite() && longitude.isFinite() &&
+            latitude in -90.0..90.0 && longitude in -180.0..180.0
+        if (!hasValidCustomerCoordinates) {
+            _formState.update { it.copy(cartErrorMarathi = appContext.getString(R.string.delivery_location_failed)) }
+            return
+        }
+
         val currentCart = cartItems.value
         val currentForm = _formState.value
 
