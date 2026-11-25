@@ -94,6 +94,7 @@ import com.example.ui.screens.MarathiChatScreen
 import com.example.ui.screens.CustomerProfileScreen
 import com.example.ui.screens.CustomerOrdersScreen
 import com.example.ui.screens.LiveOffersScreen
+import com.example.ui.screens.CustomerOffersSplashOverlay
 import com.example.ui.screens.NewArrivalsScreen
 import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
@@ -800,6 +801,7 @@ fun AnnapurnaRootApp() {
                 }
             }
         }
+        CustomerOffersSplashOverlay()
     }
 }
 
