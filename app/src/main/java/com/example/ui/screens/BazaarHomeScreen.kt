@@ -1594,8 +1594,26 @@ private val annapurnaMealCombos = listOf(
     fun matches(aliases: List<String>, item: ProduceItem) = aliases.any { alias ->
         listOf(item.marathiName, item.englishName, item.englishKeywords, item.hindiName).any { it.contains(alias, ignoreCase = true) }
     }
+    fun fallbackImage(aliases: List<String>): Int {
+        val key = aliases.joinToString(" ").lowercase()
+        return when {
+            "potato" in key || "बटाटा" in key -> R.drawable.img_prod_potato
+            "tomato" in key || "टोमॅटो" in key -> R.drawable.img_prod_tomato
+            "onion" in key || "कांदा" in key -> R.drawable.img_prod_onion
+            "cauliflower" in key || "फुलकोबी" in key -> R.drawable.img_prod_cauliflower
+            "carrot" in key || "गाजर" in key -> R.drawable.img_prod_carrot
+            "brinjal" in key || "वांगी" in key -> R.drawable.img_prod_brinjal
+            "spinach" in key || "coriander" in key || "कोथिंबीर" in key || "beans" in key || "मटकी" in key -> R.drawable.img_prod_spinach
+            "peas" in key || "मटार" in key -> R.drawable.img_prod_spinach
+            "lemon" in key || "लिंबू" in key -> R.drawable.img_prod_apple
+            "cabbage" in key || "कोबी" in key || "capsicum" in key || "ढोबळी" in key -> R.drawable.img_prod_cauliflower
+            "ginger" in key || "आले" in key -> R.drawable.img_prod_carrot
+            "chilli" in key || "मिरची" in key || "drumstick" in key || "शेवगा" in key || "bottle gourd" in key || "दुधी" in key -> R.drawable.img_prod_okra
+            else -> R.drawable.img_prod_tomato
+        }
+    }
     val rows = combo.ingredients.map { aliases -> aliases to produceItems.firstOrNull { matches(aliases, it) } }
-    val availableIds = rows.mapNotNull { (aliases, item) -> item?.takeIf { !it.isOutOfStock }?.id }.distinct()
+    val availableIds = rows.mapNotNull { (_, item) -> item?.takeIf { !it.isOutOfStock }?.id }.distinct()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(customerText("तुमचा भाजी कॉम्बो निवडा", "अपना सब्ज़ी कॉम्बो चुनें", "Choose your veggie combo")) },
@@ -1629,10 +1647,15 @@ private val annapurnaMealCombos = listOf(
                         modifier = Modifier.fillMaxWidth().background(
                             if (inStock) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
                             RoundedCornerShape(10.dp)
-                        ).padding(horizontal = 10.dp, vertical = 8.dp),
+                        ).padding(horizontal = 8.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(9.dp)
                     ) {
+                        if (item != null && !item.imageUrl.isNullOrBlank()) {
+                            AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)))
+                        } else {
+                            Image(painter = painterResource(id = item?.imageRes ?: fallbackImage(aliases)), contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)))
+                        }
                         Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                         if (inStock) {
                             Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
