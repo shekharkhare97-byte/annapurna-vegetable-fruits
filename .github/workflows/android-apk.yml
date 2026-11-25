@@ -69,7 +69,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk | head -n 5
           echo "=== RELEASE CERTIFICATE SHA-1 (use with this exact APK only) ==="
-          keytool -list -v -keystore my-upload-key.jks -storepass annapurna-ci-temporary -alias upload | grep -E 'SHA1:|SHA-1:'
+          keytool -list -v -keystore my-upload-key.jks -storepass "$STORE_PASSWORD" -alias upload | grep -E 'SHA1:|SHA-1:'
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
