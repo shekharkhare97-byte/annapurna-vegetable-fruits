@@ -1,0 +1,59 @@
+name: Build Customer App Debug APK (safe test)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - customer-app-redesign-safe
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - 'gradle/libs.versions.toml'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
+      - '.github/workflows/customer-debug-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out safe customer branch
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-36 build-tools;36.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Run unit tests
+        run: gradle --no-daemon testDebugUnitTest
+
+      - name: Build debug APK (not for public release)
+        run: gradle --no-daemon assembleDebug
+
+      - name: Verify debug APK package and signature
+        run: |
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | head -n 5
+
+      - name: Upload debug APK for internal testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: annapurna-customer-debug-apk-internal-test
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
