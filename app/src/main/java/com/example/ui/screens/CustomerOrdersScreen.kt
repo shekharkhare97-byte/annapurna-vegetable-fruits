@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
 import com.example.data.local.OrderEntity
 import java.text.DateFormat
 import java.util.Date
@@ -33,6 +34,8 @@ fun CustomerOrdersScreen(
     orders: List<OrderEntity>,
     modifier: Modifier = Modifier
 ) {
+    val language = LocalConfiguration.current.locales[0]?.language ?: "mr"
+    fun tr(mr: String, hi: String, en: String) = when (language) { "hi" -> hi; "en" -> en; else -> mr }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
@@ -44,8 +47,8 @@ fun CustomerOrdersScreen(
                     Icon(Icons.Outlined.ReceiptLong, contentDescription = null, tint = Color(0xFF23833B), modifier = Modifier.padding(14.dp))
                 }
                 Column {
-                    Text("माझ्या ऑर्डर्स", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("तुमच्या खरेदीचा संपूर्ण तपशील", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(tr("माझ्या ऑर्डर्स", "मेरे ऑर्डर", "My Orders"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(tr("तुमच्या खरेदीचा संपूर्ण तपशील", "आपकी खरीदारी का पूरा विवरण", "Your complete purchase history"), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -62,8 +65,8 @@ fun CustomerOrdersScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text("🛍️", style = MaterialTheme.typography.displaySmall)
-                        Text("अजून ऑर्डर नाही", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("तुमची पहिली खरेदी सुरू करा. केलेल्या ऑर्डर्सचा तपशील येथे दिसेल.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(tr("अजून ऑर्डर नाही", "अभी कोई ऑर्डर नहीं है", "No orders yet"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(tr("तुमची पहिली खरेदी सुरू करा. केलेल्या ऑर्डर्सचा तपशील येथे दिसेल.", "अपनी पहली खरीदारी शुरू करें। आपके ऑर्डर यहाँ दिखाई देंगे।", "Start your first purchase. Your orders will appear here."), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -80,13 +83,13 @@ fun CustomerOrdersScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("ऑर्डर #${order.orderId}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(tr("ऑर्डर #", "ऑर्डर #", "Order #") + order.orderId, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.weight(1f))
-                            Text("नोंदवली", color = Color(0xFF23833B), fontWeight = FontWeight.SemiBold)
+                            Text(tr("नोंदवली", "दर्ज हुआ", "Placed"), color = Color(0xFF23833B), fontWeight = FontWeight.SemiBold)
                         }
                         Text(order.itemsSummaryMarathi, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("${order.totalItemsCount} वस्तू")
+                            Text("${order.totalItemsCount} " + tr("वस्तू", "वस्तुएँ", "items"))
                             Spacer(Modifier.weight(1f))
                             Text("₹${order.totalAmountRupeesDecimal}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
