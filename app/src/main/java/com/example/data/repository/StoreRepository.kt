@@ -218,13 +218,17 @@ class StoreRepository(private val storeDao: StoreDao) {
             trackingData["customerLongitude"] = longitude
         }
         if (paymentMethod == "COD") {
-            // Save COD orders through the trusted Worker. Direct client writes can be
-            // rejected by Firestore Rules and would bypass the atomic stock reservation.
-            val saved = RazorpayPaymentGateway.submitCodOrder(
-                order = remoteOrderData,
-                tracking = trackingData
-            )
-            check(saved) { "COD order could not be saved. Please retry." }
+            // Preserve the previously working COD flow: commit the order and tracking
+            // record together through the existing Firebase client path. This avoids
+            // depending on a Worker route that may not yet exist in production.
+            val batch = firestore.batch()
+            batch.set(remoteOrder, remoteOrderData)
+            batch.set(firestore.collection("orderTracking").document(trackingToken), trackingData)
+            suspendCancellableCoroutine<Unit> { continuation ->
+                batch.commit()
+                    .addOnSuccessListener { if (continuation.isActive) continuation.resume(Unit) }
+                    .addOnFailureListener { error -> if (continuation.isActive) continuation.resumeWithException(error) }
+            }
         } else {
             require(paymentOrderId.isNotBlank() && paymentSignature.isNotBlank() && transactionId.isNotBlank()) {
                 "Verified Razorpay payment details are missing."
