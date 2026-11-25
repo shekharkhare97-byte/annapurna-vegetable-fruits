@@ -660,7 +660,7 @@ async function saveCodOrder(env, body) {
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(order.trackingToken) ||
       order.paymentMethod !== "COD" || order.paymentStatus !== "pending" ||
       typeof order.customerName !== "string" || order.customerName.trim().length < 2 ||
-      typeof order.mobileNumber !== "string" || !/^\\d{10}$/.test(order.mobileNumber) ||
+      typeof order.mobileNumber !== "string" || !/^\d{10}$/.test(order.mobileNumber) ||
       typeof order.deliveryAddress !== "string" || order.deliveryAddress.trim().length < 8 ||
       !Array.isArray(order.items) || order.items.length < 1 ||
       tracking.status !== "new" || tracking.orderId !== order.orderId) {
