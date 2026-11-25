@@ -510,9 +510,9 @@ fun CartAndOrderScreen(
                             if (shopPosition != null) {
                                 Text(
                                     if (trackingPartnerAccepted)
-                                        "🛵 ${trackingPartnerName.ifBlank { "Delivery Partner" }} दुकानातून Pickup करण्याच्या तयारीत आहे."
+                                        "🛵 ${trackingPartnerName.ifBlank { "Delivery Partner" }} " + customerText("दुकानातून Pickup करण्याच्या तयारीत आहे.", "दुकान से Pickup करने की तैयारी में है।", "is getting ready to pick up your order.")
                                     else
-                                        "🛵 तुमची ऑर्डर दुकानात तयार होत आहे. गाडी दुकानाजवळ आहे.",
+                                        customerText("🛵 तुमची ऑर्डर दुकानात तयार होत आहे. गाडी दुकानाजवळ आहे.", "🛵 आपका ऑर्डर दुकान में तैयार हो रहा है। वाहन दुकान के पास है।", "🛵 Your order is being prepared at the shop. The vehicle is nearby."),
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -527,15 +527,15 @@ fun CartAndOrderScreen(
                                 )
                                 Text(
                                     if (trackingPartnerAccepted)
-                                        "Pickup झाल्यावर गाडीचे Live Location येथे दिसेल."
+                                        customerText("Pickup झाल्यावर गाडीचे Live Location येथे दिसेल.", "Pickup होने के बाद वाहन की Live Location यहाँ दिखेगी।", "The vehicle's live location will appear here after pickup.")
                                     else
-                                        "Delivery Partner ऑर्डर Pickup करेपर्यंत गाडी दुकानातच दिसेल.",
+                                        customerText("Delivery Partner ऑर्डर Pickup करेपर्यंत गाडी दुकानातच दिसेल.", "Delivery Partner के ऑर्डर Pickup करने तक वाहन दुकान पर ही दिखेगा।", "The vehicle will remain shown at the shop until the delivery partner picks up the order."),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             } else {
                                 Text(
-                                    "दुकानाचे नकाशावरील Location मिळवत आहोत...",
+                                    customerText("दुकानाचे नकाशावरील Location मिळवत आहोत...", "दुकान का नक्शे वाला Location प्राप्त कर रहे हैं...", "Getting the shop's map location..."),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
