@@ -499,7 +499,7 @@ private fun CustomerFeatureShortcuts(
     wishlistSelected: Boolean
 ) {
     val tiles = listOf(
-        Triple("🎁", customerText("Live Offers", "Live Offers", "Live Offers"), onOffers),
+        Triple("🎁", customerText("थेट ऑफर्स", "लाइव ऑफ़र", "Live Offers"), onOffers),
         Triple("🆕", customerText("नवीन आगमन", "नए उत्पाद", "New Arrivals"), onNewArrivals),
         Triple("🌐", customerText("भाषा", "भाषा", "Language"), onLanguage),
         Triple("🎙️", customerText("आवाज शोध", "आवाज़ से खोजें", "Voice Search"), onVoiceSearch),
@@ -1013,7 +1013,7 @@ private fun ProduceGridCard(
                         modifier = Modifier.align(Alignment.Center)
                     ) {
                         Text(
-                            text = customerText("साठा संपला आहे", "स्टॉक खत्म है", "Out of Stock"),
+                            text = customerText("संपला आहे", "माल खत्म", "Out of Stock"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
