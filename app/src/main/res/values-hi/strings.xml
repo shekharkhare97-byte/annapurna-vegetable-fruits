@@ -120,4 +120,6 @@
     <string name="studio_prompt_hint">ऊपर से कोई आइडिया चुनें या अपना विवरण लिखें और तस्वीर बनाएँ।</string>
     <string name="payment_cod_hint">ऑर्डर मिलने पर नकद भुगतान करें।</string>
     <string name="nav_profile">प्रोफ़ाइल</string>
+    <string name="gps_permission_required">सटीक GPS अनुमति ज़रूरी है। इसके बिना आप ऑर्डर नहीं दे सकते।</string>
+    <string name="gps_fetching_customer_location">आपकी सटीक GPS लोकेशन प्राप्त की जा रही है…</string>
 </resources>
