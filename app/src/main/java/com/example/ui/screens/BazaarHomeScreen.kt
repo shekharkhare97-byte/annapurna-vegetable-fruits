@@ -143,6 +143,7 @@ fun BazaarHomeScreen(
         favoritePrefs.edit().putStringSet("ids", favoriteIds.toSet()).apply()
     }
     var showFavoritesOnly by remember { mutableStateOf(false) }
+    var showMealCombos by remember { mutableStateOf(false) }
     val visibleItems = remember(produceItems, favoriteIds.toList(), showFavoritesOnly) {
         if (showFavoritesOnly) produceItems.filter { it.id in favoriteIds } else produceItems
     }
@@ -186,6 +187,10 @@ fun BazaarHomeScreen(
                     onRequestProduct = { showProductRequest = true },
                     onOpenOffers = onOpenOffers
                 )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                MealComboEntry(onClick = { showMealCombos = true })
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -291,6 +296,13 @@ fun BazaarHomeScreen(
                 onGoToCart = onGoToCart
             )
         }
+    }
+
+    if (showMealCombos) {
+        MealComboDialog(produceItems = produceItems, onDismiss = { showMealCombos = false }, onAddIngredients = { ids ->
+            ids.forEach { onAddToCart(it, 500) }
+            showMealCombos = false
+        })
     }
 
     val productRequestFailureText = customerText(
@@ -1549,4 +1561,47 @@ private fun CustomerOffersStrip() {
 private fun customerText(mr: String, hi: String, en: String): String {
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
     return when (language) { "hi" -> hi; "en" -> en; else -> mr }
+}
+
+private data class MealCombo(val titleMr: String, val titleHi: String, val titleEn: String, val emoji: String, val ingredients: List<List<String>>)
+private val annapurnaMealCombos = listOf(
+    MealCombo("पावभाजी कॉम्बो", "पावभाजी कॉम्बो", "Pav Bhaji Combo", "🍲", listOf(listOf("बटाटा", "potato", "आलू"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कांदा", "onion", "प्याज"), listOf("फुलकोबी", "cauliflower", "फूलगोभी"), listOf("कोबी", "cabbage", "पत्ता गोभी"), listOf("मटार", "peas", "green peas"), listOf("ढोबळी मिरची", "capsicum", "bell pepper"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("लिंबू", "lemon", "नींबू"))),
+    MealCombo("मिसळ कॉम्बो", "मिसल कॉम्बो", "Misal Combo", "🌶️", listOf(listOf("मटकी", "moth beans", "matki"), listOf("कांदा", "onion", "प्याज"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("लिंबू", "lemon", "नींबू"), listOf("आले", "ginger", "अदरक"), listOf("हिरवी मिरची", "green chilli", "हरी मिर्च"))),
+    MealCombo("सांबार कॉम्बो", "सांभर कॉम्बो", "Sambar Combo", "🥘", listOf(listOf("शेवगा", "drumstick", "सहजन"), listOf("दुधी भोपळा", "bottle gourd", "लौकी"), listOf("गाजर", "carrot"), listOf("वांगी", "brinjal", "बैंगन"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कांदा", "onion", "प्याज"), listOf("कोथिंबीर", "coriander", "धनिया"))),
+    MealCombo("मिक्स व्हेज कॉम्बो", "मिक्स वेज कॉम्बो", "Mix Veg Combo", "🥦", listOf(listOf("फुलकोबी", "cauliflower", "फूलगोभी"), listOf("गाजर", "carrot"), listOf("मटार", "peas", "green peas"), listOf("बटाटा", "potato", "आलू"), listOf("ढोबळी मिरची", "capsicum", "bell pepper"), listOf("बीन्स", "beans", "फली"))),
+    MealCombo("उसळ कॉम्बो", "उसळ कॉम्बो", "Usal Combo", "🫘", listOf(listOf("मटकी", "moth beans", "matki"), listOf("कांदा", "onion", "प्याज"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("हिरवी मिरची", "green chilli", "हरी मिर्च"), listOf("लिंबू", "lemon", "नींबू"))),
+    MealCombo("व्हेज पुलाव कॉम्बो", "वेज पुलाव कॉम्बो", "Veg Pulao Combo", "🍚", listOf(listOf("गाजर", "carrot"), listOf("मटार", "peas", "green peas"), listOf("बीन्स", "beans", "फली"), listOf("कांदा", "onion", "प्याज"), listOf("बटाटा", "potato", "आलू"), listOf("कोथिंबीर", "coriander", "धनिया")))
+)
+
+@Composable private fun MealComboEntry(onClick: () -> Unit) {
+    Surface(onClick = onClick, color = Color(0xFFEAF6EC), contentColor = Color(0xFF145C2C), shape = RoundedCornerShape(18.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD5EAD8)), modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("🍲", style = MaterialTheme.typography.headlineMedium)
+            Column(Modifier.weight(1f)) {
+                Text(customerText("रेसिपीनुसार भाजी कॉम्बो", "रेसिपी के अनुसार सब्ज़ी कॉम्बो", "Recipe Vegetable Combos"), fontWeight = FontWeight.Bold)
+                Text(customerText("पावभाजी • मिसळ • सांबार आणि आणखी", "पावभाजी • मिसल • सांभर और भी", "Pav Bhaji • Misal • Sambar & more"), style = MaterialTheme.typography.bodySmall)
+            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        }
+    }
+}
+
+@Composable private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Unit, onAddIngredients: (List<String>) -> Unit) {
+    var selected by remember { mutableStateOf(0) }
+    val combo = annapurnaMealCombos[selected]
+    fun matches(aliases: List<String>, item: ProduceItem) = aliases.any { alias -> listOf(item.marathiName, item.englishName, item.englishKeywords, item.hindiName).any { it.contains(alias, ignoreCase = true) } }
+    val available = combo.ingredients.mapNotNull { aliases -> produceItems.firstOrNull { !it.isOutOfStock && matches(aliases, it) } }.distinctBy { it.id }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(customerText("तुमचा भाजी कॉम्बो निवडा", "अपना सब्ज़ी कॉम्बो चुनें", "Choose your veggie combo")) },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(annapurnaMealCombos.size) { index ->
+                FilterChip(selected = selected == index, onClick = { selected = index }, label = { Text(when (java.util.Locale.getDefault().language) { "hi" -> annapurnaMealCombos[index].titleHi; "en" -> annapurnaMealCombos[index].titleEn; else -> annapurnaMealCombos[index].titleMr }) })
+            } }
+            Text("\${combo.emoji} " + when (java.util.Locale.getDefault().language) { "hi" -> combo.titleHi; "en" -> combo.titleEn; else -> combo.titleMr }, fontWeight = FontWeight.Bold)
+            Text(customerText("उपलब्ध भाज्या (प्रत्येकी ५०० ग्रॅम Cart मध्ये जातील)", "उपलब्ध सब्ज़ियाँ (प्रत्येक ५०० ग्राम कार्ट में जुड़ेंगी)", "Available vegetables (500 g each will be added to cart)"), style = MaterialTheme.typography.bodySmall)
+            available.forEach { item -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(item.displayName(), modifier = Modifier.weight(1f)); Text("₹\${MarathiFormatters.formatRupees(item.priceRupees / 2.0)}") } }
+            if (available.size < combo.ingredients.size) Text(customerText("काही भाज्या स्टॉकमध्ये नाहीत किंवा कॅटलॉगमध्ये नाहीत.", "कुछ सब्ज़ियाँ स्टॉक में नहीं हैं या सूची में नहीं हैं।", "Some ingredients are out of stock or not listed."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            if (available.isEmpty()) Text(customerText("या कॉम्बोसाठी भाजी उपलब्ध नाही.", "इस कॉम्बो के लिए सब्ज़ियाँ उपलब्ध नहीं हैं।", "No ingredients are currently available."), color = MaterialTheme.colorScheme.error)
+        } },
+        confirmButton = { Button(onClick = { onAddIngredients(available.map { it.id }) }, enabled = available.isNotEmpty()) { Text(customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add available vegetables to cart")) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(customerText("बंद करा", "बंद करें", "Close")) } })
 }
