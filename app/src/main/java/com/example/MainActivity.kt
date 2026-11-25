@@ -284,6 +284,7 @@ fun AnnapurnaRootApp() {
     var assistantStartAction by rememberSaveable { mutableStateOf<String?>(null) }
 
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
+    val allProducts by storeViewModel.allProducts.collectAsStateWithLifecycle()
     val selectedCategory by storeViewModel.selectedCategory.collectAsStateWithLifecycle()
     val searchQuery by storeViewModel.searchQuery.collectAsStateWithLifecycle()
     val cartItems by storeViewModel.cartItems.collectAsStateWithLifecycle()
@@ -489,7 +490,7 @@ fun AnnapurnaRootApp() {
 
                     when (currentTab) {
                         AnnapurnaTab.NEW_ARRIVALS -> {
-                            NewArrivalsScreen(onBack = { currentTab = AnnapurnaTab.BAZAAR }, modifier = contentModifier)
+                            NewArrivalsScreen(products = allProducts, onAddToCart = { id, grams -> storeViewModel.addToCart(id, grams) }, onBack = { currentTab = AnnapurnaTab.BAZAAR }, modifier = contentModifier)
                         }
                         AnnapurnaTab.OFFERS -> {
                             LiveOffersScreen(onBack = { currentTab = AnnapurnaTab.BAZAAR }, modifier = contentModifier)
