@@ -1,3 +1,4 @@
+# Rebuild validation after the Annapurna-branded live-tracking marker update.
 name: Build Customer App Debug APK (safe test)
 
 on:
