@@ -167,6 +167,10 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                HeroMarketBanner(onShopNow = { onSelectCategory(ProduceCategory.VEGETABLE) })
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 SearchAndFilterBar(
                     searchQuery = searchQuery,
                     selectedCategory = selectedCategory,
@@ -176,16 +180,16 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                LiveOffersHeroBanner(onOfferClick = onOpenOffers)
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
                 CategoryFilterRow(
                     selectedCategory = selectedCategory,
                     onSelectCategory = onSelectCategory,
                     onRequestProduct = { showProductRequest = true },
                     onOpenOffers = onOpenOffers
                 )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                LiveOffersHeroBanner(onOfferClick = onOpenOffers)
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
