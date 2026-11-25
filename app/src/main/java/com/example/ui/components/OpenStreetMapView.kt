@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.Dispatchers
@@ -146,6 +147,12 @@ fun OpenStreetMapView(
     destinationLongitude: Double? = null
 ) {
     val context = LocalContext.current
+    val language = LocalConfiguration.current.locales[0]?.language ?: "mr"
+    fun localized(mr: String, hi: String, en: String) = when (language) {
+        "hi" -> hi
+        "en" -> en
+        else -> mr
+    }
     val mapHolder = remember { arrayOfNulls<MapView>(1) }
     var deliveryRoute by remember { mutableStateOf<DeliveryRoute?>(null) }
     var lastRouteFetchAt by remember { mutableStateOf(0L) }
@@ -211,8 +218,8 @@ fun OpenStreetMapView(
                 if (destinationLatitude != null && destinationLongitude != null) {
                     val customerMarker = Marker(map).apply {
                         position = GeoPoint(destinationLatitude, destinationLongitude)
-                        title = "Delivery address"
-                        snippet = "Your location"
+                        title = localized("डिलिव्हरीचा पत्ता", "डिलीवरी का पता", "Delivery address")
+                        snippet = localized("तुमचे ठिकाण", "आपकी लोकेशन", "Your location")
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     }
                     map.overlays.add(customerMarker)
@@ -229,8 +236,8 @@ fun OpenStreetMapView(
                 shadowElevation = 4.dp
             ) {
                 Text(
-                    text = "मार्ग " + String.format("%.1f", deliveryRoute!!.distanceKm) +
-                        " km  •  अंदाजे " + deliveryRoute!!.durationMinutes + " मिनिटे",
+                    text = localized("मार्ग ", "रास्ता ", "Route ") + String.format(java.util.Locale.US, "%.1f", deliveryRoute!!.distanceKm) +
+                        " km  •  " + localized("अंदाजे ", "लगभग ", "approx. ") + deliveryRoute!!.durationMinutes + localized(" मिनिटे", " मिनट", " min"),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
