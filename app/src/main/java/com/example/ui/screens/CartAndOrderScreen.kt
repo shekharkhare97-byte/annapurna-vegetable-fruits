@@ -1453,22 +1453,22 @@ private fun OrderConfirmedDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ConfettiBurst(modifier = Modifier.fillMaxWidth().height(76.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ConfettiBurst(modifier = Modifier.fillMaxWidth().height(48.dp))
                 Text(
                     text = customerText(
                         "Annapurna Vegetables and Fruits कडून खरेदी केल्याबद्दल धन्यवाद! 🛍️",
                         "Annapurna Vegetables and Fruits से खरीदारी करने के लिए धन्यवाद! 🛍️",
                         "Thanks for Shopping with Annapurna Vegetables and Fruits! 🛍️"
                     ),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Text(
-                    text = stringResource(R.string.order_success_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -1476,69 +1476,38 @@ private fun OrderConfirmedDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(9.dp)
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = stringResource(
                                 R.string.order_id_format,
                                 MarathiFormatters.toMarathiNumber(order.orderId.toInt())
                             ),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
-                        Text("${stringResource(R.string.customer_name_prefix)} ${order.customerName}", style = MaterialTheme.typography.bodySmall)
-                        Text("${stringResource(R.string.mobile_prefix)} ${MarathiFormatters.toMarathiDigits(order.mobileNumber)}", style = MaterialTheme.typography.bodySmall)
-                        if (order.deliveryAddress.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = order.deliveryAddress,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = stringResource(R.string.total_bill_label),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
                 }
-                Text(
-                    text = order.itemsSummaryMarathi,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.large,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
-                    ) {
-                        Text(
-                            stringResource(R.string.total_bill_label),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                }
             }
         },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onShareReceipt,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.testTag("share_receipt_button")
-            ) {
-                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.btn_share_receipt))
-            }
-        },
+        dismissButton = null,
         confirmButton = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Button(
