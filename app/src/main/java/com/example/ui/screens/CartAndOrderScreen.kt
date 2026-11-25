@@ -196,8 +196,8 @@ fun CartAndOrderScreen(
                     this.latitude = latitude
                     this.longitude = longitude
                 } else Location("annapurna_shop").apply {
-                    latitude = 20.053216
-                    longitude = 73.799811
+                    this.latitude = 20.053216
+                    this.longitude = 73.799811
                 }
             }.getOrNull() }
             if (shop == null) { deliveryMessage = context.getString(R.string.delivery_shop_location_missing); return@launch }
