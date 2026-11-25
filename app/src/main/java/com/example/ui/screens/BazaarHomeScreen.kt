@@ -275,10 +275,8 @@ fun BazaarHomeScreen(
                     wishlistSelected = showFavoritesOnly
                 )
             }
-
         }
-
-
+        
         AnimatedVisibility(
             visible = totalCartQty > 0,
             enter = slideInVertically(animationSpec = spring()) { it } + fadeIn(),
