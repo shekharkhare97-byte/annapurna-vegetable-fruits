@@ -8,6 +8,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -25,6 +29,7 @@ fun NewArrivalsScreen(
     modifier: Modifier = Modifier
 ) {
     val language = LocalConfiguration.current.locales[0]?.language ?: "mr"
+    var selectedItem by remember { mutableStateOf<ProduceItem?>(null) }
     fun tr(mr: String, hi: String, en: String) = when (language) { "hi" -> hi; "en" -> en; else -> mr }
     // Only Admin-tagged products belong here. Never label the whole catalogue as new.
     val arrivals = products.filter {
@@ -75,9 +80,9 @@ fun NewArrivalsScreen(
                                 }
                             }
                             Text(item.displayName(), fontWeight = FontWeight.Bold, maxLines = 2)
-                            Text("₹" + item.priceRupees.toString() + " / " + item.displayUnit(), style = MaterialTheme.typography.bodyMedium)
+                            Text("₹${com.example.util.MarathiFormatters.formatRupees(item.priceRupees)} / ${item.displayUnit()}", style = MaterialTheme.typography.bodyMedium)
                             Button(
-                                onClick = { onAddToCart(item.id, 1000) },
+                                onClick = { selectedItem = item },
                                 enabled = !item.isOutOfStock,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -88,5 +93,15 @@ fun NewArrivalsScreen(
                 }
             }
         }
+    }
+    selectedItem?.let { item ->
+        WeightSelectionDialog(
+            item = item,
+            onDismiss = { selectedItem = null },
+            onConfirm = { grams ->
+                onAddToCart(item.id, grams)
+                selectedItem = null
+            }
+        )
     }
 }
