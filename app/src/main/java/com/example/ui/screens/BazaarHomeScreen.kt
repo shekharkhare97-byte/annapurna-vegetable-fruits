@@ -183,7 +183,8 @@ fun BazaarHomeScreen(
                 CategoryFilterRow(
                     selectedCategory = selectedCategory,
                     onSelectCategory = onSelectCategory,
-                    onRequestProduct = { showProductRequest = true }
+                    onRequestProduct = { showProductRequest = true },
+                    onOpenOffers = onOpenOffers
                 )
             }
 
@@ -875,7 +876,8 @@ private fun SearchAndFilterBar(
 private fun CategoryFilterRow(
     selectedCategory: ProduceCategory,
     onSelectCategory: (ProduceCategory) -> Unit,
-    onRequestProduct: () -> Unit
+    onRequestProduct: () -> Unit,
+    onOpenOffers: () -> Unit
 ) {
     data class HomeCategory(
         val emoji: String,
