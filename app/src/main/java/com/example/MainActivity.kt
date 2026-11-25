@@ -117,13 +117,13 @@ enum class AnnapurnaTab(
         tag = "nav_tab_bazaar"
     ),
     NEW_ARRIVALS(
-        labelRes = R.string.nav_categories,
+        labelRes = R.string.nav_new_arrivals,
         selectedIcon = Icons.Filled.Eco,
         unselectedIcon = Icons.Filled.Eco,
         tag = "nav_tab_new_arrivals"
     ),
     OFFERS(
-        labelRes = R.string.nav_categories,
+        labelRes = R.string.nav_offers,
         selectedIcon = Icons.Filled.Eco,
         unselectedIcon = Icons.Filled.Eco,
         tag = "nav_tab_offers"
@@ -238,7 +238,7 @@ private fun CustomerStartupPermissions(content: @Composable () -> Unit) {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
-        // Do not block shopping if a customer declines an optional permission.
+        // GPS is requested at startup; order submission independently requires precise GPS permission.
         preferences.edit().putBoolean("requested_once", true).apply()
     }
 
@@ -280,7 +280,7 @@ fun AnnapurnaRootApp() {
         entryPrefs.getString("customer_mobile", null)?.let(storeViewModel::updateMobileNumber)
     }
 
-    var currentTab by remember { mutableStateOf(AnnapurnaTab.BAZAAR) }
+    var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
     var assistantStartAction by rememberSaveable { mutableStateOf<String?>(null) }
 
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
