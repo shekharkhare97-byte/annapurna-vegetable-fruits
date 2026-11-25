@@ -177,6 +177,7 @@ class StoreViewModel(
     val selectedProduceDetail: StateFlow<ProduceItem?> = _selectedProduceDetail.asStateFlow()
 
     private val _adminProducts = MutableStateFlow<List<ProduceItem>>(emptyList())
+    val allProducts: StateFlow<List<ProduceItem>> = _adminProducts.asStateFlow()
 
     val filteredProduce: StateFlow<List<ProduceItem>> = combine(
         _selectedCategory,
