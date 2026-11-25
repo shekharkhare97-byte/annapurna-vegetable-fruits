@@ -78,6 +78,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -161,6 +162,7 @@ fun BazaarHomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .fillMaxSize()
+                .blur(if (showMealCombos) 8.dp else 0.dp)
                 .testTag("produce_grid")
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -1589,19 +1591,63 @@ private val annapurnaMealCombos = listOf(
 @Composable private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Unit, onAddIngredients: (List<String>) -> Unit) {
     var selected by remember { mutableStateOf(0) }
     val combo = annapurnaMealCombos[selected]
-    fun matches(aliases: List<String>, item: ProduceItem) = aliases.any { alias -> listOf(item.marathiName, item.englishName, item.englishKeywords, item.hindiName).any { it.contains(alias, ignoreCase = true) } }
-    val available = combo.ingredients.mapNotNull { aliases -> produceItems.firstOrNull { !it.isOutOfStock && matches(aliases, it) } }.distinctBy { it.id }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text(customerText("तुमचा भाजी कॉम्बो निवडा", "अपना सब्ज़ी कॉम्बो चुनें", "Choose your veggie combo")) },
-        text = { Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(annapurnaMealCombos.size) { index ->
-                FilterChip(selected = selected == index, onClick = { selected = index }, label = { Text(when (java.util.Locale.getDefault().language) { "hi" -> annapurnaMealCombos[index].titleHi; "en" -> annapurnaMealCombos[index].titleEn; else -> annapurnaMealCombos[index].titleMr }) })
-            } }
-            Text("\${combo.emoji} " + when (java.util.Locale.getDefault().language) { "hi" -> combo.titleHi; "en" -> combo.titleEn; else -> combo.titleMr }, fontWeight = FontWeight.Bold)
-            Text(customerText("उपलब्ध भाज्या (प्रत्येकी ५०० ग्रॅम Cart मध्ये जातील)", "उपलब्ध सब्ज़ियाँ (प्रत्येक ५०० ग्राम कार्ट में जुड़ेंगी)", "Available vegetables (500 g each will be added to cart)"), style = MaterialTheme.typography.bodySmall)
-            available.forEach { item -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(item.displayName(), modifier = Modifier.weight(1f)); Text("₹\${MarathiFormatters.formatRupees(item.priceRupees / 2.0)}") } }
-            if (available.size < combo.ingredients.size) Text(customerText("काही भाज्या स्टॉकमध्ये नाहीत किंवा कॅटलॉगमध्ये नाहीत.", "कुछ सब्ज़ियाँ स्टॉक में नहीं हैं या सूची में नहीं हैं।", "Some ingredients are out of stock or not listed."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            if (available.isEmpty()) Text(customerText("या कॉम्बोसाठी भाजी उपलब्ध नाही.", "इस कॉम्बो के लिए सब्ज़ियाँ उपलब्ध नहीं हैं।", "No ingredients are currently available."), color = MaterialTheme.colorScheme.error)
-        } },
-        confirmButton = { Button(onClick = { onAddIngredients(available.map { it.id }) }, enabled = available.isNotEmpty()) { Text(customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add available vegetables to cart")) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(customerText("बंद करा", "बंद करें", "Close")) } })
+    fun matches(aliases: List<String>, item: ProduceItem) = aliases.any { alias ->
+        listOf(item.marathiName, item.englishName, item.englishKeywords, item.hindiName).any { it.contains(alias, ignoreCase = true) }
+    }
+    val rows = combo.ingredients.map { aliases -> aliases to produceItems.firstOrNull { matches(aliases, it) } }
+    val availableIds = rows.mapNotNull { (aliases, item) -> item?.takeIf { !it.isOutOfStock }?.id }.distinct()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(customerText("तुमचा भाजी कॉम्बो निवडा", "अपना सब्ज़ी कॉम्बो चुनें", "Choose your veggie combo")) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(annapurnaMealCombos.size) { index ->
+                        FilterChip(selected = selected == index, onClick = { selected = index }, label = {
+                            Text(when (java.util.Locale.getDefault().language) {
+                                "hi" -> annapurnaMealCombos[index].titleHi
+                                "en" -> annapurnaMealCombos[index].titleEn
+                                else -> annapurnaMealCombos[index].titleMr
+                            })
+                        })
+                    }
+                }
+                Text("${combo.emoji} " + when (java.util.Locale.getDefault().language) {
+                    "hi" -> combo.titleHi
+                    "en" -> combo.titleEn
+                    else -> combo.titleMr
+                }, fontWeight = FontWeight.Bold)
+                Text(customerText("प्रत्येकी ५०० ग्रॅम Cart मध्ये जोडले जातील", "प्रत्येक ५०० ग्राम कार्ट में जुड़ेंगे", "500 g each will be added to cart"), style = MaterialTheme.typography.bodySmall)
+                rows.forEach { (aliases, item) ->
+                    val inStock = item != null && !item.isOutOfStock
+                    val label = item?.displayName() ?: when (java.util.Locale.getDefault().language) {
+                        "hi" -> aliases.getOrElse(2) { aliases.last() }
+                        "en" -> aliases.getOrElse(1) { aliases.first() }
+                        else -> aliases.first()
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().background(
+                            if (inStock) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
+                            RoundedCornerShape(10.dp)
+                        ).padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (inStock) {
+                            Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
+                        } else {
+                            Text(customerText("संपला आहे", "स्टॉक खत्म", "OUT OF STOCK"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onAddIngredients(availableIds) }, enabled = availableIds.isNotEmpty()) {
+                Text(customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add available vegetables to cart"))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(customerText("बंद करा", "बंद करें", "Close")) } }
+    )
 }
