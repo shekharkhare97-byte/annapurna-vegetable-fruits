@@ -643,7 +643,7 @@ fun CartAndOrderScreen(
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Text(
-                                        "🛵 Delivery Partner: ${trackingPartnerName.ifBlank { customerText("नाव मिळवत आहोत", "नाम प्राप्त हो रहा है", "Getting name") }}",
+                                        customerText("🛵 डिलिव्हरी पार्टनर: ${trackingPartnerName.ifBlank { "नाव मिळवत आहोत" }}", "🛵 डिलीवरी पार्टनर: ${trackingPartnerName.ifBlank { "नाम प्राप्त हो रहा है" }}", "🛵 Delivery Partner: ${trackingPartnerName.ifBlank { "Getting name" }}"),
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
