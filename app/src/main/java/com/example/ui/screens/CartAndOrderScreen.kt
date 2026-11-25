@@ -20,6 +20,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -65,6 +68,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,6 +90,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Animatable
 import com.example.R
 import com.example.data.local.OrderEntity
 import com.example.data.repository.CartLineItem
@@ -1450,8 +1455,13 @@ private fun OrderConfirmedDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ConfettiBurst(modifier = Modifier.fillMaxWidth().height(76.dp))
                 Text(
-                    text = customerText("ऑर्डर यशस्वीरीत्या नोंदवली! धन्यवाद! 🛍️", "ऑर्डर सफलतापूर्वक दर्ज हुआ! धन्यवाद! 🛍️", "Order Placed! Thanks for Shopping! 🛍️"),
+                    text = customerText(
+                        "Annapurna Vegetables and Fruits कडून खरेदी केल्याबद्दल धन्यवाद! 🛍️",
+                        "Annapurna Vegetables and Fruits से खरीदारी करने के लिए धन्यवाद! 🛍️",
+                        "Thanks for Shopping with Annapurna Vegetables and Fruits! 🛍️"
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.ExtraBold
@@ -1548,6 +1558,47 @@ private fun OrderConfirmedDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ConfettiBurst(modifier: Modifier = Modifier) {
+    val progress = androidx.compose.runtime.remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 2200)
+        )
+    }
+    val colors = listOf(
+        Color(0xFFE53935), Color(0xFFFFB300), Color(0xFF43A047),
+        Color(0xFF1E88E5), Color(0xFF8E24AA), Color(0xFFFF7043),
+        Color(0xFF00ACC1)
+    )
+    Canvas(modifier = modifier) {
+        val t = progress.value
+        val w = size.width
+        val h = size.height
+        for (i in 0 until 46) {
+            val column = (i * 37 % 101) / 100f
+            val startY = -((i * 19 % 75) / 100f) * h
+            val travel = h * (1.15f + (i % 5) * 0.12f)
+            val x = column * w + kotlin.math.sin((t * 5.5f + i) * 1.4f) * (8f + (i % 4) * 3f)
+            val y = startY + travel * t
+            val alpha = (1f - t * 0.18f).coerceIn(0f, 1f)
+            val color = colors[i % colors.size].copy(alpha = alpha)
+            rotate(degrees = (i * 29f + t * 520f) % 360f, pivot = Offset(x, y)) {
+                if (i % 3 == 0) {
+                    drawCircle(color = color, radius = 3.5.dp.toPx(), center = Offset(x, y))
+                } else {
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(x - 3.dp.toPx(), y - 5.dp.toPx()),
+                        size = androidx.compose.ui.geometry.Size(6.dp.toPx(), 10.dp.toPx())
+                    )
+                }
+            }
+        }
+    }
 }
 
 private fun formatOrderShareReceipt(order: OrderEntity): String {
