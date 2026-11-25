@@ -231,11 +231,11 @@ fun CartAndOrderScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) fetchGpsForDelivery()
-        else clearCustomerGps("अचूक GPS परवानगी आवश्यक आहे. परवानगी न दिल्यास ऑर्डर देता येणार नाही.")
+        else clearCustomerGps(context.getString(R.string.gps_permission_required))
     }
 
     fun requestDeliveryLocation() {
-        clearCustomerGps("ग्राहकाचे अचूक GPS Location मिळवत आहोत…")
+        clearCustomerGps(context.getString(R.string.gps_fetching_customer_location))
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val enabled = runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
         if (!enabled) { showGpsOffDialog = true; return }
