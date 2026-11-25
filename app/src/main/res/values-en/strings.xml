@@ -70,6 +70,7 @@
     <string name="delivery_calculating_distance">Calculating delivery distance...</string>
     <string name="delivery_shop_location_missing">Shop location not found. Check your internet connection and try again.</string>
     <string name="delivery_charge_added">Delivery fee has been added to your bill.</string>
+    <string name="delivery_charge_added_format">Road distance from shop: %1$s km (₹10 per km)</string>
     <string name="delivery_location_missing">Location not found. Turn on GPS and try again.</string>
     <string name="delivery_location_failed">Could not get your location. Please try again.</string>
     <string name="delivery_address_checking">Checking address and calculating delivery fee...</string>
