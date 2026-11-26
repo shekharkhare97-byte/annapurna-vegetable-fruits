@@ -170,7 +170,9 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                HeroMarketBanner(onShopNow = { onSelectCategory(ProduceCategory.VEGETABLE) })
+                CustomerOffersStrip(onOfferClick = onOpenOffers) {
+                    HeroMarketBanner(onShopNow = { onSelectCategory(ProduceCategory.VEGETABLE) })
+                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -199,10 +201,6 @@ fun BazaarHomeScreen(
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 LiveOffersHeroBanner(onOfferClick = onOpenOffers)
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                CustomerOffersStrip()
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -1412,7 +1410,7 @@ private fun ProduceDetailSheetContent(
 
 
 @Composable
-private fun CustomerOffersStrip() {
+private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composable () -> Unit) {
     val offers = remember { mutableStateListOf<Map<String, Any>>() }
     DisposableEffect(Unit) {
         val registration = FirebaseFirestore.getInstance()
@@ -1494,9 +1492,10 @@ private fun CustomerOffersStrip() {
 
                     Box(
                         modifier = Modifier
-                            .width(284.dp)
+                            .fillParentMaxWidth()
                             .height(170.dp)
                             .clip(RoundedCornerShape(22.dp))
+                            .clickable(onClick = onOfferClick)
                             .background(
                                 Brush.linearGradient(
                                     colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))
@@ -1562,9 +1561,10 @@ private fun CustomerOffersStrip() {
                 }
             }
         }
+    } else {
+        onNoOffers()
     }
 }
-
 @Composable
 private fun customerText(mr: String, hi: String, en: String): String {
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
