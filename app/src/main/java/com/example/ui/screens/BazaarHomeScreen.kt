@@ -1515,32 +1515,49 @@ private val annapurnaMealCombos = listOf(
 private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Unit, onAddIngredients: (List<String>) -> Unit) {
     var selected by remember { mutableStateOf(0) }
     val combo = annapurnaMealCombos[selected]
+    fun normalizeComboName(value: String): String =
+        java.text.Normalizer.normalize(value.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "")
+            .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
+            .trim()
     fun matches(aliases: List<String>, item: ProduceItem): Boolean {
-        val exactNames = listOf(item.marathiName, item.englishName, item.hindiName)
-            .filter { it.isNotBlank() }.map { it.trim().lowercase() }
-        val keywordTokens = item.englishKeywords.split(Regex("[,;/|]"))
-            .map { it.trim().lowercase() }.filter { it.isNotBlank() }
+        // englishKeywords is stored as a space-separated list of all three language names.
+        // Compare normalized whole words/phrases instead of treating the entire string as one token.
+        val candidates = (listOf(item.marathiName, item.englishName, item.hindiName) + item.englishKeywords.split(Regex("[,;/|]")))
+            .filter { it.isNotBlank() }.map(::normalizeComboName)
         return aliases.any { alias ->
-            val key = alias.trim().lowercase()
-            key in exactNames || key in keywordTokens
+            val key = normalizeComboName(alias)
+            candidates.any { candidate -> candidate == key || " $candidate ".contains(" $key ") }
         }
     }
-    fun fallbackImage(aliases: List<String>): Int {
-        val key = aliases.joinToString(" ").lowercase()
+    fun fallbackImage(aliases: List<String>): Int? {
+        val key = normalizeComboName(aliases.joinToString(" "))
         return when {
-            "potato" in key || "बटाटा" in key -> R.drawable.img_prod_potato
-            "tomato" in key || "टोमॅटो" in key -> R.drawable.img_prod_tomato
-            "onion" in key || "कांदा" in key -> R.drawable.img_prod_onion
-            "cauliflower" in key || "फुलकोबी" in key -> R.drawable.img_prod_cauliflower
+            "potato" in key || "बटाटा" in key || "आलू" in key -> R.drawable.img_prod_potato
+            "tomato" in key || "टोमॅटो" in key || "टमाटर" in key -> R.drawable.img_prod_tomato
+            "onion" in key || "कांदा" in key || "प्याज" in key -> R.drawable.img_prod_onion
+            "cauliflower" in key || "फुलकोबी" in key || "फूलगोभी" in key -> R.drawable.img_prod_cauliflower
             "carrot" in key || "गाजर" in key -> R.drawable.img_prod_carrot
-            "brinjal" in key || "वांगी" in key -> R.drawable.img_prod_brinjal
-            "spinach" in key || "coriander" in key || "कोथिंबीर" in key || "beans" in key || "मटकी" in key -> R.drawable.img_prod_spinach
-            "peas" in key || "मटार" in key -> R.drawable.img_prod_spinach
-            "lemon" in key || "लिंबू" in key -> R.drawable.img_prod_apple
-            "cabbage" in key || "कोबी" in key || "capsicum" in key || "ढोबळी" in key -> R.drawable.img_prod_cauliflower
-            "ginger" in key || "आले" in key -> R.drawable.img_prod_carrot
-            "chilli" in key || "मिरची" in key || "drumstick" in key || "शेवगा" in key || "bottle gourd" in key || "दुधी" in key -> R.drawable.img_prod_okra
-            else -> R.drawable.img_prod_tomato
+            "brinjal" in key || "वांगी" in key || "बैंगन" in key -> R.drawable.img_prod_brinjal
+            "spinach" in key || "पालक" in key -> R.drawable.img_prod_spinach
+            else -> null
+        }
+    }
+    fun fallbackEmoji(aliases: List<String>): String {
+        val key = normalizeComboName(aliases.joinToString(" "))
+        return when {
+            "lemon" in key || "लिंबू" in key || "नींबू" in key -> "🍋"
+            "capsicum" in key || "bell pepper" in key || "ढोबळी" in key -> "🫑"
+            "cabbage" in key || "कोबी" in key -> "🥬"
+            "beans" in key || "moth beans" in key || "मटकी" in key -> "🫘"
+            "peas" in key || "मटार" in key -> "🟢"
+            "coriander" in key || "कोथिंबीर" in key || "धनिया" in key -> "🌿"
+            "ginger" in key || "आले" in key || "अदरक" in key -> "🫚"
+            "garlic" in key || "लसूण" in key || "लहसुन" in key -> "🧄"
+            "chilli" in key || "मिरची" in key -> "🌶️"
+            "drumstick" in key || "शेवगा" in key || "सहजन" in key -> "🌿"
+            "bottle gourd" in key || "दुधी" in key || "लौकी" in key -> "🥒"
+            else -> "🥬"
         }
     }
     val rows = combo.ingredients.map { aliases -> aliases to produceItems.firstOrNull { matches(aliases, it) } }
@@ -1594,12 +1611,24 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                         if (item != null && !item.imageUrl.isNullOrBlank()) {
                             AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
                         } else {
-                            Image(
-                                painter = painterResource(id = fallbackImage(aliases)),
-                                contentDescription = label,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
-                            )
+                            val localPhoto = fallbackImage(aliases)
+                            if (localPhoto != null) {
+                                Image(
+                                    painter = painterResource(id = localPhoto),
+                                    contentDescription = label,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                                )
+                            } else {
+                                Surface(
+                                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)),
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(fallbackEmoji(aliases), style = MaterialTheme.typography.headlineMedium)
+                                    }
+                                }
+                            }
                         }
                         Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                         if (inStock) {
