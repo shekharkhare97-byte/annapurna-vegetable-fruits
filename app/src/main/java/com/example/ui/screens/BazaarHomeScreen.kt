@@ -1470,7 +1470,7 @@ private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composabl
             modifier = Modifier.fillMaxWidth().height(170.dp)
                 .clip(RoundedCornerShape(22.dp))
                 .clickable(onClick = onOfferClick)
-                .background(Brush.linearGradient(colors = listOf(Color(0xFF238B45), Color(0xFF075B2A)))
+                .background(Brush.linearGradient(colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))))
         ) {
             if (imageUrl.isNotBlank()) {
                 AsyncImage(model = imageUrl, contentDescription = offerTitle, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
