@@ -1430,7 +1430,7 @@ private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composabl
     LaunchedEffect(offerIds) {
         currentOfferIndex = 0
         if (offerIds.isNotEmpty()) {
-            while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+            while (true) {
                 kotlinx.coroutines.delay(4000)
                 if (offers.isNotEmpty()) {
                     currentOfferIndex = (currentOfferIndex + 1) % offers.size
