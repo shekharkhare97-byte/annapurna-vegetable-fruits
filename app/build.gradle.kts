@@ -130,6 +130,9 @@ dependencies {
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
   implementation("com.razorpay:checkout:1.6.41")
+  // Pin the transitive LATEST dependency to a reproducible Maven Central release.
+  // AGP 9.1.1-compatible namespace fix is present in the 1.7.18+ Razorpay line.
+  implementation("com.razorpay:standard-core:1.7.22")
   implementation(libs.play.services.location)
   implementation("org.osmdroid:osmdroid-android:6.1.20")
   implementation(libs.retrofit)
