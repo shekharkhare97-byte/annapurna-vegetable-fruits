@@ -1426,16 +1426,14 @@ private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composabl
     }
 
     val offerIds = offers.map { it["offerId"]?.toString().orEmpty() }
-    var currentOfferIndex by remember { mutableStateOf(-1) }
+    var currentOfferIndex by remember { mutableStateOf(0) }
     LaunchedEffect(offerIds) {
-        currentOfferIndex = -1
+        currentOfferIndex = 0
         if (offerIds.isNotEmpty()) {
-            while (true) {
-                currentOfferIndex = -1
-                kotlinx.coroutines.delay(2000)
-                offers.indices.forEach { index ->
-                    currentOfferIndex = index
-                    kotlinx.coroutines.delay(2000)
+            while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+                kotlinx.coroutines.delay(4000)
+                if (offers.isNotEmpty()) {
+                    currentOfferIndex = (currentOfferIndex + 1) % offers.size
                 }
             }
         }
@@ -1443,10 +1441,8 @@ private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composabl
 
     if (offers.isEmpty()) {
         onNoOffers()
-    } else if (currentOfferIndex < 0 || currentOfferIndex >= offers.size) {
-        onNoOffers()
     } else {
-        val offer = offers[currentOfferIndex]
+        val offer = offers[currentOfferIndex.coerceIn(0, offers.lastIndex)]
         val imageUrl = offer["imageUrl"]?.toString().orEmpty()
         val offerLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
         val offerTitle = when (offerLanguage) {
