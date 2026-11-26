@@ -1,4 +1,4 @@
-# Rebuild validation after the Annapurna-branded live-tracking marker update.
+# Debug build validation for Combo Pack product matching, accurate ingredient photos, and fixed cart action.
 name: Build Customer App Debug APK (safe test)
 
 on:
