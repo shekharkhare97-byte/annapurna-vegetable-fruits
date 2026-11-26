@@ -1517,10 +1517,10 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
             .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
             .trim()
     fun matches(aliases: List<String>, item: ProduceItem): Boolean {
-        // englishKeywords is stored as a space-separated list of all three language names.
-        // Compare normalized whole words/phrases instead of treating the entire string as one token.
+        // Keep complete multilingual names/phrases intact; splitting "green peas" into
+        // separate words prevents a correct ingredient match against multi-word aliases.
         val candidates = (listOf(item.marathiName, item.englishName, item.hindiName) +
-            item.englishKeywords.split(Regex("[,;/|\\s]+")))
+            item.englishKeywords.split(Regex("[,;/|]+")))
             .filter { it.isNotBlank() }.map(::normalizeComboName)
         return aliases.any { alias ->
             val key = normalizeComboName(alias)
