@@ -1523,7 +1523,8 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
     fun matches(aliases: List<String>, item: ProduceItem): Boolean {
         // englishKeywords is stored as a space-separated list of all three language names.
         // Compare normalized whole words/phrases instead of treating the entire string as one token.
-        val candidates = (listOf(item.marathiName, item.englishName, item.hindiName) + item.englishKeywords.split(Regex("[,;/|]")))
+        val candidates = (listOf(item.marathiName, item.englishName, item.hindiName) +
+            item.englishKeywords.split(Regex("[,;/|\\s]+")))
             .filter { it.isNotBlank() }.map(::normalizeComboName)
         return aliases.any { alias ->
             val key = normalizeComboName(alias)
@@ -1543,22 +1544,25 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
             else -> null
         }
     }
-    fun fallbackEmoji(aliases: List<String>): String {
+    // Free-license real photographs from Wikimedia Commons; Admin imageUrl takes priority.
+    fun fallbackPhotoUrl(aliases: List<String>): String? {
         val key = normalizeComboName(aliases.joinToString(" "))
-        return when {
-            "lemon" in key || "लिंबू" in key || "नींबू" in key -> "🍋"
-            "capsicum" in key || "bell pepper" in key || "ढोबळी" in key -> "🫑"
-            "cabbage" in key || "कोबी" in key -> "🥬"
-            "beans" in key || "moth beans" in key || "मटकी" in key -> "🫘"
-            "peas" in key || "मटार" in key -> "🟢"
-            "coriander" in key || "कोथिंबीर" in key || "धनिया" in key -> "🌿"
-            "ginger" in key || "आले" in key || "अदरक" in key -> "🫚"
-            "garlic" in key || "लसूण" in key || "लहसुन" in key -> "🧄"
-            "chilli" in key || "मिरची" in key -> "🌶️"
-            "drumstick" in key || "शेवगा" in key || "सहजन" in key -> "🌿"
-            "bottle gourd" in key || "दुधी" in key || "लौकी" in key -> "🥒"
-            else -> "🥬"
+        val file = when {
+            "lemon" in key || "लिंबू" in key || "नींबू" in key -> "Lemon%20fruit.jpg"
+            "capsicum" in key || "bell pepper" in key || "ढोबळी" in key -> "GREEN%20CAPSICUM.jpg"
+            "cabbage" in key || "कोबी" in key -> "Cabbage%20%283741604131%29.jpg"
+            "beans" in key || "फली" in key -> "Green%20beans%20picture.jpg"
+            "moth beans" in key || "मटकी" in key -> "Green%20beans%20picture.jpg"
+            "peas" in key || "मटार" in key -> "Green%20peas.jpg"
+            "coriander" in key || "कोथिंबीर" in key || "धनिया" in key -> "Coriander%20Leaves.jpg"
+            "ginger" in key || "आले" in key || "अदरक" in key -> "Ginger%20Root.jpg"
+            "garlic" in key || "लसूण" in key || "लहसुन" in key -> "Garlic%20image.jpg"
+            "chilli" in key || "मिरची" in key -> "Green-chillies.jpg"
+            "drumstick" in key || "शेवगा" in key || "सहजन" in key -> "Moringa%20oleifera%20drumstick%20pods.JPG"
+            "bottle gourd" in key || "दुधी" in key || "लौकी" in key -> "Bottle%20gourd%20Vegetable.jpg"
+            else -> null
         }
+        return file?.let { "https://commons.wikimedia.org/wiki/Special:FilePath/$it?width=480" }
     }
     val rows = combo.ingredients.map { aliases -> aliases to produceItems.firstOrNull { matches(aliases, it) } }
     val availableIds = rows.mapNotNull { (_, item) -> item?.takeIf { !it.isOutOfStock }?.id }.distinct()
@@ -1597,6 +1601,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                 }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(customerText("प्रत्येकी ५०० ग्रॅम Cart मध्ये जोडले जातील", "प्रत्येक ५०० ग्राम कार्ट में जुड़ेंगे", "500 g each will be added to cart"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 rows.forEach { (aliases, item) ->
+                    val isMatched = item != null
                     val inStock = item != null && !item.isOutOfStock
                     val label = item?.displayName() ?: when (java.util.Locale.getDefault().language) {
                         "hi" -> aliases.getOrElse(2) { aliases.last() }
@@ -1612,29 +1617,35 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                             AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
                         } else {
                             val localPhoto = fallbackImage(aliases)
-                            if (localPhoto != null) {
-                                Image(
+                            val onlinePhoto = fallbackPhotoUrl(aliases)
+                            when {
+                                localPhoto != null -> Image(
                                     painter = painterResource(id = localPhoto),
                                     contentDescription = label,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
                                 )
-                            } else {
-                                Surface(
+                                onlinePhoto != null -> AsyncImage(
+                                    model = onlinePhoto,
+                                    contentDescription = label,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                                )
+                                else -> Surface(
                                     modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)),
                                     color = MaterialTheme.colorScheme.surfaceVariant
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
-                                        Text(fallbackEmoji(aliases), style = MaterialTheme.typography.headlineMedium)
+                                        Text("—", style = MaterialTheme.typography.headlineMedium)
                                     }
                                 }
                             }
                         }
                         Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
-                        if (inStock) {
-                            Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
-                        } else {
-                            Text(customerText("संपला आहे", "स्टॉक खत्म", "OUT OF STOCK"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                        when {
+                            inStock -> Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
+                            isMatched -> Text(customerText("संपला आहे", "माल खत्म", "OUT OF STOCK"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                            else -> Text(customerText("यादीत नाही", "सूची में नहीं", "NOT LISTED"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
