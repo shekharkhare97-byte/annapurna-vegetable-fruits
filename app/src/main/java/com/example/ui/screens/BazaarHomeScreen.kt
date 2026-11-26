@@ -1638,10 +1638,23 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                             }
                         }
                         Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
-                        when {
-                            inStock -> Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
-                            isMatched -> Text(customerText("संपला आहे", "माल खत्म", "OUT OF STOCK"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
-                            else -> Text(customerText("यादीत नाही", "सूची में नहीं", "NOT LISTED"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.labelSmall)
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            when {
+                                inStock -> {
+                                    Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
+                                    androidx.compose.material3.FilledTonalButton(
+                                        onClick = { onAddIngredients(listOf(item.id)) },
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                        modifier = Modifier.height(34.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(customerText("जोडा", "जोड़ें", "ADD"), style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                                isMatched -> Text(customerText("संपला आहे", "माल खत्म", "OUT OF STOCK"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                                else -> Text(customerText("यादीत नाही", "सूची में नहीं", "NOT LISTED"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
