@@ -146,6 +146,9 @@ fun BazaarHomeScreen(
     }
     var showFavoritesOnly by remember { mutableStateOf(false) }
     var showMealCombos by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedCategory) {
+        if (selectedCategory == ProduceCategory.COMBO_PACKS) showMealCombos = true
+    }
     val visibleItems = remember(produceItems, favoriteIds.toList(), showFavoritesOnly) {
         if (showFavoritesOnly) produceItems.filter { it.id in favoriteIds } else produceItems
     }
@@ -192,16 +195,6 @@ fun BazaarHomeScreen(
                     onRequestProduct = { showProductRequest = true },
                     onOpenOffers = onOpenOffers
                 )
-            }
-
-            if (selectedCategory == ProduceCategory.COMBO_PACKS) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    MealComboEntry(onClick = { showMealCombos = true })
-                }
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                LiveOffersHeroBanner(onOfferClick = onOpenOffers)
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
