@@ -1609,31 +1609,35 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (item != null && !item.imageUrl.isNullOrBlank()) {
-                            AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
-                        } else {
-                            val localPhoto = fallbackImage(aliases)
-                            val onlinePhoto = fallbackPhotoUrl(aliases)
-                            when {
-                                localPhoto != null -> Image(
-                                    painter = painterResource(id = localPhoto),
-                                    contentDescription = label,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
-                                )
-                                onlinePhoto != null -> AsyncImage(
-                                    model = onlinePhoto,
-                                    contentDescription = label,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
-                                )
-                                else -> Surface(
-                                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)),
-                                    color = MaterialTheme.colorScheme.surfaceVariant
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text("—", style = MaterialTheme.typography.headlineMedium)
-                                    }
+                        val localPhoto = fallbackImage(aliases)
+                        val onlinePhoto = fallbackPhotoUrl(aliases)
+                        when {
+                            // Ingredient-specific photos take priority in combo rows so a
+                            // wrongly assigned Admin product photo cannot label one vegetable as another.
+                            localPhoto != null -> Image(
+                                painter = painterResource(id = localPhoto),
+                                contentDescription = label,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                            )
+                            onlinePhoto != null -> AsyncImage(
+                                model = onlinePhoto,
+                                contentDescription = label,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                            )
+                            item != null && !item.imageUrl.isNullOrBlank() -> AsyncImage(
+                                model = item.imageUrl,
+                                contentDescription = label,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                            )
+                            else -> Surface(
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("—", style = MaterialTheme.typography.headlineMedium)
                                 }
                             }
                         }
