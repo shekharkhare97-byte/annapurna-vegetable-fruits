@@ -191,8 +191,10 @@ fun BazaarHomeScreen(
                 )
             }
 
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                MealComboEntry(onClick = { showMealCombos = true })
+            if (selectedCategory == ProduceCategory.COMBO_PACKS) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    MealComboEntry(onClick = { showMealCombos = true })
+                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
