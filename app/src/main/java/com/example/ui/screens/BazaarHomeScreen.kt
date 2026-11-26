@@ -1515,8 +1515,15 @@ private val annapurnaMealCombos = listOf(
 private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Unit, onAddIngredients: (List<String>) -> Unit) {
     var selected by remember { mutableStateOf(0) }
     val combo = annapurnaMealCombos[selected]
-    fun matches(aliases: List<String>, item: ProduceItem) = aliases.any { alias ->
-        listOf(item.marathiName, item.englishName, item.englishKeywords, item.hindiName).any { it.contains(alias, ignoreCase = true) }
+    fun matches(aliases: List<String>, item: ProduceItem): Boolean {
+        val exactNames = listOf(item.marathiName, item.englishName, item.hindiName)
+            .filter { it.isNotBlank() }.map { it.trim().lowercase() }
+        val keywordTokens = item.englishKeywords.split(Regex("[,;/|]"))
+            .map { it.trim().lowercase() }.filter { it.isNotBlank() }
+        return aliases.any { alias ->
+            val key = alias.trim().lowercase()
+            key in exactNames || key in keywordTokens
+        }
     }
     fun fallbackImage(aliases: List<String>): Int {
         val key = aliases.joinToString(" ").lowercase()
@@ -1582,8 +1589,15 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                     ) {
                         if (item != null && !item.imageUrl.isNullOrBlank()) {
                             AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
+                        } else if (item != null) {
+                            Image(painter = painterResource(id = item.imageRes), contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
                         } else {
-                            Image(painter = painterResource(id = item?.imageRes ?: fallbackImage(aliases)), contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
+                            Box(
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.secondaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("🥬", style = MaterialTheme.typography.headlineMedium)
+                            }
                         }
                         Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                         if (inStock) {
