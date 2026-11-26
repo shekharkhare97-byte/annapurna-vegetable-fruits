@@ -1548,9 +1548,13 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(0.dp)) {
             Column(
-                modifier = Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                Column(
+                    modifier = Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(customerText("कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -1589,15 +1593,13 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                     ) {
                         if (item != null && !item.imageUrl.isNullOrBlank()) {
                             AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
-                        } else if (item != null) {
-                            Image(painter = painterResource(id = item.imageRes), contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
                         } else {
-                            Box(
-                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.secondaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("🥬", style = MaterialTheme.typography.headlineMedium)
-                            }
+                            Image(
+                                painter = painterResource(id = fallbackImage(aliases)),
+                                contentDescription = label,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                            )
                         }
                         Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                         if (inStock) {
@@ -1607,8 +1609,18 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                         }
                     }
                 }
-                Button(onClick = { onAddIngredients(availableIds) }, enabled = availableIds.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
-                    Text(customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add available vegetables to cart"))
+                }
+                Button(
+                    onClick = { onAddIngredients(availableIds) },
+                    enabled = availableIds.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth().height(54.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        if (availableIds.isNotEmpty()) customerText("Cart मध्ये जोडा (" + availableIds.size + ")", "कार्ट में जोड़ें (" + availableIds.size + ")", "Add to Cart (" + availableIds.size + ")")
+                        else customerText("सध्या स्टॉक उपलब्ध नाही", "अभी स्टॉक उपलब्ध नहीं है", "Currently out of stock")
+                    )
                 }
             }
         }
