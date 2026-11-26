@@ -1544,7 +1544,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
     fun fallbackPhotoUrl(aliases: List<String>): String? {
         val key = normalizeComboName(aliases.joinToString(" "))
         val file = when {
-            "lemon" in key || "लिंबू" in key || "नींबू" in key -> "Lemon%20fruit.jpg"
+            "lemon" in key || "लिंबू" in key || "नींबू" in key -> "Lemon%20fruits.jpg"
             "capsicum" in key || "bell pepper" in key || "ढोबळी" in key -> "GREEN%20CAPSICUM.jpg"
             "cabbage" in key || "कोबी" in key -> "Cabbage%20%283741604131%29.jpg"
             "moth beans" in key || "मटकी" in key -> "Matki.JPG"
