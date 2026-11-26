@@ -72,6 +72,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateListOf
 import com.google.firebase.firestore.FirebaseFirestore
@@ -1420,149 +1421,69 @@ private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composabl
                 if (error == null && snapshot != null) {
                     offers.clear()
                     offers.addAll(
-                        snapshot.documents
-                            .mapNotNull { document ->
-                                document.data?.let { data -> mapOf("offerId" to document.id) + data }
-                            }
-                            .sortedByDescending { offer ->
-                                (offer["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
-                            }
+                        snapshot.documents.mapNotNull { document ->
+                            document.data?.let { data -> mapOf("offerId" to document.id) + data }
+                        }.sortedByDescending { offer ->
+                            (offer["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
+                        }
                     )
                 }
             }
         onDispose { registration.remove() }
     }
 
-    if (offers.isNotEmpty()) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        customerText("आजच्या खास Offers", "आज के खास ऑफ़र", "Today’s special offers"),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        customerText("तुमच्यासाठी खास बचत आणि ताज्या ऑफर्स", "आपके लिए खास बचत और ताज़ा ऑफ़र", "Special savings and fresh offers for you"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Surface(
-                    color = Color(0xFFE8F5E9),
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Text(
-                        customerText("खास ऑफर्स", "खास ऑफ़र", "SPECIAL OFFERS"),
-                        color = Color(0xFF16843B),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
-                }
-            }
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(
-                    items = offers,
-                    key = { offer ->
-                        offer["offerId"]?.toString()
-                            ?: offer["title"]?.toString().orEmpty()
-                    }
-                ) { offer ->
-                    val imageUrl = offer["imageUrl"]?.toString().orEmpty()
-                    val offerLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
-                    val offerTitle = when (offerLanguage) {
-                        "hi" -> offer["titleHi"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
-                        "en" -> offer["titleEn"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
-                        else -> offer["titleMr"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
-                    }
-                    val offerDescription = when (offerLanguage) {
-                        "hi" -> offer["descriptionHi"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
-                        "en" -> offer["descriptionEn"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
-                        else -> offer["descriptionMr"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillParentMaxWidth()
-                            .height(170.dp)
-                            .clip(RoundedCornerShape(22.dp))
-                            .clickable(onClick = onOfferClick)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))
-                                )
-                            )
-                    ) {
-                        if (imageUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = imageUrl,
-                                contentDescription = offerTitle,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color(0x99000000),
-                                            Color(0xE6000000)
-                                        )
-                                    )
-                                )
-                        )
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(15.dp),
-                            verticalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Surface(
-                                color = Color(0xFFFFD54F),
-                                shape = RoundedCornerShape(50)
-                            ) {
-                                Text(
-                                    customerText("आजची खास ऑफर", "आज का खास ऑफ़र", "Today’s special offer"),
-                                    color = Color(0xFF3E2723),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                                )
-                            }
-                            Text(
-                                offerTitle,
-                                color = Color.White,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                offerDescription,
-                                color = Color.White.copy(alpha = 0.94f),
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
+    val offerIds = offers.map { it["offerId"]?.toString().orEmpty() }
+    var currentOfferIndex by remember { mutableStateOf(-1) }
+    LaunchedEffect(offerIds) {
+        currentOfferIndex = -1
+        if (offerIds.isNotEmpty()) {
+            while (true) {
+                currentOfferIndex = -1
+                kotlinx.coroutines.delay(2000)
+                offers.indices.forEach { index ->
+                    currentOfferIndex = index
+                    kotlinx.coroutines.delay(2000)
                 }
             }
         }
-    } else {
+    }
+
+    if (offers.isEmpty()) {
         onNoOffers()
+    } else if (currentOfferIndex < 0 || currentOfferIndex >= offers.size) {
+        onNoOffers()
+    } else {
+        val offer = offers[currentOfferIndex]
+        val imageUrl = offer["imageUrl"]?.toString().orEmpty()
+        val offerLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+        val offerTitle = when (offerLanguage) {
+            "hi" -> offer["titleHi"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+            "en" -> offer["titleEn"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+            else -> offer["titleMr"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+        }
+        val offerDescription = when (offerLanguage) {
+            "hi" -> offer["descriptionHi"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+            "en" -> offer["descriptionEn"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+            else -> offer["descriptionMr"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+        }
+        Box(
+            modifier = Modifier.fillMaxWidth().height(170.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .clickable(onClick = onOfferClick)
+                .background(Brush.linearGradient(colors = listOf(Color(0xFF238B45), Color(0xFF075B2A)))
+        ) {
+            if (imageUrl.isNotBlank()) {
+                AsyncImage(model = imageUrl, contentDescription = offerTitle, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            }
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color(0x99000000), Color(0xE6000000)))))
+            Column(Modifier.align(Alignment.BottomStart).padding(15.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Surface(color = Color(0xFFFFD54F), shape = RoundedCornerShape(50)) {
+                    Text(customerText("आजची खास ऑफर", "आज का खास ऑफ़र", "Today’s special offer"), color = Color(0xFF3E2723), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
+                }
+                Text(offerTitle, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(offerDescription, color = Color.White.copy(alpha = 0.94f), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+        }
     }
 }
 @Composable
