@@ -1518,7 +1518,8 @@ private val annapurnaMealCombos = listOf(
     }
 }
 
-@Composable private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Unit, onAddIngredients: (List<String>) -> Unit) {
+@Composable
+private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Unit, onAddIngredients: (List<String>) -> Unit) {
     var selected by remember { mutableStateOf(0) }
     val combo = annapurnaMealCombos[selected]
     fun matches(aliases: List<String>, item: ProduceItem) = aliases.any { alias ->
@@ -1544,12 +1545,20 @@ private val annapurnaMealCombos = listOf(
     }
     val rows = combo.ingredients.map { aliases -> aliases to produceItems.firstOrNull { matches(aliases, it) } }
     val availableIds = rows.mapNotNull { (_, item) -> item?.takeIf { !it.isOutOfStock }?.id }.distinct()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(customerText("तुमचा भाजी कॉम्बो निवडा", "अपना सब्ज़ी कॉम्बो चुनें", "Choose your veggie combo")) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(0.dp)) {
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(customerText("कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text(customerText("तुमच्या आवडत्या पदार्थांसाठी भाज्या निवडा", "अपने पसंदीदा व्यंजन के लिए सब्ज़ियाँ चुनें", "Choose vegetables for your favourite recipes"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Clear, contentDescription = customerText("बंद करा", "बंद करें", "Close")) }
+                }
+                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(annapurnaMealCombos.size) { index ->
                         FilterChip(selected = selected == index, onClick = { selected = index }, label = {
                             Text(when (java.util.Locale.getDefault().language) {
@@ -1564,8 +1573,8 @@ private val annapurnaMealCombos = listOf(
                     "hi" -> combo.titleHi
                     "en" -> combo.titleEn
                     else -> combo.titleMr
-                }, fontWeight = FontWeight.Bold)
-                Text(customerText("प्रत्येकी ५०० ग्रॅम Cart मध्ये जोडले जातील", "प्रत्येक ५०० ग्राम कार्ट में जुड़ेंगे", "500 g each will be added to cart"), style = MaterialTheme.typography.bodySmall)
+                }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(customerText("प्रत्येकी ५०० ग्रॅम Cart मध्ये जोडले जातील", "प्रत्येक ५०० ग्राम कार्ट में जुड़ेंगे", "500 g each will be added to cart"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 rows.forEach { (aliases, item) ->
                     val inStock = item != null && !item.isOutOfStock
                     val label = item?.displayName() ?: when (java.util.Locale.getDefault().language) {
@@ -1574,17 +1583,14 @@ private val annapurnaMealCombos = listOf(
                         else -> aliases.first()
                     }
                     Row(
-                        modifier = Modifier.fillMaxWidth().background(
-                            if (inStock) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
-                            RoundedCornerShape(10.dp)
-                        ).padding(horizontal = 8.dp, vertical = 7.dp),
+                        modifier = Modifier.fillMaxWidth().background(if (inStock) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(9.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (item != null && !item.imageUrl.isNullOrBlank()) {
-                            AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)))
+                            AsyncImage(model = item.imageUrl, contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
                         } else {
-                            Image(painter = painterResource(id = item?.imageRes ?: fallbackImage(aliases)), contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)))
+                            Image(painter = painterResource(id = item?.imageRes ?: fallbackImage(aliases)), contentDescription = label, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
                         }
                         Text(label, modifier = Modifier.weight(1f), color = if (inStock) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                         if (inStock) {
@@ -1594,13 +1600,10 @@ private val annapurnaMealCombos = listOf(
                         }
                     }
                 }
+                Button(onClick = { onAddIngredients(availableIds) }, enabled = availableIds.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
+                    Text(customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add available vegetables to cart"))
+                }
             }
-        },
-        confirmButton = {
-            Button(onClick = { onAddIngredients(availableIds) }, enabled = availableIds.isNotEmpty()) {
-                Text(customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add available vegetables to cart"))
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(customerText("बंद करा", "बंद करें", "Close")) } }
-    )
+        }
+    }
 }
