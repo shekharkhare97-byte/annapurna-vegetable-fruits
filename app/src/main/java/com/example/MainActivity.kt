@@ -801,7 +801,6 @@ fun AnnapurnaRootApp() {
                 }
             }
         }
-        CustomerOffersSplashOverlay()
     }
 }
 
