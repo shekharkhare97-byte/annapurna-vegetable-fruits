@@ -1568,9 +1568,9 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
         }
         return file?.let { "https://commons.wikimedia.org/wiki/Special:FilePath/$it?width=480" }
     }
-    // Combo matching must always use the complete live Admin catalog, not a
-    // category/search/favorites-filtered list supplied by the current screen.
-    val comboCatalog = (produceItems + ProduceCatalog.items).distinctBy { it.id }
+    // Prefer the latest complete Admin catalog. The screen list may contain
+    // stale copies of the same product after category/search filtering.
+    val comboCatalog = (ProduceCatalog.items + produceItems).distinctBy { it.id }
     val rows = combo.ingredients.map { aliases ->
         aliases to comboCatalog.firstOrNull { matches(aliases, it) }
     }
