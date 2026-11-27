@@ -1709,7 +1709,8 @@ private fun MealComboDialog(
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
-                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {\n                                Text("₹${kotlin.math.ceil((product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0).toInt()}", fontWeight = FontWeight.SemiBold, color = Color(0xFF23833B))\n                                if (product?.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)\n                            }
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {\n                                Text("₹${kotlin.math.ceil((product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0).toInt()}", fontWeight = FontWeight.SemiBold, color = Color(0xFF23833B))\n                                if (product?.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)
+                            }
                         }
                     }
                     Text("₹${combo?.priceRupees ?: 0.0}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
