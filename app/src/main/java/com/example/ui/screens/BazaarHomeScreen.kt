@@ -1529,15 +1529,15 @@ private fun customerFontWeight(defaultWeight: FontWeight): FontWeight {
 
 private data class MealCombo(val titleMr: String, val titleHi: String, val titleEn: String, val emoji: String, val ingredients: List<Pair<List<String>, Int>>)
 private val annapurnaMealCombos = listOf(
-    MealCombo("पावभाजी", "पाव भाजी", "Pav Bhaji", "🍲", listOf(listOf("बटाटा", "potato", "आलू") to 100, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कांदा", "onion", "प्याज") to 30, listOf("फुलकोबी", "cauliflower", "फूलगोभी") to 30, listOf("कोबी", "cabbage", "पत्ता गोभी") to 20, listOf("मटार", "peas", "green peas") to 20, listOf("ढोबळी मिरची", "capsicum", "bell pepper") to 20, listOf("आले", "ginger", "अदरक") to 3, listOf("लसूण", "garlic", "लहसुन") to 3, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("लिंबू", "lemon", "नींबू") to 15)),
-    MealCombo("मिसळ पाव", "मिसल पाव", "Misal Pav", "🌶️", listOf(listOf("मटकी", "moth beans", "matki") to 60, listOf("कांदा", "onion", "प्याज") to 30, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("लिंबू", "lemon", "नींबू") to 20, listOf("आले", "ginger", "अदरक") to 5, listOf("हिरवी मिरची", "green chilli", "हरी मिर्च") to 3)),
+    MealCombo("पावभाजी", "पाव भाजी", "Pav Bhaji", "🍲", listOf(listOf("बटाटा", "potato", "आलू") to 100, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कांदा", "onion", "प्याज") to 30, listOf("फुलकोबी", "cauliflower", "फूलगोभी") to 30, listOf("कोबी", "cabbage", "पत्ता गोभी", "patta gobhi", "bandh gobhi", "band gobhi") to 20, listOf("मटार", "peas", "green peas") to 20, listOf("ढोबळी मिरची", "capsicum", "bell pepper", "शिमला मिर्च", "shimla mirch", "simla mirch") to 20, listOf("आले", "ginger", "अदरक") to 3, listOf("लसूण", "garlic", "लहसुन") to 3, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("लिंबू", "lemon", "नींबू") to 15)),
+    MealCombo("मिसळ पाव", "मिसल पाव", "Misal Pav", "🌶️", listOf(listOf("मटकी", "moth beans", "matki") to 60, listOf("कांदा", "onion", "प्याज") to 30, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("लिंबू", "lemon", "नींबू") to 20, listOf("आले", "ginger", "अदरक") to 5, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3)),
     MealCombo("सांबार मिक्स", "सांभर मिक्स", "Sambar Mix", "🥘", listOf(listOf("शेवगा", "drumstick", "सहजन") to 30, listOf("दुधी भोपळा", "bottle gourd", "लौकी") to 30, listOf("गाजर", "carrot") to 25, listOf("वांगी", "brinjal", "बैंगन") to 25, listOf("टोमॅटो", "tomato", "टमाटर") to 30, listOf("कांदा", "onion", "प्याज") to 20, listOf("कोथिंबीर", "coriander", "धनिया") to 5)),
-    MealCombo("मिक्स व्हेज", "मिक्स वेज", "Mix Veg", "🥦", listOf(listOf("फुलकोबी", "cauliflower", "फूलगोभी") to 35, listOf("गाजर", "carrot") to 30, listOf("मटार", "peas", "green peas") to 25, listOf("बटाटा", "potato", "आलू") to 40, listOf("ढोबळी मिरची", "capsicum", "bell pepper") to 20, listOf("बीन्स", "beans", "फली") to 25)),
-    MealCombo("उसळ कॉम्बो", "उसळ कॉम्बो", "Usal Combo", "🫘", listOf(listOf("मटकी", "moth beans", "matki") to 60, listOf("कांदा", "onion", "प्याज") to 30, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("हिरवी मिरची", "green chilli", "हरी मिर्च") to 3, listOf("लिंबू", "lemon", "नींबू") to 20)),
+    MealCombo("मिक्स व्हेज", "मिक्स वेज", "Mix Veg", "🥦", listOf(listOf("फुलकोबी", "cauliflower", "फूलगोभी") to 35, listOf("गाजर", "carrot") to 30, listOf("मटार", "peas", "green peas") to 25, listOf("बटाटा", "potato", "आलू") to 40, listOf("ढोबळी मिरची", "capsicum", "bell pepper", "शिमला मिर्च", "shimla mirch", "simla mirch") to 20, listOf("बीन्स", "beans", "फली") to 25)),
+    MealCombo("उसळ कॉम्बो", "उसळ कॉम्बो", "Usal Combo", "🫘", listOf(listOf("मटकी", "moth beans", "matki") to 60, listOf("कांदा", "onion", "प्याज") to 30, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3, listOf("लिंबू", "lemon", "नींबू") to 20)),
     MealCombo("व्हेज पुलाव कॉम्बो", "वेज पुलाव कॉम्बो", "Veg Pulao Combo", "🍚", listOf(listOf("गाजर", "carrot") to 25, listOf("मटार", "peas", "green peas") to 25, listOf("बीन्स", "beans", "फली") to 25, listOf("कांदा", "onion", "प्याज") to 25, listOf("बटाटा", "potato", "आलू") to 35, listOf("कोथिंबीर", "coriander", "धनिया") to 5)),
-    MealCombo("कांदे पोहे", "कांदा पोहा", "Kanda Poha", "🍋", listOf(listOf("कांदा", "onion", "प्याज") to 35, listOf("बटाटा", "potato", "आलू") to 40, listOf("हिरवी मिरची", "green chilli", "हरी मिर्च") to 3, listOf("लिंबू", "lemon", "नींबू") to 15, listOf("कोथिंबीर", "coriander", "धनिया") to 5)),
-    MealCombo("आलू पराठा", "आलू पराठा", "Aloo Paratha", "🥔", listOf(listOf("बटाटा", "potato", "आलू") to 120, listOf("हिरवी मिरची", "green chilli", "हरी मिर्च") to 3, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("आले", "ginger", "अदरक") to 3)),
-    MealCombo("व्हेज फ्राईड राईस", "वेज फ्राइड राइस", "Veg Fried Rice", "🍚", listOf(listOf("गाजर", "carrot") to 25, listOf("बीन्स", "beans", "फली") to 25, listOf("कोबी", "cabbage", "पत्ता गोभी") to 25, listOf("ढोबळी मिरची", "capsicum", "bell pepper") to 20, listOf("कांदा", "onion", "प्याज") to 25, listOf("हिरवी मिरची", "green chilli", "हरी मिर्च") to 3))
+    MealCombo("कांदे पोहे", "कांदा पोहा", "Kanda Poha", "🍋", listOf(listOf("कांदा", "onion", "प्याज") to 35, listOf("बटाटा", "potato", "आलू") to 40, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3, listOf("लिंबू", "lemon", "नींबू") to 15, listOf("कोथिंबीर", "coriander", "धनिया") to 5)),
+    MealCombo("आलू पराठा", "आलू पराठा", "Aloo Paratha", "🥔", listOf(listOf("बटाटा", "potato", "आलू") to 120, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("आले", "ginger", "अदरक") to 3)),
+    MealCombo("व्हेज फ्राईड राईस", "वेज फ्राइड राइस", "Veg Fried Rice", "🍚", listOf(listOf("गाजर", "carrot") to 25, listOf("बीन्स", "beans", "फली") to 25, listOf("कोबी", "cabbage", "पत्ता गोभी", "patta gobhi", "bandh gobhi", "band gobhi") to 25, listOf("ढोबळी मिरची", "capsicum", "bell pepper", "शिमला मिर्च", "shimla mirch", "simla mirch") to 20, listOf("कांदा", "onion", "प्याज") to 25, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3))
 )
 
 @Composable private fun MealComboEntry(onClick: () -> Unit) {
@@ -1567,13 +1567,19 @@ private fun MealComboDialog(
         (ProduceCatalog.items + produceItems).distinctBy { it.id }
     }
     fun normalized(value: String): String = value.trim().lowercase()
-        .replace(" ", "").replace("-", "").replace("_", "")
-    // Match only the exact recipe ingredient; never pull in a similar/unrelated vegetable.
+        .replace(" ", "").replace("-", "").replace("_", "").replace(".", "")
+    // Admin catalog keyword fields may contain comma/semicolon-separated aliases.
+    // Compare complete normalized aliases only, so unrelated products are never selected.
     fun findProduct(names: List<String>): ProduceItem? {
-        val keys = names.filter { it.isNotBlank() }.map(::normalized).toSet()
+        val keys = names.filter { it.isNotBlank() }
+            .flatMap { it.split(",", ";", "/", "|") }
+            .map(::normalized)
+            .filter { it.isNotBlank() }
+            .toSet()
         return catalog.firstOrNull { product ->
             listOf(product.marathiName, product.hindiName, product.englishName, product.englishKeywords)
                 .filter { it.isNotBlank() }
+                .flatMap { it.split(",", ";", "/", "|") }
                 .map(::normalized)
                 .any { it in keys }
         }
