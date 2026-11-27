@@ -1020,6 +1020,16 @@ private fun ProduceGridCard(
                         modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
                     )
                 }
+                if (item.imageUrl.isNullOrBlank() && item.imageRes == 0) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().background(Color(0xFFF3F8F2)),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(Icons.Default.Eco, contentDescription = null, tint = Color(0xFF9BB9A0), modifier = Modifier.size(34.dp))
+                        Text(customerText("फोटो लवकरच", "फोटो जल्द आएगा", "Photo coming soon"), color = Color(0xFF718875), style = MaterialTheme.typography.labelSmall)
+                    }
+                }
                 if (item.isOutOfStock) {
                     Surface(
                         color = Color.Black.copy(alpha = 0.68f),
@@ -1059,16 +1069,6 @@ private fun ProduceGridCard(
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
-                }
-                if (item.imageUrl.isNullOrBlank() && item.imageRes == 0) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().background(Color(0xFFF3F8F2)),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(Icons.Default.Eco, contentDescription = null, tint = Color(0xFF9BB9A0), modifier = Modifier.size(34.dp))
-                        Text(customerText("फोटो लवकरच", "फोटो जल्द आएगा", "Photo coming soon"), color = Color(0xFF718875), style = MaterialTheme.typography.labelSmall)
-                    }
                 }
             }
 
