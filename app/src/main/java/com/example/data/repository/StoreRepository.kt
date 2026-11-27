@@ -27,9 +27,10 @@ data class CartLineItem(
     val produce: ProduceItem,
     val quantity: Int,
     val weightGrams: Int,
-    val combo: MealComboPack? = null
+    val combo: MealComboPack? = null,
+    val storedCartLineId: String? = null
 ) {
-    val cartLineId: String get() = "${produce.id}-${weightGrams}"
+    val cartLineId: String get() = storedCartLineId ?: "${produce.id}-${weightGrams}"
     val lineTotalRupees: Double get() = combo?.priceRupees?.times(quantity) ?: if (produce.isPieceBased) produce.priceRupees * quantity else (WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity) / 100.0
 }
 
@@ -63,7 +64,7 @@ class StoreRepository(private val storeDao: StoreDao) {
                     englishName = combo.nameEn,
                     stockQuantity = 999.0
                 )
-                CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = 0, combo = combo)
+                CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = 0, combo = combo, storedCartLineId = entity.cartLineId)
             } else {
                 val produce = products.firstOrNull { it.id == entity.produceId }
                 if (produce != null && entity.quantity > 0 && !produce.isOutOfStock) {
@@ -94,7 +95,7 @@ class StoreRepository(private val storeDao: StoreDao) {
 
     suspend fun incrementCombo(combo: MealComboPack) {
         val id = "combo-${combo.id}"
-        val cartLineId = "$id-0"
+        val cartLineId = "$id-${combo.servings}"
         val current = storeDao.getCartItem(cartLineId)
         storeDao.upsertCartItem(
             CartItemEntity(
@@ -172,7 +173,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         }
         val summaryLines = items.joinToString(separator = "\n") { line ->
             val quantityLabel = if (line.combo != null) {
-                "${MarathiFormatters.toMarathiNumber(line.quantity)} कॉम्बो"
+                "${MarathiFormatters.toMarathiNumber(line.quantity)} कॉम्बो • ${MarathiFormatters.toMarathiNumber(line.combo.servings)} व्यक्ती प्रति कॉम्बो"
             } else if (line.produce.isPieceBased) {
                 "${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
             } else {
@@ -228,6 +229,7 @@ class StoreRepository(private val storeDao: StoreDao) {
                     put("itemType", "combo")
                     put("comboId", combo.id)
                     put("comboPriceRupees", combo.priceRupees)
+                    put("comboServings", combo.servings)
                     put("comboIngredients", combo.ingredients.map { ingredient ->
                         mapOf(
                             "productId" to ingredient.productId,
