@@ -271,7 +271,7 @@ class StoreViewModel(
                         is String -> {
                             val cleaned = value.trim().replace(",", "")
                             cleaned.toDoubleOrNull()
-                                ?: Regex("[-+]?(?:\\\\d+\\\\.?\\\\d*|\\\\.\\\\d+)")
+                                ?: Regex("[-+]?(?:\\d+\\.?\\d*|\\.\\d+)")
                                     .find(cleaned)?.value?.toDoubleOrNull()
                         }
                         else -> null
