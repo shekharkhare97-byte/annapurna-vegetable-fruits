@@ -67,6 +67,28 @@ private val produceSearchAliasGroups = listOf(
     listOf("डाळिंब", "dalimb", "anar", "pomegranate")
 )
 
+
+private fun resolveProduceImageRes(name: String, hindiName: String, englishName: String, keywords: String, category: ProduceCategory): Int {
+    val text = normalizeProduceSearchText(listOf(name, hindiName, englishName, keywords).joinToString(" "))
+    val mappings = listOf(
+        listOf("onion", "कांदा", "प्याज", "kanda") to R.drawable.img_prod_onion,
+        listOf("potato", "बटाटा", "आलू", "batata") to R.drawable.img_prod_potato,
+        listOf("tomato", "टोमॅटो", "टमाटर") to R.drawable.img_prod_tomato,
+        listOf("carrot", "गाजर") to R.drawable.img_prod_carrot,
+        listOf("cauliflower", "फुलकोबी", "फूलगोभी", "फ्लॉवर") to R.drawable.img_prod_cauliflower,
+        listOf("brinjal", "eggplant", "वांगी", "बैंगन") to R.drawable.img_prod_brinjal,
+        listOf("spinach", "पालक") to R.drawable.img_prod_spinach,
+        listOf("okra", "lady finger", "भेंडी", "भिंडी") to R.drawable.img_prod_okra,
+        listOf("apple", "सफरचंद", "सेब") to R.drawable.img_prod_apple,
+        listOf("banana", "केळी", "केला") to R.drawable.img_prod_banana,
+        listOf("mango", "आंबा", "आम") to R.drawable.img_prod_mango,
+        listOf("pomegranate", "डाळिंब", "अनार") to R.drawable.img_prod_pomegranate
+    )
+    return mappings.firstOrNull { (aliases, _) ->
+        aliases.any { alias -> text.contains(normalizeProduceSearchText(alias)) }
+    }?.second ?: 0
+}
+
 private fun normalizeProduceSearchText(value: String): String =
     java.text.Normalizer.normalize(value.lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD)
         .replace(Regex("\\p{Mn}+"), "")
@@ -287,7 +309,7 @@ class StoreViewModel(
                         },
                         badgeMarathi = "ताजा माल",
                         descriptionMarathi = descriptionMr,
-                        imageRes = if (category == ProduceCategory.FRUIT) R.drawable.img_prod_mango else R.drawable.img_prod_tomato,
+                        imageRes = resolveProduceImageRes(name, hindiName, englishName, listOf(name, hindiName, englishName).joinToString(" "), category),
                         imageUrl = imageUrl,
                         isPieceBased = isPieceBased,
                         hindiName = hindiName,
