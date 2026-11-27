@@ -1568,10 +1568,13 @@ private fun MealComboDialog(
     val catalog = remember(produceItems, ProduceCatalog.items) {
         (ProduceCatalog.items + produceItems).distinctBy { it.id }
     }
-    fun normalized(value: String): String = value.trim().lowercase()
-        .replace(" ", "").replace("-", "").replace("_", "").replace(".", "")
-    // Admin catalog keyword fields may contain comma/semicolon-separated aliases.
-    // Compare complete normalized aliases only, so unrelated products are never selected.
+    fun normalized(value: String): String = java.text.Normalizer
+        .normalize(value.trim().lowercase(), java.text.Normalizer.Form.NFKC)
+        .replace("\\u200c", "").replace("\\u200d", "").replace("़", "")
+        .replace(Regex("[\\\\s\\\\-_.]+"), "")
+    // Match against every Admin catalog identifier/name/keyword, not just display labels.
+    // This supports Marathi/Hindi/English spellings and legacy product IDs without
+    // creating fake "not listed" ingredients when the product is already in Firestore.
     fun findProduct(names: List<String>): ProduceItem? {
         val keys = names.filter { it.isNotBlank() }
             .flatMap { it.split(",", ";", "/", "|") }
@@ -1579,15 +1582,15 @@ private fun MealComboDialog(
             .filter { it.isNotBlank() }
             .toSet()
         return catalog.firstOrNull { product ->
-            listOf(product.marathiName, product.hindiName, product.englishName, product.englishKeywords)
+            listOf(product.id, product.marathiName, product.hindiName, product.englishName, product.englishKeywords)
                 .filter { it.isNotBlank() }
                 .flatMap { it.split(",", ";", "/", "|") }
                 .map(::normalized)
                 .any { candidate ->
                     keys.any { key ->
                         candidate == key ||
-                            (key.length >= 4 && candidate.contains(key)) ||
-                            (candidate.length >= 4 && key.contains(candidate))
+                            (key.length >= 3 && candidate.contains(key)) ||
+                            (candidate.length >= 3 && key.contains(candidate))
                     }
                 }
         }
