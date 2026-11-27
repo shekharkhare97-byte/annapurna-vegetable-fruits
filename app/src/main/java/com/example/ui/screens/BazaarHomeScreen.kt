@@ -1568,8 +1568,8 @@ private fun MealComboDialog(
             .addSnapshotListener { snapshot, _ ->
                 value = snapshot?.documents?.mapNotNull { doc ->
                     val rawIngredients = doc.get("ingredients") as? List<*> ?: emptyList<Any>()
-                    val ingredients = rawIngredients.mapNotNull { raw ->
-                        val item = raw as? Map<*, *> ?: return@mapNotNull null
+                    val ingredients = rawIngredients.mapNotNull ingredientLoop@{ raw ->
+                        val item = raw as? Map<*, *> ?: return@ingredientLoop null
                         MealComboIngredient(
                             productId = item["productId"]?.toString().orEmpty(),
                             nameMr = item["nameMr"]?.toString().orEmpty(),
