@@ -70,7 +70,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.awaitDispose
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -1562,11 +1561,12 @@ private fun MealComboDialog(
 ) {
     var selectedId by remember { mutableStateOf<String?>(null) }
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
-    val combos by androidx.compose.runtime.produceState(initialValue = emptyList<MealComboPack>()) {
+    var combos by remember { mutableStateOf(emptyList<MealComboPack>()) }
+    androidx.compose.runtime.DisposableEffect(Unit) {
         val registration = FirebaseFirestore.getInstance().collection("mealCombos")
             .whereEqualTo("active", true)
             .addSnapshotListener { snapshot, _ ->
-                value = snapshot?.documents?.mapNotNull { doc ->
+                combos = snapshot?.documents?.mapNotNull { doc ->
                     val rawIngredients = doc.get("ingredients") as? List<*> ?: emptyList<Any>()
                     val ingredients = rawIngredients.mapNotNull ingredientLoop@{ raw ->
                         val item = raw as? Map<*, *> ?: return@ingredientLoop null
@@ -1584,14 +1584,14 @@ private fun MealComboDialog(
                         nameMr = doc.getString("nameMr").orEmpty(),
                         nameHi = doc.getString("nameHi").orEmpty(),
                         nameEn = doc.getString("nameEn").orEmpty(),
-                        priceRupees = doc.getDouble("priceRupees") ?: (doc.getLong("priceRupees")?.toDouble() ?: 0.0),
+                        priceRupees = (doc.get("priceRupees") as? Number)?.toDouble() ?: 0.0,
                         ingredients = ingredients,
                         imageUrl = doc.getString("imageUrl").orEmpty()
                     ).takeIf { it.ingredients.isNotEmpty() && it.priceRupees > 0.0 }
                 } ?: emptyList()
-                if (selectedId == null || value.none { it.id == selectedId }) selectedId = value.firstOrNull()?.id
+                if (selectedId == null || combos.none { it.id == selectedId }) selectedId = combos.firstOrNull()?.id
             }
-        awaitDispose { registration.remove() }
+        onDispose { registration.remove() }
     }
     val combo = combos.firstOrNull { it.id == selectedId } ?: combos.firstOrNull()
     val catalog = (ProduceCatalog.items + produceItems).distinctBy { it.id }
