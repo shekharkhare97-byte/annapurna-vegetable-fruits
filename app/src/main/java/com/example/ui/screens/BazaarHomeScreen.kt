@@ -1600,7 +1600,7 @@ private fun MealComboDialog(
     }.orEmpty()
     val outOfStockIngredients = combo?.ingredients?.filter { ingredient ->
         val product = catalog.firstOrNull { it.id == ingredient.productId }
-        product != null && product.stockQuantity <= 0.0
+        product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
     }.orEmpty()
     val canAdd = combo != null && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty()
     val comboPhoto = combo?.imageUrl?.takeIf { it.isNotBlank() } ?: when (combo?.nameEn?.lowercase()) {
@@ -1646,7 +1646,7 @@ private fun MealComboDialog(
                         Text(customerText("या कॉम्बोमध्ये मिळणाऱ्या भाज्या आणि प्रमाण", "इस कॉम्बो में शामिल सब्ज़ियाँ और मात्रा", "Vegetables and quantities included"), fontWeight = FontWeight.SemiBold)
                         combo?.ingredients?.forEach { ingredient ->
                             val product = catalog.firstOrNull { it.id == ingredient.productId }
-                            val unavailable = product == null || product.stockQuantity <= 0.0
+                            val unavailable = product == null || product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
                             Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
