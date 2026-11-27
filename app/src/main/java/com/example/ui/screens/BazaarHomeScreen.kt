@@ -1572,8 +1572,8 @@ private fun MealComboDialog(
     onAddCombo: (MealComboPack) -> Unit
 ) {
     var selectedId by remember { mutableStateOf<String?>(null) }
-    var servingsText by remember { mutableStateOf("1") }
-    val servings = servingsText.toIntOrNull()?.takeIf { it > 0 } ?: 0
+    var comboAmountText by remember { mutableStateOf("250") }
+    val comboAmountGrams = comboAmountText.toIntOrNull()?.takeIf { it in setOf(250, 500, 1000, 2000) } ?: 0
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
     val catalog = remember(produceItems, ProduceCatalog.items) {
         (ProduceCatalog.items + produceItems).distinctBy { it.id }
@@ -1605,22 +1605,45 @@ private fun MealComboDialog(
                 }
         }
     }
-    val combos = remember(catalog, servings) {
+    fun comboQuantity(product: ProduceItem?, isMainIngredient: Boolean): Pair<Int, String> {
+        val bunchUnit = product?.unitMarathi.orEmpty().let { it.contains("जुडी") || it.contains("जोडी") || it.contains("गड्डी") || it.contains("bunch", true) }
+        val count = when (comboAmountGrams) { 500 -> 2; 1000 -> 4; 2000 -> 6; else -> 1 }
+        val bunchCount = if (comboAmountGrams == 2000) 2 else 1
+        return when {
+            bunchUnit -> bunchCount to "bunch"
+            product?.isPieceBased == true -> count to "nos"
+            else -> (if (isMainIngredient) comboAmountGrams else comboAmountGrams / 2) to "g"
+        }
+    }
+    fun ingredientPrice(product: ProduceItem?, ingredient: MealComboIngredient): Double {
+        if (product == null) return 0.0
+        return when (ingredient.unit) {
+            "nos", "bunch" -> product.priceRupees * ingredient.quantityGrams
+            else -> product.priceRupees * ingredient.quantityGrams / 1000.0
+        }
+    }
+    fun quantityLabel(ingredient: MealComboIngredient): String = when (ingredient.unit) {
+        "nos" -> "${ingredient.quantityGrams} ${customerText("नग", "नग", "Nos")}"
+        "bunch" -> "${ingredient.quantityGrams} ${customerText("जुडी", "गुच्छा", "bunch")}"
+        else -> if (ingredient.quantityGrams >= 1000 && ingredient.quantityGrams % 1000 == 0) "${ingredient.quantityGrams / 1000} kg" else "${ingredient.quantityGrams} g"
+    }
+    val combos = remember(catalog, comboAmountGrams) {
         annapurnaMealCombos.map { recipe ->
-            val ingredients = recipe.ingredients.map { (names, gramsPerPerson) ->
+            val ingredients = recipe.ingredients.mapIndexed { index, (names, _) ->
                 val product = findProduct(names)
+                val (quantity, unit) = comboQuantity(product, index == 0)
                 MealComboIngredient(
                     productId = product?.id ?: "missing-${normalized(names.firstOrNull().orEmpty())}",
                     nameMr = product?.marathiName ?: names.firstOrNull().orEmpty(),
                     nameHi = product?.hindiName?.ifBlank { null } ?: names.getOrNull(2).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
                     nameEn = product?.englishName?.ifBlank { null } ?: names.getOrNull(1).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
-                    quantityGrams = gramsPerPerson * servings,
-                    unit = "g"
+                    quantityGrams = quantity,
+                    unit = unit
                 )
             }
             val price = ingredients.sumOf { ingredient ->
                 val product = catalog.firstOrNull { it.id == ingredient.productId }
-                (product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0
+                ingredientPrice(product, ingredient)
             }
             val slug = recipe.titleEn.lowercase().replace(" ", "-")
             MealComboPack(
@@ -1630,7 +1653,7 @@ private fun MealComboDialog(
                 nameEn = recipe.titleEn,
                 priceRupees = kotlin.math.ceil(price),
                 ingredients = ingredients,
-                servings = servings,
+                servings = comboAmountGrams,
                 imageUrl = when (recipe.titleEn.lowercase()) {
                     "pav bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pav%20Baji.jpg?width=960"
                     "misal pav" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Misal%20-Pav.jpg?width=960"
@@ -1672,7 +1695,7 @@ private fun MealComboDialog(
         ingredients = availableCartIngredients,
         priceRupees = kotlin.math.ceil(availableCartPrice)
     )
-    val canAdd = combo != null && servings > 0 && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
+    val canAdd = combo != null && comboAmountGrams > 0 && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
     Dialog(onDismissRequest = onDismiss) {
         Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.88f), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(22.dp)) {
             Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1732,12 +1755,12 @@ private fun MealComboDialog(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(14.dp))
                     )
-                    Text(customerText("हा कॉम्बो किती व्यक्तींसाठी हवा आहे?", "यह कॉम्बो कितने लोगों के लिए चाहिए?", "How many people is this combo for?"), fontWeight = FontWeight.SemiBold)
+                    Text(customerText("कॉम्बोचे वजन निवडा", "कॉम्बो का वजन चुनें", "Choose combo weight"), fontWeight = FontWeight.SemiBold)
                     OutlinedTextField(
-                        value = servingsText,
-                        onValueChange = { value -> servingsText = value.filter { it.isDigit() }.take(7) },
-                        label = { Text(customerText("व्यक्तींची संख्या टाका", "लोगों की संख्या दर्ज करें", "Enter number of people")) },
-                        supportingText = { Text(if (servings > 0) customerText("$servings व्यक्तींसाठी", "$servings लोगों के लिए", "For $servings people") else customerText("किमान 1 व्यक्ती निवडा", "कम से कम 1 व्यक्ति दर्ज करें", "Enter at least 1 person")) },
+                        value = comboAmountText,
+                        onValueChange = { value -> comboAmountText = value.filter { it.isDigit() }.take(4) },
+                        label = { Text(customerText("250, 500, 1000 किंवा 2000 ग्रॅम", "250, 500, 1000 या 2000 ग्राम", "250, 500, 1000 or 2000 grams")) },
+                        supportingText = { Text(if (comboAmountGrams > 0) customerText("$comboAmountGrams ग्रॅम कॉम्बोसाठी", "$comboAmountGrams ग्राम कॉम्बो", "For ${if (comboAmountGrams >= 1000) "${comboAmountGrams / 1000} kg" else "$comboAmountGrams g"} combo") else customerText("250, 500, 1000 किंवा 2000 पैकी वजन टाका", "250, 500, 1000 या 2000 में से वजन दर्ज करें", "Enter 250, 500, 1000 or 2000")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1749,8 +1772,8 @@ private fun MealComboDialog(
                             Column(Modifier.weight(1f)) {
                                 Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
                                 Text(
-                                    if (insufficientStock) "${ingredient.quantityGrams} g • " + customerText("संपला आहे", "माल खत्म", "OUT OF STOCK")
-                                    else "${ingredient.quantityGrams} g",
+                                    if (insufficientStock) "${quantityLabel(ingredient)} • " + customerText("संपला आहे", "माल खत्म", "OUT OF STOCK")
+                                    else quantityLabel(ingredient),
                                     color = if (insufficientStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodySmall
                                 )
