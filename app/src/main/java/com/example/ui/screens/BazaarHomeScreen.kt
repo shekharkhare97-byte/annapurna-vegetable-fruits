@@ -1555,6 +1555,23 @@ private val annapurnaMealCombos = listOf(
     }
 }
 
+
+private fun comboIngredientFallbackImage(ingredient: MealComboIngredient): Int {
+    val text = listOf(ingredient.nameMr, ingredient.nameHi, ingredient.nameEn)
+        .joinToString(" ").lowercase()
+    return when {
+        listOf("potato", "बटाटा", "आलू").any(text::contains) -> R.drawable.img_prod_potato
+        listOf("tomato", "टोमॅटो", "टमाटर").any(text::contains) -> R.drawable.img_prod_tomato
+        listOf("onion", "कांदा", "प्याज").any(text::contains) -> R.drawable.img_prod_onion
+        listOf("carrot", "गाजर").any(text::contains) -> R.drawable.img_prod_carrot
+        listOf("cauliflower", "फुलकोबी", "फूलगोभी").any(text::contains) -> R.drawable.img_prod_cauliflower
+        listOf("brinjal", "eggplant", "वांगी", "बैंगन").any(text::contains) -> R.drawable.img_prod_brinjal
+        listOf("spinach", "पालक").any(text::contains) -> R.drawable.img_prod_spinach
+        listOf("okra", "भेंडी", "भिंडी").any(text::contains) -> R.drawable.img_prod_okra
+        else -> 0
+    }
+}
+
 @Composable
 private fun MealComboDialog(
     produceItems: List<ProduceItem>,
@@ -1640,16 +1657,20 @@ private fun MealComboDialog(
     val missingIngredients = combo?.ingredients?.filter { ingredient ->
         catalog.none { it.id == ingredient.productId }
     }.orEmpty()
+    // Any positive Admin stock is available for this combo. Ingredient quantity
+    // is the recipe quantity, not a threshold for hiding the ingredient.
     val outOfStockIngredients = combo?.ingredients?.filter { ingredient ->
         val product = catalog.firstOrNull { it.id == ingredient.productId }
-        product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
+        product != null && product.stockQuantity <= 0.0
     }.orEmpty()
-    // Keep every ingredient visible in the recipe, but only put ingredients with
-    // sufficient live stock into the cart. Missing products are treated as unavailable.
     val availableCartIngredients = combo?.ingredients?.filter { ingredient ->
         val product = catalog.firstOrNull { it.id == ingredient.productId }
-        product != null && product.stockQuantity * 1000.0 >= ingredient.quantityGrams.toDouble()
+        product != null && product.stockQuantity > 0.0
     }.orEmpty()
+    val comboCatalogPrice = combo?.ingredients.orEmpty().sumOf { ingredient ->
+        val product = catalog.firstOrNull { it.id == ingredient.productId }
+        (product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0
+    }
     val availableCartPrice = availableCartIngredients.sumOf { ingredient ->
         val product = catalog.firstOrNull { it.id == ingredient.productId }
         (product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0
@@ -1726,7 +1747,7 @@ private fun MealComboDialog(
                     Text(customerText("या कॉम्बोमध्ये मिळणाऱ्या भाज्या आणि प्रमाण", "इस कॉम्बो में शामिल सब्ज़ियाँ और मात्रा", "Vegetables and quantities included"), fontWeight = FontWeight.SemiBold)
                     combo?.ingredients?.forEach { ingredient ->
                         val product = catalog.firstOrNull { it.id == ingredient.productId }
-                        val insufficientStock = product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
+                        val insufficientStock = product != null && product.stockQuantity <= 0.0
                         Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
@@ -1742,7 +1763,9 @@ private fun MealComboDialog(
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 // Always retain a visible ingredient image; blur it and overlay the stock status when unavailable.
-                                val photoUnavailable = product == null || insufficientStock
+                                val photoUnavailable = insufficientStock
+                                val fallbackImageRes = product?.imageRes?.takeIf { it != 0 }
+                                    ?: comboIngredientFallbackImage(ingredient)
                                 Box(
                                     modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
                                     contentAlignment = Alignment.Center
