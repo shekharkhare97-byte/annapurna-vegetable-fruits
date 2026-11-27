@@ -1561,40 +1561,61 @@ private fun MealComboDialog(
 ) {
     var selectedId by remember { mutableStateOf<String?>(null) }
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
-    var combos by remember { mutableStateOf(emptyList<MealComboPack>()) }
-    androidx.compose.runtime.DisposableEffect(Unit) {
-        val registration = FirebaseFirestore.getInstance().collection("mealCombos")
-            .whereEqualTo("active", true)
-            .addSnapshotListener { snapshot, _ ->
-                combos = snapshot?.documents?.mapNotNull { doc ->
-                    val rawIngredients = doc.get("ingredients") as? List<*> ?: emptyList<Any>()
-                    val ingredients = rawIngredients.mapNotNull ingredientLoop@{ raw ->
-                        val item = raw as? Map<*, *> ?: return@ingredientLoop null
-                        MealComboIngredient(
-                            productId = item["productId"]?.toString().orEmpty(),
-                            nameMr = item["nameMr"]?.toString().orEmpty(),
-                            nameHi = item["nameHi"]?.toString().orEmpty(),
-                            nameEn = item["nameEn"]?.toString().orEmpty(),
-                            quantityGrams = (item["quantityGrams"] as? Number)?.toInt() ?: 250,
-                            unit = item["unit"]?.toString() ?: "g"
-                        )
-                    }
-                    MealComboPack(
-                        id = doc.id,
-                        nameMr = doc.getString("nameMr").orEmpty(),
-                        nameHi = doc.getString("nameHi").orEmpty(),
-                        nameEn = doc.getString("nameEn").orEmpty(),
-                        priceRupees = (doc.get("priceRupees") as? Number)?.toDouble() ?: 0.0,
-                        ingredients = ingredients,
-                        imageUrl = doc.getString("imageUrl").orEmpty()
-                    ).takeIf { it.ingredients.isNotEmpty() && it.priceRupees > 0.0 }
-                } ?: emptyList()
-                if (selectedId == null || combos.none { it.id == selectedId }) selectedId = combos.firstOrNull()?.id
+    val catalog = remember(produceItems, ProduceCatalog.items) {
+        (ProduceCatalog.items + produceItems).distinctBy { it.id }
+    }
+    fun normalized(value: String): String = value.trim().lowercase()
+        .replace(" ", "").replace("-", "").replace("_", "")
+    fun findProduct(names: List<String>): ProduceItem? {
+        val keys = names.filter { it.isNotBlank() }.map(::normalized)
+        return catalog.firstOrNull { product ->
+            val productNames = listOf(product.marathiName, product.hindiName, product.englishName, product.englishKeywords)
+                .filter { it.isNotBlank() }.map(::normalized)
+            productNames.any { it in keys } ||
+                keys.any { key -> productNames.any { name -> name.contains(key) || key.contains(name) } }
+        }
+    }
+    val combos = remember(catalog) {
+        annapurnaMealCombos.map { recipe ->
+            val ingredients = recipe.ingredients.map { names ->
+                val product = findProduct(names)
+                MealComboIngredient(
+                    productId = product?.id ?: "missing-${normalized(names.firstOrNull().orEmpty())}",
+                    nameMr = product?.marathiName ?: names.firstOrNull().orEmpty(),
+                    nameHi = product?.hindiName?.ifBlank { null } ?: names.getOrNull(2).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
+                    nameEn = product?.englishName?.ifBlank { null } ?: names.getOrNull(1).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
+                    quantityGrams = 250,
+                    unit = "g"
+                )
             }
-        onDispose { registration.remove() }
+            val price = ingredients.sumOf { ingredient ->
+                val product = catalog.firstOrNull { it.id == ingredient.productId }
+                (product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0
+            }
+            val slug = recipe.titleEn.lowercase().replace(" ", "-")
+            MealComboPack(
+                id = "prebuilt-$slug",
+                nameMr = recipe.titleMr,
+                nameHi = recipe.titleHi,
+                nameEn = recipe.titleEn,
+                priceRupees = kotlin.math.ceil(price),
+                ingredients = ingredients,
+                imageUrl = when (recipe.titleEn.lowercase()) {
+                    "pav bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pavbhaji.jpg?width=960"
+                    "misal pav" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Misal%20-Pav.jpg?width=960"
+                    "sambar mix" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Sambar%20Curry.JPG?width=960"
+                    "mix veg" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Mixed%20vegetable%20curry%201.jpg?width=960"
+                    "usal combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Matki%20sprout%20usal%20chapati%20ambehalad%20pickel%20taak%20salad.jpg?width=960"
+                    "veg pulao combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Vegetable%20Pulao.jpg?width=960"
+                    "kanda poha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Kaanda%20Poha.jpg?width=960"
+                    "aloo paratha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Alu%20Paratha.jpg?width=960"
+                    "veg fried rice" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Fried%20Vegetable%20Rice.jpeg?width=960"
+                    else -> ""
+                }
+            )
+        }
     }
     val combo = combos.firstOrNull { it.id == selectedId } ?: combos.firstOrNull()
-    val catalog = (ProduceCatalog.items + produceItems).distinctBy { it.id }
     val missingIngredients = combo?.ingredients?.filter { ingredient ->
         catalog.none { it.id == ingredient.productId }
     }.orEmpty()
@@ -1602,80 +1623,63 @@ private fun MealComboDialog(
         val product = catalog.firstOrNull { it.id == ingredient.productId }
         product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
     }.orEmpty()
-    val canAdd = combo != null && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty()
-    val comboPhoto = combo?.imageUrl?.takeIf { it.isNotBlank() } ?: when (combo?.nameEn?.lowercase()) {
-        "pav bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pavbhaji.jpg?width=960"
-        "misal pav" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Misal%20-Pav.jpg?width=960"
-        "sambar mix" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Sambar%20Curry.JPG?width=960"
-        "mix veg" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Mixed%20vegetable%20curry%201.jpg?width=960"
-        "usal combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Matki%20sprout%20usal%20chapati%20ambehalad%20pickel%20taak%20salad.jpg?width=960"
-        "veg pulao combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Vegetable%20Pulao.jpg?width=960"
-        "kanda poha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Kaanda%20Poha.jpg?width=960"
-        "aloo paratha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Alu%20Paratha.jpg?width=960"
-        "veg fried rice" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Fried%20Vegetable%20Rice.jpeg?width=960"
-        else -> null
-    }
+    val canAdd = combo != null && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty() && combo.priceRupees > 0.0
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(0.dp)) {
             Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(customerText("कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        Text(customerText("Admin ने तयार केलेले रेसिपी कॉम्बो", "Admin द्वारा बनाए गए रेसिपी कॉम्बो", "Recipe combos managed by Admin"), style = MaterialTheme.typography.bodySmall)
+                        Text(customerText("आधीपासून तयार रेसिपी कॉम्बो", "पहले से तैयार रेसिपी कॉम्बो", "Ready-made recipe combos"), style = MaterialTheme.typography.bodySmall)
                     }
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Clear, contentDescription = customerText("बंद करा", "बंद करें", "Close")) }
                 }
-                if (combos.isEmpty()) {
-                    Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(customerText("सध्या कॉम्बो उपलब्ध नाहीत", "अभी कॉम्बो उपलब्ध नहीं हैं", "No combos available right now"))
+                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(combos.size) { index ->
+                        val item = combos[index]
+                        FilterChip(selected = item.id == combo?.id, onClick = { selectedId = item.id }, label = { Text(item.displayName(language)) })
                     }
-                } else {
-                    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(combos.size) { index ->
-                            val item = combos[index]
-                            FilterChip(selected = item.id == combo?.id, onClick = { selectedId = item.id }, label = { Text(item.displayName(language)) })
-                        }
-                    }
-                    Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(combo?.displayName(language).orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        if (comboPhoto != null) AsyncImage(
-                            model = comboPhoto, contentDescription = combo?.displayName(language),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(16.dp))
-                        )
-                        Text(customerText("या कॉम्बोमध्ये मिळणाऱ्या भाज्या आणि प्रमाण", "इस कॉम्बो में शामिल सब्ज़ियाँ और मात्रा", "Vegetables and quantities included"), fontWeight = FontWeight.SemiBold)
-                        combo?.ingredients?.forEach { ingredient ->
-                            val product = catalog.firstOrNull { it.id == ingredient.productId }
-                            val insufficientStock = product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
-                            Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
-                                    Text(
-                                        when {
-                                            product == null -> customerText("यादीत नाही", "सूची में नहीं", "Not listed")
-                                            insufficientStock -> customerText("संपला आहे", "माल खत्म", "Out of Stock")
-                                            else -> "${ingredient.quantityGrams} g"
-                                        },
-                                        color = if (insufficientStock || product == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                                if (product?.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+                }
+                Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(combo?.displayName(language).orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    if (!combo?.imageUrl.isNullOrBlank()) AsyncImage(
+                        model = combo?.imageUrl, contentDescription = combo?.displayName(language),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(16.dp))
+                    )
+                    Text(customerText("या कॉम्बोमध्ये मिळणाऱ्या भाज्या आणि प्रमाण", "इस कॉम्बो में शामिल सब्ज़ियाँ और मात्रा", "Vegetables and quantities included"), fontWeight = FontWeight.SemiBold)
+                    combo?.ingredients?.forEach { ingredient ->
+                        val product = catalog.firstOrNull { it.id == ingredient.productId }
+                        val insufficientStock = product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
+                        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
+                                Text(
+                                    when {
+                                        product == null -> customerText("यादीत नाही", "सूची में नहीं", "Not listed")
+                                        insufficientStock -> customerText("संपला आहे", "माल खत्म", "Out of Stock")
+                                        else -> "${ingredient.quantityGrams} g"
+                                    },
+                                    color = if (insufficientStock || product == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
+                            if (product?.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
                         }
-                        Text("₹${combo?.priceRupees ?: 0.0}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
-                        if (missingIngredients.isNotEmpty()) Text(customerText("काही साहित्य कॅटलॉगमध्ये उपलब्ध नाही", "कुछ सामग्री कैटलॉग में उपलब्ध नहीं है", "Some ingredients are not in the catalog"), color = MaterialTheme.colorScheme.error)
                     }
-                    Button(
-                        onClick = { combo?.let { onAddCombo(it.copy(imageUrl = comboPhoto.orEmpty())) } },
-                        enabled = canAdd,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        Icon(Icons.Default.AddShoppingCart, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (canAdd) customerText("एक कॉम्बो Cart मध्ये जोडा", "एक कॉम्बो कार्ट में जोड़ें", "Add Combo to Cart") else customerText("सध्या उपलब्ध नाही", "अभी उपलब्ध नहीं", "Currently unavailable"), fontWeight = FontWeight.Bold)
-                    }
+                    Text("₹${combo?.priceRupees ?: 0.0}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
+                    if (missingIngredients.isNotEmpty()) Text(customerText("काही साहित्य कॅटलॉगमध्ये उपलब्ध नाही", "कुछ सामग्री कैटलॉग में उपलब्ध नहीं है", "Some ingredients are not in the catalog"), color = MaterialTheme.colorScheme.error)
+                    Text(customerText("किंमत सध्याच्या भाजीपाल्याच्या दरानुसार मोजली आहे.", "कीमत मौजूदा सब्ज़ियों के दाम के अनुसार है।", "Price is calculated from current vegetable catalog rates."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Button(
+                    onClick = { combo?.let(onAddCombo) },
+                    enabled = canAdd,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    Icon(Icons.Default.AddShoppingCart, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (canAdd) customerText("एक कॉम्बो Cart मध्ये जोडा", "एक कॉम्बो कार्ट में जोड़ें", "Add Combo to Cart") else customerText("सध्या उपलब्ध नाही", "अभी उपलब्ध नहीं", "Currently unavailable"), fontWeight = FontWeight.Bold)
                 }
             }
         }
