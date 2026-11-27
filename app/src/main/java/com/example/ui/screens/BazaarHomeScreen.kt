@@ -1554,6 +1554,20 @@ private val annapurnaMealCombos = listOf(
 private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Unit, onAddIngredients: (List<String>) -> Unit) {
     var selected by remember { mutableStateOf(0) }
     val combo = annapurnaMealCombos[selected]
+    // Distinct real food photographs for each recipe combo (Wikimedia Commons).
+    // Keep these separate so one dish photo is never reused for another combo.
+    val comboPhotoUrl = when (combo.titleEn) {
+        "Pav Bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pavbhaji.jpg?width=960"
+        "Misal Pav" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Misal%20-Pav.jpg?width=960"
+        "Sambar Mix" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Sambar%20Curry.JPG?width=960"
+        "Mix Veg" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Mixed%20vegetable%20curry%201.jpg?width=960"
+        "Usal Combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Matki%20sprout%20usal%20chapati%20ambehalad%20pickel%20taak%20salad.jpg?width=960"
+        "Veg Pulao Combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Vegetable%20Pulao.jpg?width=960"
+        "Kanda Poha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Kaanda%20Poha.jpg?width=960"
+        "Aloo Paratha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Alu%20Paratha.jpg?width=960"
+        "Veg Fried Rice" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Fried%20Vegetable%20Rice.jpeg?width=960"
+        else -> null
+    }
     fun normalizeComboName(value: String): String =
         java.text.Normalizer.normalize(value.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD)
             .replace(Regex("\\p{Mn}+"), "")
@@ -1678,6 +1692,18 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                     "en" -> combo.titleEn
                     else -> combo.titleMr
                 }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                if (comboPhotoUrl != null) {
+                    AsyncImage(
+                        model = comboPhotoUrl,
+                        contentDescription = when ((androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr")) {
+                            "hi" -> combo.titleHi
+                            "en" -> combo.titleEn
+                            else -> combo.titleMr
+                        },
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(16.dp))
+                    )
+                }
                 Text(customerText("प्रत्येकी २५० ग्रॅम Cart मध्ये जोडले जातील", "प्रत्येक २५० ग्राम कार्ट में जुड़ेंगे", "250 g each will be added to cart"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 rows.forEach { (aliases, item) ->
                     val isMatched = item != null
