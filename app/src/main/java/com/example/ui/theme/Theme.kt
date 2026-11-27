@@ -12,6 +12,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 
 private val LightColorScheme = lightColorScheme(
     primary = LeafGreenPrimaryLight,
@@ -82,7 +83,9 @@ fun AnnapurnaTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    val appTypography = if (language == "en") Typography.copy(\n        displayLarge = Typography.displayLarge.copy(fontWeight = FontWeight.Bold),\n        displayMedium = Typography.displayMedium.copy(fontWeight = FontWeight.Bold),\n        displaySmall = Typography.displaySmall.copy(fontWeight = FontWeight.Bold),\n        headlineLarge = Typography.headlineLarge.copy(fontWeight = FontWeight.Bold),\n        headlineMedium = Typography.headlineMedium.copy(fontWeight = FontWeight.Bold),\n        headlineSmall = Typography.headlineSmall.copy(fontWeight = FontWeight.Bold),\n        titleLarge = Typography.titleLarge.copy(fontWeight = FontWeight.Bold),\n        titleMedium = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),\n        titleSmall = Typography.titleSmall.copy(fontWeight = FontWeight.Bold),\n        bodyLarge = Typography.bodyLarge.copy(fontWeight = FontWeight.Bold),\n        bodyMedium = Typography.bodyMedium.copy(fontWeight = FontWeight.Bold),\n        bodySmall = Typography.bodySmall.copy(fontWeight = FontWeight.Bold),\n        labelLarge = Typography.labelLarge.copy(fontWeight = FontWeight.Bold),\n        labelMedium = Typography.labelMedium.copy(fontWeight = FontWeight.Bold),\n        labelSmall = Typography.labelSmall.copy(fontWeight = FontWeight.Bold)\n    ) else Typography
+\n    val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -93,7 +96,7 @@ fun AnnapurnaTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = appTypography,
         shapes = AnnapurnaShapes,
         content = content
     )
