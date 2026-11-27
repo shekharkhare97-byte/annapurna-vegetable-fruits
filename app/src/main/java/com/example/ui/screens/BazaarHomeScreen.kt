@@ -552,7 +552,7 @@ private fun CustomerFeatureShortcuts(
                         Text(
                             tile.second,
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = customerFontWeight(FontWeight.SemiBold),
                             maxLines = 2,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
@@ -658,7 +658,7 @@ private fun StoreBrandHeader() {
                     Text(
                         customerText("तुमचा पत्ता ऑर्डर करताना भरा", "ऑर्डर करते समय अपना पता भरें", "Add your address at checkout"),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = customerFontWeight(FontWeight.SemiBold),
                         color = Color(0xFF174B29)
                     )
                 }
@@ -963,7 +963,7 @@ private fun CategoryFilterRow(
                         Text(
                             label,
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = customerFontWeight(FontWeight.SemiBold),
                             maxLines = 2,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                             color = Color(0xFF315C3A)
@@ -1640,7 +1640,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                 androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(annapurnaMealCombos.size) { index ->
                         FilterChip(selected = selected == index, onClick = { selected = index }, label = {
-                            Text(when (java.util.Locale.getDefault().language) {
+                            Text(when ((androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr")) {
                                 "hi" -> annapurnaMealCombos[index].titleHi
                                 "en" -> annapurnaMealCombos[index].titleEn
                                 else -> annapurnaMealCombos[index].titleMr
@@ -1648,7 +1648,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                         })
                     }
                 }
-                Text("${combo.emoji} " + when (java.util.Locale.getDefault().language) {
+                Text("${combo.emoji} " + when ((androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr")) {
                     "hi" -> combo.titleHi
                     "en" -> combo.titleEn
                     else -> combo.titleMr
@@ -1657,7 +1657,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                 rows.forEach { (aliases, item) ->
                     val isMatched = item != null
                     val inStock = item != null && !item.isOutOfStock
-                    val label = item?.displayName() ?: when (java.util.Locale.getDefault().language) {
+                    val label = item?.displayName() ?: when ((androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr")) {
                         "hi" -> aliases.getOrElse(2) { aliases.last() }
                         "en" -> aliases.getOrElse(1) { aliases.first() }
                         else -> aliases.first()
