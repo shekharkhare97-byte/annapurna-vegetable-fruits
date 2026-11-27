@@ -866,7 +866,9 @@ private fun CartLineCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (line.produce.isPieceBased)
+                        text = if (line.combo != null)
+                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / कॉम्बो • ${MarathiFormatters.toMarathiNumber(line.quantity)} कॉम्बो"
+                        else if (line.produce.isPieceBased)
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.displayUnit().removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.displayUnit().removePrefix("१ ")}"
                         else
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
@@ -883,6 +885,21 @@ private fun CartLineCard(
                         contentDescription = stringResource(R.string.cd_remove_item),
                         tint = MaterialTheme.colorScheme.error
                     )
+                }
+            }
+            if (line.combo != null) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = if (java.util.Locale.getDefault().language == "en") "Included vegetables" else if (java.util.Locale.getDefault().language == "hi") "शामिल सब्ज़ियाँ" else "समाविष्ट भाज्या",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    line.combo.ingredients.forEach { ingredient ->
+                        Text("• ${ingredient.displayName(java.util.Locale.getDefault().language)} — ${ingredient.quantityGrams} g", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
             Row(
