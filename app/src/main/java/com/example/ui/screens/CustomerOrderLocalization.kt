@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
 import com.example.data.local.OrderEntity
+import android.util.Base64
+import com.example.data.model.MealComboPack
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.WeightPricing
 import java.util.Locale
@@ -14,6 +16,16 @@ fun localizedOrderItemsSummary(order: OrderEntity, language: String): String {
     val lines = order.serializedItems.split(",").mapNotNull { encoded ->
         val parts = encoded.split(":")
         if (parts.size < 2) return@mapNotNull null
+        if (parts[0].startsWith("combo~")) {
+            val quantity = parts[1].toIntOrNull()?.takeIf { it > 0 } ?: return@mapNotNull null
+            val combo = runCatching {
+                val bytes = Base64.decode(parts[0].removePrefix("combo~"), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+                MealComboPack.fromJson(String(bytes, Charsets.UTF_8))
+            }.getOrNull() ?: return@mapNotNull null
+            val ingredients = combo.ingredients.joinToString(", ") { "${it.displayName(language)} ${it.quantityGrams}g" }
+            val price = String.format(Locale.US, "%.2f", combo.priceRupees * quantity).trimEnd('0').trimEnd('.')
+            return@mapNotNull "• ${combo.displayName(language)} × $quantity — $ingredients = ₹$price"
+        }
         val product = ProduceCatalog.findById(parts[0]) ?: return@mapNotNull null
         val quantity = parts[1].toIntOrNull()?.takeIf { it > 0 } ?: return@mapNotNull null
         val grams = parts.getOrNull(2)?.toIntOrNull()?.takeIf { it > 0 } ?: 1000
