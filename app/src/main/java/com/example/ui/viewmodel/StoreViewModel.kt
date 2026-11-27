@@ -31,6 +31,7 @@ import com.example.data.model.ProduceCategory
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import android.content.SharedPreferences
+import com.example.data.model.MealComboPack
 import com.example.data.model.ProduceItem
 import com.example.data.repository.CartLineItem
 import com.example.data.repository.StoreRepository
@@ -377,6 +378,13 @@ class StoreViewModel(
     fun addToCart(produceId: String, weightGrams: Int = 1000) {
         viewModelScope.launch {
             repository.incrementItem(produceId, weightGrams)
+            _formState.update { it.copy(cartErrorMarathi = null) }
+        }
+    }
+
+    fun addComboToCart(combo: MealComboPack) {
+        viewModelScope.launch {
+            repository.incrementCombo(combo)
             _formState.update { it.copy(cartErrorMarathi = null) }
         }
     }
