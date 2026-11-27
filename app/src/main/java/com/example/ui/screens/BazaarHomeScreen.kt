@@ -1655,10 +1655,10 @@ private fun MealComboDialog(
                 ingredients = ingredients,
                 servings = comboAmountGrams,
                 imageUrl = when (recipe.titleEn.lowercase()) {
-                    "pav bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pav%20Baji.jpg?width=960"
-                    "misal pav" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Misal%20-Pav.jpg?width=960"
-                    "sambar mix" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Mixed%20vegetable%20sambar.jpg?width=960"
-                    "mix veg" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Mixed%20vegetable%20curry%201.jpg?width=960"
+                    "pav bhaji" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Pavbhaji.jpg/1280px-Pavbhaji.jpg"
+                    "misal pav" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Misal_Pav.jpg/1280px-Misal_Pav.jpg"
+                    "sambar mix" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Sambar-Popular_south-Indian_food.jpg/960px-Sambar-Popular_south-Indian_food.jpg"
+                    "mix veg" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Mixed_vegetable_curry_1.jpg/960px-Mixed_vegetable_curry_1.jpg"
                     "usal combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Matki%20sprout%20usal%20chapati%20ambehalad%20pickel%20taak%20salad.jpg?width=960"
                     "veg pulao combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Vegetable%20Pulao.jpg?width=960"
                     "kanda poha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Kaanda%20Poha.jpg?width=960"
