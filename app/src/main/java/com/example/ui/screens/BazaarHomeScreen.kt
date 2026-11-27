@@ -70,6 +70,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.awaitDispose
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -1590,7 +1591,7 @@ private fun MealComboDialog(
                 } ?: emptyList()
                 if (selectedId == null || value.none { it.id == selectedId }) selectedId = value.firstOrNull()?.id
             }
-        androidx.compose.runtime.awaitDispose { registration.remove() }
+        awaitDispose { registration.remove() }
     }
     val combo = combos.firstOrNull { it.id == selectedId } ?: combos.firstOrNull()
     val catalog = (ProduceCatalog.items + produceItems).distinctBy { it.id }
