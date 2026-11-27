@@ -868,7 +868,7 @@ private fun CartLineCard(
                     )
                     Text(
                         text = if (line.combo != null)
-                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / ${customerText("कॉम्बो", "कॉम्बो", "combo")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${customerText("कॉम्बो", "कॉम्बो", "combos")}"
+                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / ${customerText("कॉम्बो", "कॉम्बो", "combo")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${customerText("कॉम्बो", "कॉम्बो", "combos")} • ${MarathiFormatters.toMarathiNumber(line.combo.servings)} ${customerText("व्यक्ती प्रति कॉम्बो", "लोग प्रति कॉम्बो", "people per combo")}"
                         else if (line.produce.isPieceBased)
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.displayUnit().removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.displayUnit().removePrefix("१ ")}"
                         else
@@ -893,6 +893,12 @@ private fun CartLineCard(
                     modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    Text(
+                        text = if (java.util.Locale.getDefault().language == "en") "For ${line.combo.servings} people" else if (java.util.Locale.getDefault().language == "hi") "${line.combo.servings} लोगों के लिए" else "${MarathiFormatters.toMarathiNumber(line.combo.servings)} व्यक्तींसाठी",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Text(
                         text = if (java.util.Locale.getDefault().language == "en") "Included vegetables" else if (java.util.Locale.getDefault().language == "hi") "शामिल सब्ज़ियाँ" else "समाविष्ट भाज्या",
                         style = MaterialTheme.typography.labelMedium,
