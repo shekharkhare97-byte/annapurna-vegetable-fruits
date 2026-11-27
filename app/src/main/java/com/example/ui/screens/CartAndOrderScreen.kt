@@ -868,7 +868,7 @@ private fun CartLineCard(
                     )
                     Text(
                         text = if (line.combo != null)
-                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / कॉम्बो • ${MarathiFormatters.toMarathiNumber(line.quantity)} कॉम्बो"
+                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / ${customerText("कॉम्बो", "कॉम्बो", "combo")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${customerText("कॉम्बो", "कॉम्बो", "combos")}"
                         else if (line.produce.isPieceBased)
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.displayUnit().removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.displayUnit().removePrefix("१ ")}"
                         else
