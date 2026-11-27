@@ -563,6 +563,7 @@ private fun CustomerFeatureShortcuts(
     }
 }
 
+@Composable
 private fun customerNumber(value: Int): String {
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language
     return if (language == "en") value.toString() else MarathiFormatters.toMarathiNumber(value)
