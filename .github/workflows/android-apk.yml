@@ -37,43 +37,29 @@ jobs:
       - name: Run unit tests
         run: gradle --no-daemon testDebugUnitTest
 
-      - name: Create debug key and restore permanent Annapurna signing key
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Create debug signing key
         run: |
-          test -n "$ANDROID_KEYSTORE_BASE64" || (echo "Missing ANDROID_KEYSTORE_BASE64 secret" && exit 1)
-          test -n "$STORE_PASSWORD" || (echo "Missing ANDROID_KEYSTORE_PASSWORD secret" && exit 1)
-          test -n "$KEY_PASSWORD" || (echo "Missing ANDROID_KEY_PASSWORD secret" && exit 1)
-          keytool -genkeypair -v \
-            -keystore debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
+          keytool -genkeypair -v \\
+            -keystore debug.keystore \\
+            -storepass android \\
+            -alias androiddebugkey \\
+            -keypass android \\
+            -keyalg RSA \\
+            -keysize 2048 \\
+            -validity 10000 \\
             -dname "CN=Android Debug,O=Android,C=US"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > my-upload-key.jks
-          keytool -list -keystore my-upload-key.jks -storepass "$STORE_PASSWORD" -alias upload >/dev/null
-          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/my-upload-key.jks" >> "$GITHUB_ENV"
-          echo "STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
-          echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
 
-      - name: Build signed release APK
-        run: gradle --no-daemon assembleRelease
+      - name: Build installable debug APK
+        run: gradle --no-daemon assembleDebug
 
-      - name: Verify APK signature, package, and print SHA-1
+      - name: Verify debug APK signature and package
         run: |
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk | head -n 5
-          echo "=== RELEASE CERTIFICATE SHA-1 (use with this exact APK only) ==="
-          keytool -list -v -keystore my-upload-key.jks -storepass "$STORE_PASSWORD" -alias upload | grep -E 'SHA1:|SHA-1:'
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | head -n 5
 
-      - name: Upload release APK
+      - name: Upload internal-test APK
         uses: actions/upload-artifact@v4
         with:
-          name: annapurna-customer-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: annapurna-customer-debug-apk-internal-test
+          path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
