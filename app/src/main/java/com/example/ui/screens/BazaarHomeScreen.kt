@@ -1566,13 +1566,14 @@ private fun MealComboDialog(
     }
     fun normalized(value: String): String = value.trim().lowercase()
         .replace(" ", "").replace("-", "").replace("_", "")
+    // Match only the exact recipe ingredient; never pull in a similar/unrelated vegetable.
     fun findProduct(names: List<String>): ProduceItem? {
-        val keys = names.filter { it.isNotBlank() }.map(::normalized)
+        val keys = names.filter { it.isNotBlank() }.map(::normalized).toSet()
         return catalog.firstOrNull { product ->
-            val productNames = listOf(product.marathiName, product.hindiName, product.englishName, product.englishKeywords)
-                .filter { it.isNotBlank() }.map(::normalized)
-            productNames.any { it in keys } ||
-                keys.any { key -> productNames.any { name -> name.contains(key) || key.contains(name) } }
+            listOf(product.marathiName, product.hindiName, product.englishName, product.englishKeywords)
+                .filter { it.isNotBlank() }
+                .map(::normalized)
+                .any { it in keys }
         }
     }
     val combos = remember(catalog) {
