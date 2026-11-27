@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -46,6 +48,8 @@ import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Badge
@@ -119,14 +123,14 @@ enum class AnnapurnaTab(
     ),
     NEW_ARRIVALS(
         labelRes = R.string.nav_new_arrivals,
-        selectedIcon = Icons.Filled.Eco,
-        unselectedIcon = Icons.Filled.Eco,
+        selectedIcon = Icons.Filled.NewReleases,
+        unselectedIcon = Icons.Outlined.NewReleases,
         tag = "nav_tab_new_arrivals"
     ),
     OFFERS(
         labelRes = R.string.nav_offers,
-        selectedIcon = Icons.Filled.Eco,
-        unselectedIcon = Icons.Filled.Eco,
+        selectedIcon = Icons.Filled.LocalOffer,
+        unselectedIcon = Icons.Outlined.LocalOffer,
         tag = "nav_tab_offers"
     ),
     CATEGORIES(
