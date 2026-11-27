@@ -1635,10 +1635,42 @@ private fun MealComboDialog(
                     }
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Clear, contentDescription = customerText("बंद करा", "बंद करें", "Close")) }
                 }
-                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    customerText("तुमचा आवडता कॉम्बो निवडा", "अपना पसंदीदा कॉम्बो चुनें", "Choose your favourite combo"),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(combos.size) { index ->
                         val item = combos[index]
-                        FilterChip(selected = item.id == combo?.id, onClick = { selectedId = item.id }, label = { Text(item.displayName(language)) })
+                        val selected = item.id == combo?.id
+                        Surface(
+                            onClick = { selectedId = item.id },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (selected) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surface,
+                            border = androidx.compose.foundation.BorderStroke(
+                                if (selected) 2.dp else 1.dp,
+                                if (selected) Color(0xFF23833B) else MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            modifier = Modifier.width(148.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                AsyncImage(
+                                    model = item.imageUrl,
+                                    contentDescription = item.displayName(language),
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxWidth().height(100.dp)
+                                )
+                                Text(
+                                    item.displayName(language),
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 9.dp, vertical = 5.dp),
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 2,
+                                    minLines = 2,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                     }
                 }
                 Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
