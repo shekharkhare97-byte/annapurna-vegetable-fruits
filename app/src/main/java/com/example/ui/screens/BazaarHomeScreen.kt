@@ -986,11 +986,12 @@ private fun ProduceGridCard(
     onDecrease: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE6EEE6)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onCardClick)
@@ -1000,8 +1001,8 @@ private fun ProduceGridCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1.08f)
-                    .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(topStart = 17.dp, topEnd = 17.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 if (item.imageUrl.isNullOrBlank() && item.imageRes != 0) {
@@ -1059,15 +1060,26 @@ private fun ProduceGridCard(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
+                if (item.imageUrl.isNullOrBlank() && item.imageRes == 0) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().background(Color(0xFFF3F8F2)),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(Icons.Default.Eco, contentDescription = null, tint = Color(0xFF9BB9A0), modifier = Modifier.size(34.dp))
+                        Text(customerText("फोटो लवकरच", "फोटो जल्द आएगा", "Photo coming soon"), color = Color(0xFF718875), style = MaterialTheme.typography.labelSmall)
+                    }
+                }
             }
 
             Column(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp)
             ) {
                 Text(
                     text = item.displayName(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = customerFontWeight(FontWeight.Bold),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1100,7 +1112,7 @@ private fun ProduceGridCard(
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                        modifier = Modifier.fillMaxWidth().height(40.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
