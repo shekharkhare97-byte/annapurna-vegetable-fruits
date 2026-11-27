@@ -1646,11 +1646,19 @@ private fun MealComboDialog(
                         Text(customerText("या कॉम्बोमध्ये मिळणाऱ्या भाज्या आणि प्रमाण", "इस कॉम्बो में शामिल सब्ज़ियाँ और मात्रा", "Vegetables and quantities included"), fontWeight = FontWeight.SemiBold)
                         combo?.ingredients?.forEach { ingredient ->
                             val product = catalog.firstOrNull { it.id == ingredient.productId }
-                            val unavailable = product == null || product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
+                            val insufficientStock = product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
                             Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
-                                    Text(if (unavailable) customerText("संपला आहे", "माल खत्म", "Out of Stock") else "${ingredient.quantityGrams} g", color = if (unavailable) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                    Text(
+                                        when {
+                                            product == null -> customerText("यादीत नाही", "सूची में नहीं", "Not listed")
+                                            insufficientStock -> customerText("संपला आहे", "माल खत्म", "Out of Stock")
+                                            else -> "${ingredient.quantityGrams} g"
+                                        },
+                                        color = if (insufficientStock || product == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
                                 }
                                 if (product?.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
                             }
