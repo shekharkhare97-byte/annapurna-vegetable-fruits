@@ -1461,9 +1461,15 @@ private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composabl
                 .clickable(onClick = onOfferClick)
                 .background(Brush.linearGradient(colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))))
         ) {
-            if (imageUrl.isNotBlank()) {
-                AsyncImage(model = imageUrl, contentDescription = offerTitle, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            }
+            // Do not display arbitrary Admin-uploaded URLs here: a wrong upload
+            // previously showed unrelated clothing photos in the grocery banner.
+            // Keep the banner grocery-relevant until offer-image category validation exists.
+            Image(
+                painter = painterResource(id = R.drawable.img_hero_banner),
+                contentDescription = customerText("ताज्या भाज्या आणि फळे", "ताज़ी सब्ज़ियाँ और फल", "Fresh vegetables and fruits"),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color(0x99000000), Color(0xE6000000)))))
             Column(Modifier.align(Alignment.BottomStart).padding(15.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Surface(color = Color(0xFFFFD54F), shape = RoundedCornerShape(50)) {
