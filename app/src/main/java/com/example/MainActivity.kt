@@ -696,6 +696,7 @@ fun AnnapurnaRootApp() {
                                 onSelectCategory = storeViewModel::selectCategory,
                                 onSearchQueryChange = storeViewModel::updateSearchQuery,
                                 onAddToCart = { id, grams -> storeViewModel.addToCart(id, grams) },
+                                onAddComboToCart = storeViewModel::addComboToCart,
                                 onDecreaseQty = storeViewModel::decreaseProductQuantity,
                                 onOpenDetail = storeViewModel::openProduceDetail,
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
