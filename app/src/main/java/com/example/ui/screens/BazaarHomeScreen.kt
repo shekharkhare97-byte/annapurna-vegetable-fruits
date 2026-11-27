@@ -1712,7 +1712,7 @@ private fun MealComboDialog(
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("₹${kotlin.math.ceil((product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0).toInt()}", fontWeight = FontWeight.SemiBold, color = Color(0xFF23833B))
                                 if (product != null) {
-                                    if (product.imageUrl.isNotBlank()) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)
+                                    if (product.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)
                                     else Image(painter = painterResource(product.imageRes), contentDescription = ingredient.displayName(language), modifier = Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)
                                 }
                             }
