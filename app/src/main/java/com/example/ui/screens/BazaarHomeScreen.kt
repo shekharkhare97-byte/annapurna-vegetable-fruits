@@ -230,7 +230,7 @@ fun BazaarHomeScreen(
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(
-                            text = MarathiFormatters.toMarathiNumber(visibleItems.size),
+                            text = customerNumber(visibleItems.size),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             fontWeight = FontWeight.Bold,
@@ -561,6 +561,11 @@ private fun CustomerFeatureShortcuts(
             }
         }
     }
+}
+
+private fun customerNumber(value: Int): String {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language
+    return if (language == "en") value.toString() else MarathiFormatters.toMarathiNumber(value)
 }
 
 @Composable
@@ -1178,7 +1183,7 @@ private fun ProduceGridCard(
                             }
 
                             Text(
-                                text = MarathiFormatters.toMarathiNumber(quantityInCart),
+                                text = customerNumber(quantityInCart),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold
@@ -1240,7 +1245,7 @@ private fun FloatingCartBanner(
                 Text(
                     text = stringResource(
                         R.string.cart_items_summary_format,
-                        MarathiFormatters.toMarathiNumber(totalItems),
+                        customerNumber(totalItems),
                         MarathiFormatters.formatRupees(totalRupees)
                     ),
                     style = MaterialTheme.typography.titleMedium,
