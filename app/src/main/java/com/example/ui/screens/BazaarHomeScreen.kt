@@ -1661,22 +1661,12 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                             when {
                                 inStock -> {
                                     Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
-                                    androidx.compose.material3.FilledTonalButton(
-                                        onClick = { onAddIngredients(listOf(item.id)) },
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                                        modifier = Modifier.height(34.dp)
-                                    ) {
-                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(customerText("जोडा", "जोड़ें", "ADD"), style = MaterialTheme.typography.labelSmall)
-                                    }
                                 }
                                 isMatched -> Text(customerText("संपला आहे", "माल खत्म", "OUT OF STOCK"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                                 else -> Text(customerText("यादीत नाही", "सूची में नहीं", "NOT LISTED"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
-                }
                 }
                 Button(
                     onClick = { onAddIngredients(availableIds) },
@@ -1686,9 +1676,10 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        if (availableIds.isNotEmpty()) customerText("Cart मध्ये जोडा (" + availableIds.size + ")", "कार्ट में जोड़ें (" + availableIds.size + ")", "Add to Cart (" + availableIds.size + ")")
+                        if (availableIds.isNotEmpty()) customerText("सर्व भाज्या Cart मध्ये जोडा (" + availableIds.size + ")", "सभी सब्ज़ियाँ Cart में जोड़ें (" + availableIds.size + ")", "Add All Vegetables to Cart (" + availableIds.size + ")")
                         else customerText("सध्या स्टॉक उपलब्ध नाही", "अभी स्टॉक उपलब्ध नहीं है", "Currently out of stock")
                     )
+                }
                 }
             }
         }
