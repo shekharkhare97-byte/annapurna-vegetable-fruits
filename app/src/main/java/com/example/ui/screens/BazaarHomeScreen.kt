@@ -1667,7 +1667,7 @@ private fun MealComboDialog(
                         if (missingIngredients.isNotEmpty()) Text(customerText("काही साहित्य कॅटलॉगमध्ये उपलब्ध नाही", "कुछ सामग्री कैटलॉग में उपलब्ध नहीं है", "Some ingredients are not in the catalog"), color = MaterialTheme.colorScheme.error)
                     }
                     Button(
-                        onClick = { combo?.let(onAddCombo) },
+                        onClick = { combo?.let { onAddCombo(it.copy(imageUrl = comboPhoto.orEmpty())) } },
                         enabled = canAdd,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
                         contentPadding = PaddingValues(16.dp)
