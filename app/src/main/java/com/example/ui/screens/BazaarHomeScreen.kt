@@ -1679,13 +1679,13 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
                             )
-                            localPhoto != null -> Image(
+                            item != null && localPhoto != null -> Image(
                                 painter = painterResource(id = localPhoto),
                                 contentDescription = label,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
                             )
-                            onlinePhoto != null -> AsyncImage(
+                            item != null && onlinePhoto != null -> AsyncImage(
                                 model = onlinePhoto,
                                 contentDescription = label,
                                 contentScale = ContentScale.Crop,
