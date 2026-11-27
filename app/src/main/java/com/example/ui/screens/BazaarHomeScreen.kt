@@ -1533,9 +1533,10 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
             .replace(Regex("\\p{Mn}+"), "")
             .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
             .trim()
-    fun matches(aliases: List<String>, item: ProduceItem): Boolean {
-        // Match whole phrases on word boundaries across all Admin language fields.
-        // Also tolerate common singular/plural variants (e.g. moth bean/moth beans).
+    fun matchScore(aliases: List<String>, item: ProduceItem): Int {
+        // Match whole phrases across Marathi, Hindi and English Admin fields.
+        // Exact product names outrank compound names: "Onion" must beat
+        // "Spring Onion" when resolving the Pav Bhaji onion ingredient.
         fun phraseKey(value: String): String = normalizeComboName(value)
             .split(Regex("\\s+")).joinToString(" ") { word ->
                 when {
@@ -1552,12 +1553,17 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
             .filter { it.isNotBlank() }
             .map(::phraseKey)
         val keys = aliases.filter { it.isNotBlank() }.map(::phraseKey)
-        return keys.any { key ->
-            candidates.any { candidate ->
-                candidate == key || candidate.startsWith("$key ") ||
-                    candidate.endsWith(" $key") || candidate.contains(" $key ")
-            }
-        }
+        return keys.maxOfOrNull { key ->
+            candidates.maxOfOrNull { candidate ->
+                when {
+                    candidate == key -> 100
+                    candidate.startsWith("$key ") -> 80
+                    candidate.endsWith(" $key") -> 70
+                    candidate.contains(" $key ") -> 50
+                    else -> 0
+                }
+            } ?: 0
+        } ?: 0
     }
     fun fallbackImage(aliases: List<String>): Int? {
         val key = normalizeComboName(aliases.joinToString(" "))
@@ -1601,7 +1607,9 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
     val adminCatalog by ProduceCatalog.itemsFlow.collectAsState()
     val comboCatalog = (produceItems + adminCatalog).distinctBy { it.id }
     val rows = combo.ingredients.map { aliases ->
-        aliases to comboCatalog.firstOrNull { matches(aliases, it) }
+        aliases to comboCatalog
+            .filter { matchScore(aliases, it) > 0 }
+            .maxByOrNull { matchScore(aliases, it) }
     }
     val availableIds = rows.mapNotNull { (_, item) ->
         item?.takeIf { !it.isOutOfStock }?.id
