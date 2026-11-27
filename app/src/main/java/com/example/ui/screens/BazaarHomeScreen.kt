@@ -1689,7 +1689,7 @@ private fun MealComboDialog(
         ingredients = availableCartIngredients,
         priceRupees = kotlin.math.ceil(availableCartPrice)
     )
-    val canAdd = combo != null && comboAmountGrams > 0 && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty() && availableCartIngredients.size == combo.ingredients.size && availableCartPrice > 0.0
+    val canAdd = combo != null && comboAmountGrams > 0 && missingIngredients.isEmpty() && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
     Dialog(onDismissRequest = onDismiss) {
         Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.88f), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(22.dp)) {
             Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1833,9 +1833,9 @@ private fun MealComboDialog(
                 if (outOfStockIngredients.isNotEmpty() || missingIngredients.isNotEmpty()) {
                     Text(
                         customerText(
-                            "या कॉम्बोमधील सर्व भाज्या उपलब्ध झाल्यावरच कार्टमध्ये टाकता येतील.",
-                            "इस कॉम्बो की सभी सब्ज़ियाँ उपलब्ध होने पर ही इसे कार्ट में जोड़ सकते हैं।",
-                            "This combo can be added only when every ingredient is available."
+                            "संपलेली भाजी उपलब्ध घटकांच्या ऑर्डरमध्ये समाविष्ट होणार नाही; बाकी कॉम्बो ऑर्डर करता येईल.",
+                            "जो सब्ज़ी खत्म है वह ऑर्डर में शामिल नहीं होगी; बाकी कॉम्बो ऑर्डर कर सकते हैं।",
+                            "Out-of-stock ingredients are excluded; the available items in this combo can still be ordered."
                         ),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
