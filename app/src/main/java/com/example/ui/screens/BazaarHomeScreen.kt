@@ -1635,7 +1635,12 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
     val rows = combo.ingredients.map { aliases ->
         aliases to comboCatalog
             .filter { matchScore(aliases, it) > 0 }
-            .maxByOrNull { matchScore(aliases, it) }
+            // Exact name match remains the strongest signal; when Admin has
+            // duplicate exact-name records, choose the one with live stock.
+            .maxWithOrNull(
+                compareBy<ProduceItem> { matchScore(aliases, it) }
+                    .thenBy { it.stockQuantity }
+            )
     }
     val availableIds = rows.mapNotNull { (_, item) ->
         item?.takeIf { !it.isOutOfStock }?.id
