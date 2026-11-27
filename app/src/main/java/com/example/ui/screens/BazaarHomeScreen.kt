@@ -1568,8 +1568,15 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
         }
         return file?.let { "https://commons.wikimedia.org/wiki/Special:FilePath/$it?width=480" }
     }
-    val rows = combo.ingredients.map { aliases -> aliases to produceItems.firstOrNull { matches(aliases, it) } }
-    val availableIds = rows.mapNotNull { (_, item) -> item?.takeIf { !it.isOutOfStock }?.id }.distinct()
+    // Combo matching must always use the complete live Admin catalog, not a
+    // category/search/favorites-filtered list supplied by the current screen.
+    val comboCatalog = (produceItems + ProduceCatalog.items).distinctBy { it.id }
+    val rows = combo.ingredients.map { aliases ->
+        aliases to comboCatalog.firstOrNull { matches(aliases, it) }
+    }
+    val availableIds = rows.mapNotNull { (_, item) ->
+        item?.takeIf { !it.isOutOfStock }?.id
+    }.distinct()
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(0.dp)) {
             Column(
