@@ -263,9 +263,17 @@ class StoreViewModel(
                 val products = snapshot.documents.mapNotNull { doc ->
                     val imageUrl = doc.getString("imageUrl")?.takeIf { it.isNotBlank() }
                     if (doc.getBoolean("isVisible") != true) return@mapNotNull null
-                    val stock = doc.getDouble("stock")
-                        ?: doc.getLong("stock")?.toDouble()
-                        ?: doc.getString("stock")?.trim()?.replace(",", "")?.toDoubleOrNull()
+                    // Admin versions have used numeric and text stock values.
+                    // Read the canonical stock field first, then compatible legacy aliases.
+                    fun readStock(field: String): Double? = when (val value = doc.get(field)) {
+                        is Number -> value.toDouble()
+                        is String -> value.trim().replace(",", "").toDoubleOrNull()
+                        else -> null
+                    }
+                    val stock = sequenceOf("stock", "stockQuantity", "availableStock", "quantity", "currentStock")
+                        .mapNotNull(::readStock)
+                        .firstOrNull()
+                        ?.coerceAtLeast(0.0)
                         ?: 0.0
                     val unitText = sequenceOf("unit", "stockUnit", "sellUnit", "unitMarathi", "measurementUnit")
                         .mapNotNull { doc.getString(it) }
