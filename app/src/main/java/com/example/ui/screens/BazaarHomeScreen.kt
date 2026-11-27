@@ -1722,30 +1722,47 @@ private fun MealComboDialog(
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                // Keep the ingredient photo prominent and visible on every row.
-                                if (product?.imageUrl?.isNotBlank() == true) {
-                                    AsyncImage(
-                                        model = product.imageUrl,
-                                        contentDescription = ingredient.displayName(language),
-                                        error = if (product.imageRes != 0) painterResource(product.imageRes) else null,
-                                        placeholder = if (product.imageRes != 0) painterResource(product.imageRes) else null,
-                                        modifier = Modifier.size(76.dp).clip(RoundedCornerShape(10.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else if (product != null && product.imageRes != 0) {
-                                    Image(
-                                        painter = painterResource(product.imageRes),
-                                        contentDescription = ingredient.displayName(language),
-                                        modifier = Modifier.size(76.dp).clip(RoundedCornerShape(10.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Box(
-                                        modifier = Modifier.size(76.dp).clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0xFFEAF4E9)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text("🥬", style = MaterialTheme.typography.headlineMedium)
+                                // Always retain a visible ingredient image; blur it and overlay the stock status when unavailable.
+                                val photoUnavailable = product == null || insufficientStock
+                                Box(
+                                    modifier = Modifier.size(76.dp).clip(RoundedCornerShape(10.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    when {
+                                        product?.imageUrl?.isNotBlank() == true -> AsyncImage(
+                                            model = product.imageUrl,
+                                            contentDescription = ingredient.displayName(language),
+                                            error = if (product.imageRes != 0) painterResource(product.imageRes) else null,
+                                            placeholder = if (product.imageRes != 0) painterResource(product.imageRes) else null,
+                                            modifier = Modifier.fillMaxSize().then(if (photoUnavailable) Modifier.blur(7.dp) else Modifier),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        product != null && product.imageRes != 0 -> Image(
+                                            painter = painterResource(product.imageRes),
+                                            contentDescription = ingredient.displayName(language),
+                                            modifier = Modifier.fillMaxSize().then(if (photoUnavailable) Modifier.blur(7.dp) else Modifier),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        else -> Box(
+                                            modifier = Modifier.fillMaxSize().background(Color(0xFFEAF4E9)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("🥬", style = MaterialTheme.typography.headlineMedium)
+                                        }
+                                    }
+                                    if (photoUnavailable) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(Color(0x99000000)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                customerText("संपला आहे", "माल खत्म", "OUT OF STOCK"),
+                                                color = Color.White,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
                                     }
                                 }
                                 Text(
