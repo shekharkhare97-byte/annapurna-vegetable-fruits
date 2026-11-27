@@ -1570,8 +1570,8 @@ private fun MealComboDialog(
     }
     fun normalized(value: String): String = java.text.Normalizer
         .normalize(value.trim().lowercase(), java.text.Normalizer.Form.NFKC)
-        .replace("\\u200c", "").replace("\\u200d", "").replace("़", "")
-        .replace(Regex("[\\\\s\\\\-_.]+"), "")
+        .filterNot { it.code == 8204 || it.code == 8205 || it == '़' }
+        .replace(Regex("[\\s\\-_.]+"), "")
     // Match against every Admin catalog identifier/name/keyword, not just display labels.
     // This supports Marathi/Hindi/English spellings and legacy product IDs without
     // creating fake "not listed" ingredients when the product is already in Firestore.
