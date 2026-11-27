@@ -299,7 +299,7 @@ class StoreViewModel(
                     ProduceItem(
                         id = doc.id,
                         marathiName = name,
-                        englishKeywords = listOf(name, hindiName, englishName).joinToString(" ").lowercase(),
+                        englishKeywords = listOf(name, hindiName, englishName).filter { it.isNotBlank() }.joinToString(",").lowercase(),
                         category = category,
                         priceRupees = rate,
                         unitMarathi = when {
