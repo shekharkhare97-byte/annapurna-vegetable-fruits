@@ -1756,12 +1756,10 @@ private fun MealComboDialog(
                             Column(Modifier.weight(1f)) {
                                 Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
                                 Text(
-                                Text(
-                                     if (insufficientStock) "${ingredient.quantityGrams} g • " + customerText("संपला आहे", "माल खत्म", "OUT OF STOCK")
-                                     else "${ingredient.quantityGrams} g",
-                                     color = if (insufficientStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                                     style = MaterialTheme.typography.bodySmall
-                                 )
+                                    if (insufficientStock) "${ingredient.quantityGrams} g • " + customerText("संपला आहे", "माल खत्म", "OUT OF STOCK")
+                                    else "${ingredient.quantityGrams} g",
+                                    color = if (insufficientStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
