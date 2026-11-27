@@ -268,7 +268,12 @@ class StoreViewModel(
                     // Read the canonical stock field first, then compatible legacy aliases.
                     fun readStock(field: String): Double? = when (val value = doc.get(field)) {
                         is Number -> value.toDouble()
-                        is String -> value.trim().replace(",", "").toDoubleOrNull()
+                        is String -> {
+                            val cleaned = value.trim().replace(",", "")
+                            cleaned.toDoubleOrNull()
+                                ?: Regex("[-+]?(?:\\\\d+\\\\.?\\\\d*|\\\\.\\\\d+)")
+                                    .find(cleaned)?.value?.toDoubleOrNull()
+                        }
                         else -> null
                     }
                     val stock = sequenceOf("stock", "stockQuantity", "availableStock", "quantity", "currentStock")
