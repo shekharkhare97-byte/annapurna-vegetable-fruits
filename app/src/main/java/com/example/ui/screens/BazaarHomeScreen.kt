@@ -1568,9 +1568,11 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
         }
         return file?.let { "https://commons.wikimedia.org/wiki/Special:FilePath/$it?width=480" }
     }
-    // Prefer the latest complete Admin catalog. The screen list may contain
-    // stale copies of the same product after category/search filtering.
-    val comboCatalog = (ProduceCatalog.items + produceItems).distinctBy { it.id }
+    // Prefer the current Firestore-backed screen products when an ID is present.
+    // The screen list can be category-filtered, so append the complete Admin catalog
+    // as a fallback for ingredients outside the currently selected category.
+    // distinctBy keeps the first (newest live) representation of each product ID.
+    val comboCatalog = (produceItems + ProduceCatalog.items).distinctBy { it.id }
     val rows = combo.ingredients.map { aliases ->
         aliases to comboCatalog.firstOrNull { matches(aliases, it) }
     }
