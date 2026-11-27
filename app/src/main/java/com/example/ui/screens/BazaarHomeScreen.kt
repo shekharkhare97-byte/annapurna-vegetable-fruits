@@ -303,7 +303,7 @@ fun BazaarHomeScreen(
 
     if (showMealCombos) {
         MealComboDialog(produceItems = produceItems, onDismiss = { showMealCombos = false }, onAddIngredients = { ids ->
-            ids.forEach { onAddToCart(it, 500) }
+            ids.forEach { onAddToCart(it, 250) }
             showMealCombos = false
         })
     }
@@ -1678,7 +1678,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                     "en" -> combo.titleEn
                     else -> combo.titleMr
                 }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(customerText("प्रत्येकी ५०० ग्रॅम Cart मध्ये जोडले जातील", "प्रत्येक ५०० ग्राम कार्ट में जुड़ेंगे", "500 g each will be added to cart"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(customerText("प्रत्येकी २५० ग्रॅम Cart मध्ये जोडले जातील", "प्रत्येक २५० ग्राम कार्ट में जुड़ेंगे", "250 g each will be added to cart"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 rows.forEach { (aliases, item) ->
                     val isMatched = item != null
                     val inStock = item != null && !item.isOutOfStock
@@ -1729,7 +1729,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             when {
                                 inStock -> {
-                                    Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
+                                    Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 4.0)}", fontWeight = FontWeight.SemiBold)
                                 }
                                 isMatched -> Text(customerText("संपला आहे", "माल खत्म", "Out of Stock"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                                 else -> Text(customerText("यादीत नाही", "सूची में नहीं", "NOT LISTED"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = customerFontWeight(FontWeight.Medium), style = MaterialTheme.typography.labelSmall)
