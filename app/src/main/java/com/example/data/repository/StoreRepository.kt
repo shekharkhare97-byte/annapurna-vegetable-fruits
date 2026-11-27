@@ -45,7 +45,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         ProduceCatalog.itemsFlow
     ) { entities, products ->
         entities.mapNotNull { entity ->
-            val combo = entity.comboDataJson?.let(MealComboPack::fromJson)
+            val combo = entity.comboDataJson?.let { MealComboPack.fromJson(it) }
             if (combo != null && entity.quantity > 0) {
                 val produce = ProduceItem(
                     id = entity.produceId,
