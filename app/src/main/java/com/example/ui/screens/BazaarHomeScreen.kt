@@ -1018,30 +1018,23 @@ private fun ProduceGridCard(
                     .clip(RoundedCornerShape(topStart = 17.dp, topEnd = 17.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                if (item.imageUrl.isNullOrBlank() && item.imageRes != 0) {
-                    Image(
-                        painter = painterResource(id = item.imageRes),
-                        contentDescription = item.displayName(),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
-                    )
-                } else if (!item.imageUrl.isNullOrBlank()) {
+                val localFallbackRes = item.imageRes.takeIf { it != 0 } ?: R.drawable.img_hero_banner
+                if (!item.imageUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = item.imageUrl,
                         contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
+                        error = painterResource(localFallbackRes),
+                        placeholder = painterResource(localFallbackRes),
                         modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
                     )
-                }
-                if (item.imageUrl.isNullOrBlank() && item.imageRes == 0) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().background(Color(0xFFF3F8F2)),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(Icons.Default.Eco, contentDescription = null, tint = Color(0xFF9BB9A0), modifier = Modifier.size(34.dp))
-                        Text(customerText("फोटो लवकरच", "फोटो जल्द आएगा", "Photo coming soon"), color = Color(0xFF718875), style = MaterialTheme.typography.labelSmall)
-                    }
+                } else {
+                    Image(
+                        painter = painterResource(localFallbackRes),
+                        contentDescription = item.displayName(),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
+                    )
                 }
                 if (item.isOutOfStock) {
                     Surface(
@@ -1639,9 +1632,9 @@ private fun MealComboDialog(
                 ingredients = ingredients,
                 servings = servings,
                 imageUrl = when (recipe.titleEn.lowercase()) {
-                    "pav bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pavbhaji.jpg?width=960"
+                    "pav bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pav%20Baji.jpg?width=960"
                     "misal pav" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Misal%20-Pav.jpg?width=960"
-                    "sambar mix" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Sambar%20Curry.JPG?width=960"
+                    "sambar mix" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Mixed%20vegetable%20sambar.jpg?width=960"
                     "mix veg" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Mixed%20vegetable%20curry%201.jpg?width=960"
                     "usal combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Matki%20sprout%20usal%20chapati%20ambehalad%20pickel%20taak%20salad.jpg?width=960"
                     "veg pulao combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Vegetable%20Pulao.jpg?width=960"
