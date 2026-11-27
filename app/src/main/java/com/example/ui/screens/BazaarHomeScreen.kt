@@ -1827,7 +1827,18 @@ private fun MealComboDialog(
                             }
                         }
                     }
-                     Text("₹${kotlin.math.ceil(comboCatalogPrice).toInt()}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
+                     Text("₹${kotlin.math.ceil(availableCartPrice).toInt()}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
+                    if (outOfStockIngredients.isNotEmpty()) {
+                        Text(
+                            customerText(
+                                "ही उपलब्ध भाज्यांची किंमत आहे. संपलेल्या भाज्यांचे पैसे घेतले जाणार नाहीत.",
+                                "यह उपलब्ध सब्ज़ियों की कीमत है। खत्म सब्ज़ियों के पैसे नहीं लिए जाएंगे।",
+                                "This is the price of available vegetables only. Out-of-stock items are not charged."
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(customerText("किंमत सध्याच्या भाजीपाल्याच्या दरानुसार मोजली आहे.", "कीमत मौजूदा सब्ज़ियों के दाम के अनुसार है।", "Price is calculated from current vegetable catalog rates."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (outOfStockIngredients.isNotEmpty() || missingIngredients.isNotEmpty()) {
