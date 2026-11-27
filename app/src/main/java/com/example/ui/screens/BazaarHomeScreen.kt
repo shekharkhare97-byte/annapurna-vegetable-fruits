@@ -1640,7 +1640,21 @@ private fun MealComboDialog(
         val product = catalog.firstOrNull { it.id == ingredient.productId }
         product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
     }.orEmpty()
-    val canAdd = combo != null && servings > 0 && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty() && combo.priceRupees > 0.0
+    // Keep every ingredient visible in the recipe, but only put ingredients with
+    // sufficient live stock into the cart. Missing products are treated as unavailable.
+    val availableCartIngredients = combo?.ingredients?.filter { ingredient ->
+        val product = catalog.firstOrNull { it.id == ingredient.productId }
+        product != null && product.stockQuantity * 1000.0 >= ingredient.quantityGrams.toDouble()
+    }.orEmpty()
+    val availableCartPrice = availableCartIngredients.sumOf { ingredient ->
+        val product = catalog.firstOrNull { it.id == ingredient.productId }
+        (product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0
+    }
+    val cartCombo = combo?.copy(
+        ingredients = availableCartIngredients,
+        priceRupees = kotlin.math.ceil(availableCartPrice)
+    )
+    val canAdd = combo != null && servings > 0 && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(0.dp)) {
             Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1780,14 +1794,21 @@ private fun MealComboDialog(
                     Text(customerText("किंमत सध्याच्या भाजीपाल्याच्या दरानुसार मोजली आहे.", "कीमत मौजूदा सब्ज़ियों के दाम के अनुसार है।", "Price is calculated from current vegetable catalog rates."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Button(
-                    onClick = { combo?.let(onAddCombo) },
+                    onClick = { cartCombo?.let(onAddCombo) },
                     enabled = canAdd,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     Icon(Icons.Default.AddShoppingCart, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (canAdd) customerText("पूर्ण कॉम्बो Cart मध्ये जोडा", "पूरा कॉम्बो कार्ट में जोड़ें", "Add Complete Combo to Cart") else customerText("सध्या उपलब्ध नाही", "अभी उपलब्ध नहीं", "Currently unavailable"), fontWeight = FontWeight.Bold)
+                    Text(
+                        if (canAdd && (missingIngredients.isNotEmpty() || outOfStockIngredients.isNotEmpty()))
+                            customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add Available Vegetables to Cart")
+                        else if (canAdd)
+                            customerText("पूर्ण कॉम्बो Cart मध्ये जोडा", "पूरा कॉम्बो कार्ट में जोड़ें", "Add Complete Combo to Cart")
+                        else customerText("सध्या उपलब्ध नाही", "अभी उपलब्ध नहीं", "Currently unavailable"),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
