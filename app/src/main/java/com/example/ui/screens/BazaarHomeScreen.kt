@@ -1596,13 +1596,7 @@ private fun MealComboDialog(
                 .filter { it.isNotBlank() }
                 .flatMap { it.split(",", ";", "/", "|") }
                 .map(::normalized)
-                .any { candidate ->
-                    keys.any { key ->
-                        candidate == key ||
-                            (key.length >= 3 && candidate.contains(key)) ||
-                            (candidate.length >= 3 && key.contains(candidate))
-                    }
-                }
+                .any { candidate -> candidate in keys }
         }
     }
     fun comboQuantity(product: ProduceItem?, isMainIngredient: Boolean): Pair<Int, String> {
@@ -1695,7 +1689,7 @@ private fun MealComboDialog(
         ingredients = availableCartIngredients,
         priceRupees = kotlin.math.ceil(availableCartPrice)
     )
-    val canAdd = combo != null && comboAmountGrams > 0 && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
+    val canAdd = combo != null && comboAmountGrams > 0 && missingIngredients.isEmpty() && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
     Dialog(onDismissRequest = onDismiss) {
         Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.88f), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(22.dp)) {
             Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1729,8 +1723,8 @@ private fun MealComboDialog(
                                 AsyncImage(
                                     model = item.imageUrl,
                                     contentDescription = item.displayName(language),
-                                     error = painterResource(R.drawable.img_hero_banner),
-                                     placeholder = painterResource(R.drawable.img_hero_banner),
+                                     error = null,
+                                     placeholder = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxWidth().height(100.dp)
                                 )
@@ -1750,8 +1744,8 @@ private fun MealComboDialog(
                     Text(combo?.displayName(language).orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     if (!combo?.imageUrl.isNullOrBlank()) AsyncImage(
                         model = combo?.imageUrl, contentDescription = combo?.displayName(language),
-                         error = painterResource(R.drawable.img_hero_banner),
-                         placeholder = painterResource(R.drawable.img_hero_banner),
+                         error = null,
+                         placeholder = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(14.dp))
                     )
