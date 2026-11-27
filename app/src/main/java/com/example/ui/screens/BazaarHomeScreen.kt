@@ -1517,14 +1517,22 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
             .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
             .trim()
     fun matches(aliases: List<String>, item: ProduceItem): Boolean {
-        // Keep complete multilingual names/phrases intact; splitting "green peas" into
-        // separate words prevents a correct ingredient match against multi-word aliases.
+        // Match whole phrases on word boundaries across all Admin language fields.
+        // Also tolerate common singular/plural variants (e.g. moth bean/moth beans).
+        fun phraseKey(value: String): String = normalizeComboName(value)
+            .split(Regex("\\s+")).joinToString(" ") { word ->
+                if (word.length > 3 && word.endsWith("s")) word.dropLast(1) else word
+            }
         val candidates = (listOf(item.marathiName, item.englishName, item.hindiName) +
             item.englishKeywords.split(Regex("[,;/|]+")))
-            .filter { it.isNotBlank() }.map(::normalizeComboName)
-        return aliases.any { alias ->
-            val key = normalizeComboName(alias)
-            candidates.any { candidate -> candidate == key || " $candidate ".contains(" $key ") }
+            .filter { it.isNotBlank() }
+            .map(::phraseKey)
+        val keys = aliases.filter { it.isNotBlank() }.map(::phraseKey)
+        return keys.any { key ->
+            candidates.any { candidate ->
+                candidate == key || candidate.startsWith("$key ") ||
+                    candidate.endsWith(" $key") || candidate.contains(" $key ")
+            }
         }
     }
     fun fallbackImage(aliases: List<String>): Int? {
