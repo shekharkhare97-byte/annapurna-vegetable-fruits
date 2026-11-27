@@ -35,6 +35,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Eco
@@ -1732,21 +1733,29 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                     }
                 }
                 }
-                Button(
-                    onClick = { onAddIngredients(availableIds) },
-                    enabled = availableIds.isNotEmpty(),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 4.dp
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        if (availableIds.isNotEmpty()) customerText("सर्व भाज्या Cart मध्ये जोडा (" + availableIds.size + ")", "सभी सब्ज़ियाँ Cart में जोड़ें (" + availableIds.size + ")", "Add All Ingredients to Cart (" + availableIds.size + ")")
-                        else customerText("सध्या स्टॉक उपलब्ध नाही", "अभी स्टॉक उपलब्ध नहीं है", "Currently out of stock"),
-                        maxLines = 2,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Button(
+                        onClick = { onAddIngredients(availableIds) },
+                        enabled = availableIds.isNotEmpty(),
+                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp).heightIn(min = 60.dp)
+                    ) {
+                        Icon(Icons.Default.AddShoppingCart, contentDescription = null)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            if (availableIds.isNotEmpty()) customerText("Cart मध्ये जोडा (" + availableIds.size + ")", "कार्ट में जोड़ें (" + availableIds.size + ")", "Add to Cart (" + availableIds.size + ")")
+                            else customerText("सध्या स्टॉक उपलब्ध नाही", "अभी स्टॉक उपलब्ध नहीं है", "Currently out of stock"),
+                            maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
