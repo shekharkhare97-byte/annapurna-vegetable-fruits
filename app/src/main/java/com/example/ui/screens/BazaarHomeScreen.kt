@@ -1560,14 +1560,14 @@ private fun comboIngredientFallbackImage(ingredient: MealComboIngredient): Int {
     val text = listOf(ingredient.nameMr, ingredient.nameHi, ingredient.nameEn)
         .joinToString(" ").lowercase()
     return when {
-        listOf("potato", "बटाटा", "आलू").any(text::contains) -> R.drawable.img_prod_potato
-        listOf("tomato", "टोमॅटो", "टमाटर").any(text::contains) -> R.drawable.img_prod_tomato
-        listOf("onion", "कांदा", "प्याज").any(text::contains) -> R.drawable.img_prod_onion
-        listOf("carrot", "गाजर").any(text::contains) -> R.drawable.img_prod_carrot
-        listOf("cauliflower", "फुलकोबी", "फूलगोभी").any(text::contains) -> R.drawable.img_prod_cauliflower
-        listOf("brinjal", "eggplant", "वांगी", "बैंगन").any(text::contains) -> R.drawable.img_prod_brinjal
-        listOf("spinach", "पालक").any(text::contains) -> R.drawable.img_prod_spinach
-        listOf("okra", "भेंडी", "भिंडी").any(text::contains) -> R.drawable.img_prod_okra
+        listOf("potato", "बटाटा", "आलू").any { text.contains(it) } -> R.drawable.img_prod_potato
+        listOf("tomato", "टोमॅटो", "टमाटर").any { text.contains(it) } -> R.drawable.img_prod_tomato
+        listOf("onion", "कांदा", "प्याज").any { text.contains(it) } -> R.drawable.img_prod_onion
+        listOf("carrot", "गाजर").any { text.contains(it) } -> R.drawable.img_prod_carrot
+        listOf("cauliflower", "फुलकोबी", "फूलगोभी").any { text.contains(it) } -> R.drawable.img_prod_cauliflower
+        listOf("brinjal", "eggplant", "वांगी", "बैंगन").any { text.contains(it) } -> R.drawable.img_prod_brinjal
+        listOf("spinach", "पालक").any { text.contains(it) } -> R.drawable.img_prod_spinach
+        listOf("okra", "भेंडी", "भिंडी").any { text.contains(it) } -> R.drawable.img_prod_okra
         else -> 0
     }
 }
@@ -1713,6 +1713,8 @@ private fun MealComboDialog(
                                 AsyncImage(
                                     model = item.imageUrl,
                                     contentDescription = item.displayName(language),
+                                     error = painterResource(R.drawable.img_hero_banner),
+                                     placeholder = painterResource(R.drawable.img_hero_banner),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxWidth().height(100.dp)
                                 )
@@ -1732,6 +1734,8 @@ private fun MealComboDialog(
                     Text(combo?.displayName(language).orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     if (!combo?.imageUrl.isNullOrBlank()) AsyncImage(
                         model = combo?.imageUrl, contentDescription = combo?.displayName(language),
+                         error = painterResource(R.drawable.img_hero_banner),
+                         placeholder = painterResource(R.drawable.img_hero_banner),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(14.dp))
                     )
@@ -1752,13 +1756,12 @@ private fun MealComboDialog(
                             Column(Modifier.weight(1f)) {
                                 Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
                                 Text(
-                                    when {
-                                        product == null -> customerText("यादीत नाही", "सूची में नहीं", "Not listed")
-                                        insufficientStock -> customerText("संपला आहे", "माल खत्म", "Out of Stock")
-                                        else -> "${ingredient.quantityGrams} g"
-                                    },
-                                    color = if (insufficientStock || product == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodySmall
+                                Text(
+                                     if (insufficientStock) "${ingredient.quantityGrams} g • " + customerText("संपला आहे", "माल खत्म", "OUT OF STOCK")
+                                     else "${ingredient.quantityGrams} g",
+                                     color = if (insufficientStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                     style = MaterialTheme.typography.bodySmall
+                                 )
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -1774,13 +1777,13 @@ private fun MealComboDialog(
                                         product?.imageUrl?.isNotBlank() == true -> AsyncImage(
                                             model = product.imageUrl,
                                             contentDescription = ingredient.displayName(language),
-                                            error = if (product.imageRes != 0) painterResource(product.imageRes) else null,
-                                            placeholder = if (product.imageRes != 0) painterResource(product.imageRes) else null,
+                                            error = if (fallbackImageRes != 0) painterResource(fallbackImageRes) else null,
+                                            placeholder = if (fallbackImageRes != 0) painterResource(fallbackImageRes) else null,
                                             modifier = Modifier.fillMaxSize().then(if (photoUnavailable) Modifier.blur(7.dp) else Modifier),
                                             contentScale = ContentScale.Crop
                                         )
-                                        product != null && product.imageRes != 0 -> Image(
-                                            painter = painterResource(product.imageRes),
+                                        fallbackImageRes != 0 -> Image(
+                                            painter = painterResource(fallbackImageRes),
                                             contentDescription = ingredient.displayName(language),
                                             modifier = Modifier.fillMaxSize().then(if (photoUnavailable) Modifier.blur(7.dp) else Modifier),
                                             contentScale = ContentScale.Crop
@@ -1816,8 +1819,7 @@ private fun MealComboDialog(
                             }
                         }
                     }
-                    Text("₹${combo?.priceRupees ?: 0.0}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
-                    if (missingIngredients.isNotEmpty()) Text(customerText("काही साहित्य कॅटलॉगमध्ये उपलब्ध नाही", "कुछ सामग्री कैटलॉग में उपलब्ध नहीं है", "Some ingredients are not in the catalog"), color = MaterialTheme.colorScheme.error)
+                     Text("₹${kotlin.math.ceil(comboCatalogPrice).toInt()}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
                     Text(customerText("किंमत सध्याच्या भाजीपाल्याच्या दरानुसार मोजली आहे.", "कीमत मौजूदा सब्ज़ियों के दाम के अनुसार है।", "Price is calculated from current vegetable catalog rates."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Button(
