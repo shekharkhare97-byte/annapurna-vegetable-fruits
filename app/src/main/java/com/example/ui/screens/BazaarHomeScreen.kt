@@ -1674,7 +1674,7 @@ private fun MealComboDialog(
         catalog.none { it.id == ingredient.productId }
     }.orEmpty()
     // Any positive Admin stock is available for this combo. Ingredient quantity
-    // is the recipe quantity, not a threshold for hiding the ingredient.
+    // is the selected combo weight ratio, not a threshold for hiding the ingredient.
     val outOfStockIngredients = combo?.ingredients?.filter { ingredient ->
         val product = catalog.firstOrNull { it.id == ingredient.productId }
         product != null && product.stockQuantity <= 0.0
@@ -1685,11 +1685,11 @@ private fun MealComboDialog(
     }.orEmpty()
     val comboCatalogPrice = combo?.ingredients.orEmpty().sumOf { ingredient ->
         val product = catalog.firstOrNull { it.id == ingredient.productId }
-        (product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0
+        ingredientPrice(product, ingredient)
     }
     val availableCartPrice = availableCartIngredients.sumOf { ingredient ->
         val product = catalog.firstOrNull { it.id == ingredient.productId }
-        (product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0
+        ingredientPrice(product, ingredient)
     }
     val cartCombo = combo?.copy(
         ingredients = availableCartIngredients,
@@ -1826,7 +1826,7 @@ private fun MealComboDialog(
                                 }
                                 Text(
                                     if (product == null) customerText("दर उपलब्ध नाही", "कीमत उपलब्ध नहीं", "Price unavailable")
-                                    else "₹${kotlin.math.ceil(product.priceRupees * ingredient.quantityGrams / 1000.0).toInt()}",
+                                    else "₹${kotlin.math.ceil(ingredientPrice(product, ingredient)).toInt()}",
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (product == null) MaterialTheme.colorScheme.error else Color(0xFF23833B)
                                 )
