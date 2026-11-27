@@ -1623,8 +1623,8 @@ private fun MealComboDialog(
         }
     }
     fun quantityLabel(ingredient: MealComboIngredient): String = when (ingredient.unit) {
-        "nos" -> "${ingredient.quantityGrams} ${customerText("नग", "नग", "Nos")}"
-        "bunch" -> "${ingredient.quantityGrams} ${customerText("जुडी", "गुच्छा", "bunch")}"
+        "nos" -> "${ingredient.quantityGrams} ${when (language) { "hi" -> "नग"; "en" -> "Nos"; else -> "नग" }}"
+        "bunch" -> "${ingredient.quantityGrams} ${when (language) { "hi" -> "गुच्छा"; "en" -> "bunch"; else -> "जुडी" }}"
         else -> if (ingredient.quantityGrams >= 1000 && ingredient.quantityGrams % 1000 == 0) "${ingredient.quantityGrams / 1000} kg" else "${ingredient.quantityGrams} g"
     }
     val combos = remember(catalog, comboAmountGrams) {
