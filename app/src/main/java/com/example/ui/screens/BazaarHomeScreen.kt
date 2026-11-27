@@ -175,18 +175,18 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                CustomerOffersStrip(onOfferClick = onOpenOffers) {
-                    HeroMarketBanner(onShopNow = { onSelectCategory(ProduceCategory.VEGETABLE) })
-                }
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
                 SearchAndFilterBar(
                     searchQuery = searchQuery,
                     selectedCategory = selectedCategory,
                     onSearchQueryChange = onSearchQueryChange,
                     onSelectCategory = onSelectCategory
                 )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                CustomerOffersStrip(onOfferClick = onOpenOffers) {
+                    HeroMarketBanner(onShopNow = { onSelectCategory(ProduceCategory.VEGETABLE) })
+                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
