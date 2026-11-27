@@ -263,7 +263,10 @@ class StoreViewModel(
                 val products = snapshot.documents.mapNotNull { doc ->
                     val imageUrl = doc.getString("imageUrl")?.takeIf { it.isNotBlank() }
                     if (doc.getBoolean("isVisible") != true) return@mapNotNull null
-                    val stock = doc.getDouble("stock") ?: (doc.getLong("stock")?.toDouble() ?: 0.0)
+                    val stock = doc.getDouble("stock")
+                        ?: doc.getLong("stock")?.toDouble()
+                        ?: doc.getString("stock")?.trim()?.replace(",", "")?.toDoubleOrNull()
+                        ?: 0.0
                     val unitText = sequenceOf("unit", "stockUnit", "sellUnit", "unitMarathi", "measurementUnit")
                         .mapNotNull { doc.getString(it) }
                         .firstOrNull { it.isNotBlank() }
