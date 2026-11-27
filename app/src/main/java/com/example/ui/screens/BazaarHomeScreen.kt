@@ -1689,7 +1689,7 @@ private fun MealComboDialog(
         ingredients = availableCartIngredients,
         priceRupees = kotlin.math.ceil(availableCartPrice)
     )
-    val canAdd = combo != null && comboAmountGrams > 0 && missingIngredients.isEmpty() && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
+    val canAdd = combo != null && comboAmountGrams > 0 && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty() && availableCartIngredients.size == combo.ingredients.size && availableCartPrice > 0.0
     Dialog(onDismissRequest = onDismiss) {
         Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.88f), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(22.dp)) {
             Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1829,6 +1829,17 @@ private fun MealComboDialog(
                     }
                      Text("₹${kotlin.math.ceil(comboCatalogPrice).toInt()}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
                     Text(customerText("किंमत सध्याच्या भाजीपाल्याच्या दरानुसार मोजली आहे.", "कीमत मौजूदा सब्ज़ियों के दाम के अनुसार है।", "Price is calculated from current vegetable catalog rates."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (outOfStockIngredients.isNotEmpty() || missingIngredients.isNotEmpty()) {
+                    Text(
+                        customerText(
+                            "या कॉम्बोमधील सर्व भाज्या उपलब्ध झाल्यावरच कार्टमध्ये टाकता येतील.",
+                            "इस कॉम्बो की सभी सब्ज़ियाँ उपलब्ध होने पर ही इसे कार्ट में जोड़ सकते हैं।",
+                            "This combo can be added only when every ingredient is available."
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
                 Button(
                     onClick = { cartCombo?.let(onAddCombo) },
