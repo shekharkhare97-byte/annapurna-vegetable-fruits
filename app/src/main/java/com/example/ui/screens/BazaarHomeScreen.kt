@@ -429,7 +429,7 @@ fun BazaarHomeScreen(
                                 ) {
                                     Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                         if (other.imageUrl.isNullOrBlank() && other.imageRes != 0) {
-                                            Image(painter = painterResource(id = other.imageRes), contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
+                                            Image(painter = painterResource(id = other.imageRes), contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(76.dp).clip(RoundedCornerShape(12.dp)))
                                         } else if (!other.imageUrl.isNullOrBlank()) {
                                             AsyncImage(model = other.imageUrl, contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
                                         }
@@ -1655,9 +1655,9 @@ private fun MealComboDialog(
         priceRupees = kotlin.math.ceil(availableCartPrice)
     )
     val canAdd = combo != null && servings > 0 && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(0.dp)) {
-            Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.88f), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(22.dp)) {
+            Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(customerText("कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -1682,9 +1682,9 @@ private fun MealComboDialog(
                                 if (selected) 2.dp else 1.dp,
                                 if (selected) Color(0xFF23833B) else MaterialTheme.colorScheme.outlineVariant
                             ),
-                            modifier = Modifier.width(148.dp)
+                            modifier = Modifier.width(124.dp)
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 AsyncImage(
                                     model = item.imageUrl,
                                     contentDescription = item.displayName(language),
@@ -1693,7 +1693,7 @@ private fun MealComboDialog(
                                 )
                                 Text(
                                     item.displayName(language),
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 9.dp, vertical = 5.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 7.dp, vertical = 3.dp),
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 2,
                                     minLines = 2,
@@ -1703,12 +1703,12 @@ private fun MealComboDialog(
                         }
                     }
                 }
-                Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(combo?.displayName(language).orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     if (!combo?.imageUrl.isNullOrBlank()) AsyncImage(
                         model = combo?.imageUrl, contentDescription = combo?.displayName(language),
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(16.dp))
+                        modifier = Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(14.dp))
                     )
                     Text(customerText("हा कॉम्बो किती व्यक्तींसाठी हवा आहे?", "यह कॉम्बो कितने लोगों के लिए चाहिए?", "How many people is this combo for?"), fontWeight = FontWeight.SemiBold)
                     OutlinedTextField(
@@ -1723,7 +1723,7 @@ private fun MealComboDialog(
                     combo?.ingredients?.forEach { ingredient ->
                         val product = catalog.firstOrNull { it.id == ingredient.productId }
                         val insufficientStock = product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
-                        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
                                 Text(
@@ -1740,7 +1740,7 @@ private fun MealComboDialog(
                                 // Always retain a visible ingredient image; blur it and overlay the stock status when unavailable.
                                 val photoUnavailable = product == null || insufficientStock
                                 Box(
-                                    modifier = Modifier.size(76.dp).clip(RoundedCornerShape(10.dp)),
+                                    modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     when {
@@ -1796,19 +1796,12 @@ private fun MealComboDialog(
                 Button(
                     onClick = { cartCombo?.let(onAddCombo) },
                     enabled = canAdd,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
-                    contentPadding = PaddingValues(16.dp)
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
                 ) {
                     Icon(Icons.Default.AddShoppingCart, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        if (canAdd && (missingIngredients.isNotEmpty() || outOfStockIngredients.isNotEmpty()))
-                            customerText("उपलब्ध भाज्या Cart मध्ये जोडा", "उपलब्ध सब्ज़ियाँ कार्ट में जोड़ें", "Add Available Vegetables to Cart")
-                        else if (canAdd)
-                            customerText("पूर्ण कॉम्बो Cart मध्ये जोडा", "पूरा कॉम्बो कार्ट में जोड़ें", "Add Complete Combo to Cart")
-                        else customerText("सध्या उपलब्ध नाही", "अभी उपलब्ध नहीं", "Currently unavailable"),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("ADD ALL TO CART", fontWeight = FontWeight.Bold)
                 }
             }
         }
