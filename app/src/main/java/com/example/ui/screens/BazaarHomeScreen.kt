@@ -1527,7 +1527,14 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
         // Also tolerate common singular/plural variants (e.g. moth bean/moth beans).
         fun phraseKey(value: String): String = normalizeComboName(value)
             .split(Regex("\\s+")).joinToString(" ") { word ->
-                if (word.length > 3 && word.endsWith("s")) word.dropLast(1) else word
+                when {
+                    word.length > 4 && word.endsWith("ies") -> word.dropLast(3) + "y"
+                    word.length > 4 && word.endsWith("oes") -> word.dropLast(2)
+                    word.length > 5 && (word.endsWith("ches") || word.endsWith("shes") ||
+                        word.endsWith("xes") || word.endsWith("zes")) -> word.dropLast(2)
+                    word.length > 3 && word.endsWith("s") -> word.dropLast(1)
+                    else -> word
+                }
             }
         val candidates = (listOf(item.marathiName, item.englishName, item.hindiName) +
             item.englishKeywords.split(Regex("[,;/|]+")))
