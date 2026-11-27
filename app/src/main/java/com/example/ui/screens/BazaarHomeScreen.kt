@@ -1730,18 +1730,22 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                         }
                     }
                 }
+                }
                 Button(
                     onClick = { onAddIngredients(availableIds) },
                     enabled = availableIds.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth().height(54.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         if (availableIds.isNotEmpty()) customerText("सर्व भाज्या Cart मध्ये जोडा (" + availableIds.size + ")", "सभी सब्ज़ियाँ Cart में जोड़ें (" + availableIds.size + ")", "Add All Ingredients to Cart (" + availableIds.size + ")")
-                        else customerText("सध्या स्टॉक उपलब्ध नाही", "अभी स्टॉक उपलब्ध नहीं है", "Currently out of stock")
+                        else customerText("सध्या स्टॉक उपलब्ध नाही", "अभी स्टॉक उपलब्ध नहीं है", "Currently out of stock"),
+                        maxLines = 2,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.weight(1f)
                     )
-                }
                 }
             }
         }
