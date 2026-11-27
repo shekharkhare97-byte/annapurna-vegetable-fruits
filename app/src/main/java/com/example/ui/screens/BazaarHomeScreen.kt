@@ -68,6 +68,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -1595,7 +1596,10 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
     // The screen list can be category-filtered, so append the complete Admin catalog
     // as a fallback for ingredients outside the currently selected category.
     // distinctBy keeps the first (newest live) representation of each product ID.
-    val comboCatalog = (produceItems + ProduceCatalog.items).distinctBy { it.id }
+    // Observe the complete Admin catalog so a combo opened before Firestore
+    // finishes loading refreshes automatically when products arrive.
+    val adminCatalog by ProduceCatalog.itemsFlow.collectAsState()
+    val comboCatalog = (produceItems + adminCatalog).distinctBy { it.id }
     val rows = combo.ingredients.map { aliases ->
         aliases to comboCatalog.firstOrNull { matches(aliases, it) }
     }
