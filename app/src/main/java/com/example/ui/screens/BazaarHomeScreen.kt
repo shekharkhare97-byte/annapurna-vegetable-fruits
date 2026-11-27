@@ -421,9 +421,9 @@ fun BazaarHomeScreen(
                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                                 ) {
                                     Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        if (other.imageUrl.isNullOrBlank()) {
+                                        if (other.imageUrl.isNullOrBlank() && other.imageRes != 0) {
                                             Image(painter = painterResource(id = other.imageRes), contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
-                                        } else {
+                                        } else if (!other.imageUrl.isNullOrBlank()) {
                                             AsyncImage(model = other.imageUrl, contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
                                         }
                                         Text(other.displayName(), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -1003,14 +1003,14 @@ private fun ProduceGridCard(
                     .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                if (item.imageUrl.isNullOrBlank()) {
+                if (item.imageUrl.isNullOrBlank() && item.imageRes != 0) {
                     Image(
                         painter = painterResource(id = item.imageRes),
                         contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
                     )
-                } else {
+                } else if (!item.imageUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = item.imageUrl,
                         contentDescription = item.displayName(),
@@ -1309,14 +1309,14 @@ private fun ProduceDetailSheetContent(
             .padding(horizontal = 20.dp)
             .padding(bottom = 28.dp)
     ) {
-        if (item.imageUrl.isNullOrBlank()) {
+        if (item.imageUrl.isNullOrBlank() && item.imageRes != 0) {
             Image(
                 painter = painterResource(id = item.imageRes),
                 contentDescription = item.displayName(),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
             )
-        } else {
+        } else if (!item.imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = item.imageUrl,
                 contentDescription = item.displayName(),
