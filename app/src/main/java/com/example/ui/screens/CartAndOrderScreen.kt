@@ -868,7 +868,7 @@ private fun CartLineCard(
                     )
                     Text(
                         text = if (line.combo != null)
-                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / ${customerText("कॉम्बो", "कॉम्बो", "combo")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${customerText("कॉम्बो", "कॉम्बो", "combos")} • ${MarathiFormatters.toMarathiNumber(line.combo.servings)} ${customerText("व्यक्ती प्रति कॉम्बो", "लोग प्रति कॉम्बो", "people per combo")}"
+                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / ${customerText("कॉम्बो", "कॉम्बो", "combo")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${customerText("कॉम्बो", "कॉम्बो", "combos")} • ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${line.combo.servings} g"}"
                         else if (line.produce.isPieceBased)
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.displayUnit().removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.displayUnit().removePrefix("१ ")}"
                         else
@@ -894,7 +894,7 @@ private fun CartLineCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = if (java.util.Locale.getDefault().language == "en") "For ${line.combo.servings} people" else if (java.util.Locale.getDefault().language == "hi") "${line.combo.servings} लोगों के लिए" else "${MarathiFormatters.toMarathiNumber(line.combo.servings)} व्यक्तींसाठी",
+                        text = if (java.util.Locale.getDefault().language == "en") "Combo weight: ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${line.combo.servings} g"}" else if (java.util.Locale.getDefault().language == "hi") "कॉम्बो वजन: ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${line.combo.servings} ग्राम"}" else "कॉम्बो वजन: ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${MarathiFormatters.toMarathiNumber(line.combo.servings)} ग्रॅम"}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -905,7 +905,14 @@ private fun CartLineCard(
                         fontWeight = FontWeight.Bold
                     )
                     line.combo.ingredients.forEach { ingredient ->
-                        Text("• ${ingredient.displayName(java.util.Locale.getDefault().language)} — ${ingredient.quantityGrams} g", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "• ${ingredient.displayName(java.util.Locale.getDefault().language)} — " + when (ingredient.unit) {
+                                "nos" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} ${if (java.util.Locale.getDefault().language == "en") "Nos" else "नग"}"
+                                "bunch" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} ${if (java.util.Locale.getDefault().language == "en") "bunch" else if (java.util.Locale.getDefault().language == "hi") "गुच्छा" else "जुडी"}"
+                                else -> if (ingredient.quantityGrams >= 1000 && ingredient.quantityGrams % 1000 == 0) "${ingredient.quantityGrams / 1000} kg" else "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} g"
+                            },
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
