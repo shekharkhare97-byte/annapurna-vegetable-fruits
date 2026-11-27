@@ -30,7 +30,8 @@ data class MealComboPack(
     val nameEn: String,
     val priceRupees: Double,
     val ingredients: List<MealComboIngredient>,
-    val imageUrl: String = ""
+    val imageUrl: String = "",
+    val servings: Int = 1
 ) {
     fun displayName(language: String): String = when (language) {
         "hi" -> nameHi.ifBlank { nameEn.ifBlank { nameMr } }
@@ -40,7 +41,7 @@ data class MealComboPack(
 
     fun toJson(): String = JSONObject().apply {
         put("id", id); put("nameMr", nameMr); put("nameHi", nameHi); put("nameEn", nameEn)
-        put("priceRupees", priceRupees); put("imageUrl", imageUrl)
+        put("priceRupees", priceRupees); put("imageUrl", imageUrl); put("servings", servings)
         put("ingredients", JSONArray().apply { ingredients.forEach { put(it.toJson()) } })
     }.toString()
 
@@ -66,7 +67,8 @@ data class MealComboPack(
                 nameEn = json.optString("nameEn"),
                 priceRupees = json.optDouble("priceRupees", 0.0),
                 ingredients = ingredients,
-                imageUrl = json.optString("imageUrl")
+                imageUrl = json.optString("imageUrl"),
+                servings = json.optInt("servings", 1)
             )
         }.getOrNull()
     }
