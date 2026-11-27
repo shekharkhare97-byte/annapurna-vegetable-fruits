@@ -18,10 +18,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -33,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Eco
@@ -43,6 +47,9 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,19 +67,23 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateListOf
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -83,10 +94,13 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceCategory
+import com.example.data.model.MealComboIngredient
+import com.example.data.model.MealComboPack
 import com.example.data.model.ProduceItem
 import com.example.data.repository.CartLineItem
 import com.example.util.MarathiFormatters
@@ -102,10 +116,19 @@ fun BazaarHomeScreen(
     onSelectCategory: (ProduceCategory) -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onAddToCart: (String, Int) -> Unit,
+    onAddComboToCart: (MealComboPack) -> Unit,
     onDecreaseQty: (String) -> Unit,
     onOpenDetail: (ProduceItem?) -> Unit,
     onGoToCart: () -> Unit,
     onAskRecipeInChat: (ProduceItem) -> Unit,
+    onOpenAssistant: () -> Unit,
+    onOpenVoiceSearch: () -> Unit,
+    onOpenPhotoSearch: () -> Unit,
+    onOpenOffers: () -> Unit,
+    onOpenNewArrivals: () -> Unit,
+    onOpenLanguageSettings: () -> Unit,
+    onOpenOrders: () -> Unit,
+    onShareApp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val qtyMap = remember(cartItems) {
@@ -114,6 +137,12 @@ fun BazaarHomeScreen(
     val totalCartQty = remember(cartItems) { cartItems.sumOf { it.quantity } }
     val totalCartAmount = remember(cartItems) { cartItems.sumOf { it.lineTotalRupees } }
     var weightDialogItem by remember { mutableStateOf<ProduceItem?>(null) }
+    var showProductRequest by remember { mutableStateOf(false) }
+    var requestedProductName by remember { mutableStateOf("") }
+    var requestedProductQuantity by remember { mutableStateOf("") }
+    var requestedProductNote by remember { mutableStateOf("") }
+    var productRequestSending by remember { mutableStateOf(false) }
+    var productRequestMessage by remember { mutableStateOf<String?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val favoritePrefs = remember { context.getSharedPreferences("annapurna_favorites", android.content.Context.MODE_PRIVATE) }
     val favoriteIds = remember { mutableStateListOf<String>().apply {
@@ -123,6 +152,14 @@ fun BazaarHomeScreen(
         if (id in favoriteIds) favoriteIds.remove(id) else favoriteIds.add(id)
         favoritePrefs.edit().putStringSet("ids", favoriteIds.toSet()).apply()
     }
+    var showFavoritesOnly by remember { mutableStateOf(false) }
+    var showMealCombos by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedCategory) {
+        if (selectedCategory == ProduceCategory.COMBO_PACKS) showMealCombos = true
+    }
+    val visibleItems = remember(produceItems, favoriteIds.toList(), showFavoritesOnly) {
+        if (showFavoritesOnly) produceItems.filter { it.id in favoriteIds } else produceItems
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -130,13 +167,14 @@ fun BazaarHomeScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 8.dp,
-                bottom = if (totalCartQty > 0) 104.dp else 24.dp
+                top = 14.dp,
+                bottom = if (totalCartQty > 0) 104.dp else 28.dp
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .fillMaxSize()
+                .blur(if (showMealCombos) 8.dp else 0.dp)
                 .testTag("produce_grid")
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -153,39 +191,18 @@ fun BazaarHomeScreen(
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
-                HeroMarketBanner()
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                CustomerOffersStrip()
-            }
-
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                customerText("अंदाजे डिलिव्हरी वेळ: ३०–६० मिनिटे", "अनुमानित डिलीवरी समय: ३०–६० मिनट", "Estimated delivery time: 30–60 minutes"),
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                            Text(
-                                customerText("अंतर आणि ऑर्डरच्या गर्दीनुसार वेळ बदलू शकतो.", "दूरी और ऑर्डर की संख्या के अनुसार समय बदल सकता है।", "Time may vary depending on distance and order volume."),
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
+                CustomerOffersStrip(onOfferClick = onOpenOffers) {
+                    HeroMarketBanner(onShopNow = { onSelectCategory(ProduceCategory.VEGETABLE) })
                 }
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                CategoryFilterRow(
+                    selectedCategory = selectedCategory,
+                    onSelectCategory = onSelectCategory,
+                    onRequestProduct = { showProductRequest = true },
+                    onOpenOffers = onOpenOffers
+                )
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -196,7 +213,15 @@ fun BazaarHomeScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            text = if (selectedCategory == ProduceCategory.ALL) stringResource(R.string.bazaar_today_title) else when (selectedCategory) { ProduceCategory.ALL -> stringResource(R.string.cat_all); ProduceCategory.VEGETABLE -> stringResource(R.string.cat_vegetables); ProduceCategory.FRUIT -> stringResource(R.string.cat_fruits) },
+                            text = if (selectedCategory == ProduceCategory.ALL) stringResource(R.string.bazaar_today_title) else when (selectedCategory) {
+                                ProduceCategory.ALL -> stringResource(R.string.cat_all)
+                                ProduceCategory.VEGETABLE -> stringResource(R.string.cat_vegetables)
+                                ProduceCategory.FRUIT -> stringResource(R.string.cat_fruits)
+                                ProduceCategory.LEAFY_GREENS -> customerText("पालेभाज्या", "हरी पत्तेदार", "Leafy Greens")
+                                ProduceCategory.ORGANIC -> customerText("सेंद्रिय उत्पादने", "ऑर्गेनिक उत्पाद", "Organic Products")
+                                ProduceCategory.DAILY_NEEDS -> customerText("दैनंदिन गरजा", "दैनिक ज़रूरतें", "Daily Needs")
+                                ProduceCategory.COMBO_PACKS -> customerText("कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs")
+                            },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -212,7 +237,7 @@ fun BazaarHomeScreen(
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(
-                            text = MarathiFormatters.toMarathiNumber(produceItems.size),
+                            text = customerNumber(visibleItems.size),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             fontWeight = FontWeight.Bold,
@@ -222,7 +247,7 @@ fun BazaarHomeScreen(
                 }
             }
 
-            if (produceItems.isEmpty()) {
+            if (visibleItems.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyProduceState(onResetFilter = {
                         onSearchQueryChange("")
@@ -231,7 +256,7 @@ fun BazaarHomeScreen(
                 }
             } else {
                 items(
-                    items = produceItems,
+                    items = visibleItems,
                     key = { it.id }
                 ) { item ->
                     ProduceGridCard(
@@ -245,8 +270,26 @@ fun BazaarHomeScreen(
                     )
                 }
             }
-        }
 
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                AnnapurnaAiHomeCard(onClick = onOpenAssistant)
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                CustomerFeatureShortcuts(
+                    onOffers = onOpenOffers,
+                    onNewArrivals = onOpenNewArrivals,
+                    onLanguage = onOpenLanguageSettings,
+                    onVoiceSearch = onOpenVoiceSearch,
+                    onPhotoSearch = onOpenPhotoSearch,
+                    onRefer = onShareApp,
+                    onWishlist = { showFavoritesOnly = !showFavoritesOnly },
+                    onNotifications = onOpenOrders,
+                    wishlistSelected = showFavoritesOnly
+                )
+            }
+        }
+        
         AnimatedVisibility(
             visible = totalCartQty > 0,
             enter = slideInVertically(animationSpec = spring()) { it } + fadeIn(),
@@ -263,6 +306,83 @@ fun BazaarHomeScreen(
         }
     }
 
+    if (showMealCombos) {
+        MealComboDialog(produceItems = produceItems, onDismiss = { showMealCombos = false }, onAddCombo = { combo ->
+            onAddComboToCart(combo)
+            showMealCombos = false
+        })
+    }
+
+    val productRequestFailureText = customerText(
+        "विनंती पाठवता आली नाही. कृपया पुन्हा प्रयत्न करा.",
+        "अनुरोध नहीं भेजा जा सका। कृपया फिर कोशिश करें।",
+        "Could not send request. Please try again."
+    )
+    if (showProductRequest) {
+        AlertDialog(
+            onDismissRequest = { if (!productRequestSending) showProductRequest = false },
+            title = { Text(customerText("नवीन वस्तू मागवा", "नई चीज़ मँगवाएँ", "Request a new item")) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = requestedProductName,
+                        onValueChange = { requestedProductName = it },
+                        label = { Text(customerText("वस्तूचे नाव", "वस्तु का नाम", "Item name")) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = requestedProductQuantity,
+                        onValueChange = { requestedProductQuantity = it },
+                        label = { Text(customerText("प्रमाण (उदा. २ किलो)", "मात्रा (जैसे २ किलो)", "Quantity (e.g. 2 kg)")) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = requestedProductNote,
+                        onValueChange = { requestedProductNote = it },
+                        label = { Text(customerText("अधिक माहिती (ऐच्छिक)", "अधिक जानकारी (वैकल्पिक)", "Extra details (optional)")) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    productRequestMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = requestedProductName.isNotBlank() && !productRequestSending,
+                    onClick = {
+                        productRequestSending = true
+                        val request = hashMapOf<String, Any>(
+                            "productName" to requestedProductName.trim(),
+                            "quantity" to requestedProductQuantity.trim(),
+                            "note" to requestedProductNote.trim(),
+                            "status" to "pending",
+                            "source" to "customer_app",
+                            "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                            "createdAtMillis" to System.currentTimeMillis()
+                        )
+                        FirebaseFirestore.getInstance().collection("productRequests").add(request)
+                            .addOnSuccessListener {
+                                productRequestSending = false
+                                showProductRequest = false
+                                requestedProductName = ""
+                                requestedProductQuantity = ""
+                                requestedProductNote = ""
+                                productRequestMessage = null
+                            }
+                            .addOnFailureListener { error ->
+                                productRequestSending = false
+                                productRequestMessage = productRequestFailureText
+                            }
+                    }
+                ) { Text(if (productRequestSending) customerText("पाठवत आहे…", "भेज रहे हैं…", "Sending…") else customerText("विनंती पाठवा", "अनुरोध भेजें", "Send request")) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showProductRequest = false }) { Text(customerText("रद्द करा", "रद्द करें", "Cancel")) }
+            }
+        )
+    }
+
     if (weightDialogItem != null) {
         WeightSelectionDialog(
             item = weightDialogItem!!,
@@ -275,29 +395,191 @@ fun BazaarHomeScreen(
     }
 
     if (selectedDetailItem != null) {
-        ModalBottomSheet(
+        Dialog(
             onDismissRequest = { onOpenDetail(null) },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            ProduceDetailSheetContent(
-                item = selectedDetailItem,
-                quantityInCart = qtyMap[selectedDetailItem.id] ?: 0,
-                onAdd = { weightDialogItem = selectedDetailItem },
-                onDecrease = { onDecreaseQty(selectedDetailItem.id) },
-                onAskAiRecipe = {
-                    val chosen = selectedDetailItem
-                    onOpenDetail(null)
-                    onAskRecipeInChat(chosen)
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(customerText("उत्पादनाची माहिती", "उत्पाद की जानकारी", "Product details"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        IconButton(onClick = { onOpenDetail(null) }) { Icon(Icons.Default.Clear, contentDescription = customerText("बंद करा", "बंद करें", "Close")) }
+                    }
+                    ProduceDetailSheetContent(
+                        item = selectedDetailItem,
+                        isFavorite = selectedDetailItem.id in favoriteIds,
+                        onToggleFavorite = { toggleFavorite(selectedDetailItem.id) },
+                        onAdd = { weightDialogItem = selectedDetailItem }
+                    )
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(customerText("इतर उत्पादने", "अन्य उत्पाद", "Other products"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(produceItems.filter { it.id != selectedDetailItem.id }.take(12), key = { it.id }) { other ->
+                                Card(
+                                    modifier = Modifier.width(142.dp).clickable { onOpenDetail(other) },
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        if (other.imageUrl.isNullOrBlank() && other.imageRes != 0) {
+                                            Image(painter = painterResource(id = other.imageRes), contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(76.dp).clip(RoundedCornerShape(12.dp)))
+                                        } else if (!other.imageUrl.isNullOrBlank()) {
+                                            AsyncImage(model = other.imageUrl, contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
+                                        }
+                                        Text(other.displayName(), fontWeight = customerFontWeight(FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text("₹${MarathiFormatters.formatRupees(other.priceRupees)}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnnapurnaAiHomeCard(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = Color(0xFFEAF6EC),
+        contentColor = Color(0xFF145C2C),
+        shape = RoundedCornerShape(20.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD5EAD8)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                color = Color(0xFFD4EED9),
+                shape = RoundedCornerShape(15.dp),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "Annapurna AI",
+                        tint = Color(0xFF14743A),
+                        modifier = Modifier.size(27.dp)
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = "Annapurna AI",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF145C2C)
+                )
+                Text(
+                    text = customerText(
+                        "भाजी-फळांची माहिती, पाककृती आणि शोधासाठी AI ला विचारा",
+                        "सब्ज़ियों-फलों की जानकारी, रेसिपी और खोज के लिए AI से पूछें",
+                        "Ask AI about produce, recipes and finding products"
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF416B4D),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = Color(0xFF14743A)
             )
         }
     }
 }
 
 @Composable
+private fun CustomerFeatureShortcuts(
+    onOffers: () -> Unit,
+    onNewArrivals: () -> Unit,
+    onLanguage: () -> Unit,
+    onVoiceSearch: () -> Unit,
+    onPhotoSearch: () -> Unit,
+    onRefer: () -> Unit,
+    onWishlist: () -> Unit,
+    onNotifications: () -> Unit,
+    wishlistSelected: Boolean
+) {
+    val tiles = listOf(
+        Triple("🎁", customerText("थेट ऑफर्स", "लाइव ऑफ़र", "Live Offers"), onOffers),
+        Triple("🆕", customerText("नवीन आगमन", "नए उत्पाद", "New Arrivals"), onNewArrivals),
+        Triple("🌐", customerText("भाषा", "भाषा", "Language"), onLanguage),
+        Triple("🎙️", customerText("आवाज शोध", "आवाज़ से खोजें", "Voice Search"), onVoiceSearch),
+        Triple("📷", customerText("फोटोने शोधा", "फोटो से खोजें", "Search by Photo"), onPhotoSearch),
+        Triple("👥", customerText("मित्रांना सांगा", "दोस्तों को बताएँ", "Refer & Earn"), onRefer),
+        Triple("❤️", customerText("आवडती यादी", "पसंदीदा सूची", "Wishlist"), onWishlist),
+        Triple("🔔", customerText("ऑर्डर सूचना", "ऑर्डर सूचनाएँ", "Notifications"), onNotifications)
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(
+            customerText("तुमच्यासाठी खास सुविधा", "आपके लिए खास सुविधाएँ", "Quick features"),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            userScrollEnabled = false,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.height(176.dp)
+        ) {
+            items(tiles.size) { index ->
+                val tile = tiles[index]
+                Surface(
+                    onClick = tile.third,
+                    color = if (index == 6 && wishlistSelected) MaterialTheme.colorScheme.primaryContainer else Color(0xFFF1F8F2),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 3.dp, vertical = 7.dp)
+                    ) {
+                        Text(tile.first, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            tile.second,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = customerFontWeight(FontWeight.SemiBold),
+                            maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun customerNumber(value: Int): String {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language
+    return if (language == "en") value.toString() else MarathiFormatters.toMarathiNumber(value)
+}
+
+@Composable
 private fun StoreBrandHeader() {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -312,16 +594,16 @@ private fun StoreBrandHeader() {
                 Surface(
                     shape = RoundedCornerShape(15.dp),
                     color = Color(0xFFE8F5E9),
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(56.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Eco,
-                            contentDescription = "Annapurna",
-                            tint = Color(0xFF16843B),
-                            modifier = Modifier.size(31.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(R.drawable.img_launcher_logo),
+                        contentDescription = stringResource(R.string.brand_name),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(2.dp)
+                    )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
@@ -389,7 +671,7 @@ private fun StoreBrandHeader() {
                     Text(
                         customerText("तुमचा पत्ता ऑर्डर करताना भरा", "ऑर्डर करते समय अपना पता भरें", "Add your address at checkout"),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = customerFontWeight(FontWeight.SemiBold),
                         color = Color(0xFF174B29)
                     )
                 }
@@ -405,7 +687,7 @@ private fun StoreBrandHeader() {
 }
 
 @Composable
-private fun HeroMarketBanner() {
+private fun HeroMarketBanner(onShopNow: () -> Unit) {
     Card(
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -416,7 +698,7 @@ private fun HeroMarketBanner() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(142.dp)
+                .height(178.dp)
         ) {
             Image(
                 painter = painterResource(id = R.drawable.img_hero_banner),
@@ -479,6 +761,22 @@ private fun HeroMarketBanner() {
                         color = Color.White.copy(alpha = 0.92f),
                         maxLines = 2
                     )
+                    Spacer(modifier = Modifier.height(9.dp))
+                    Button(
+                        onClick = onShopNow,
+                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF12652F)
+                        ),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(
+                            customerText("आत्ताच खरेदी करा", "अभी खरीदें", "Shop Now"),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
             }
         }
@@ -596,49 +894,95 @@ private fun SearchAndFilterBar(
             }
         }
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(vertical = 2.dp)
+
+    }
+}
+
+
+@Composable
+private fun CategoryFilterRow(
+    selectedCategory: ProduceCategory,
+    onSelectCategory: (ProduceCategory) -> Unit,
+    onRequestProduct: () -> Unit,
+    onOpenOffers: () -> Unit
+) {
+    data class HomeCategory(
+        val emoji: String,
+        val mr: String,
+        val hi: String,
+        val en: String,
+        val category: ProduceCategory?,
+        val request: Boolean = false,
+        val offers: Boolean = false
+    )
+    val categories = listOf(
+        HomeCategory("🥬", "भाज्या", "सब्ज़ियाँ", "Vegetables", ProduceCategory.VEGETABLE),
+        HomeCategory("🍎", "फळे", "फल", "Fruits", ProduceCategory.FRUIT),
+        HomeCategory("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.LEAFY_GREENS),
+        HomeCategory("🎁", "ऑफर्स", "ऑफर", "Offers", null, offers = true),
+        HomeCategory("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ORGANIC),
+        HomeCategory("🧺", "दैनंदिन गरजा", "रोज़मर्रा", "Daily Needs", ProduceCategory.DAILY_NEEDS),
+        HomeCategory("📦", "कॉम्बो पॅक", "कॉम्बो पैक", "Combo Packs", ProduceCategory.COMBO_PACKS),
+        HomeCategory("＋", "अधिक", "और", "More", null, request = true)
+    )
+    val language = androidx.compose.ui.platform.LocalContext.current.resources.configuration.locales[0].language
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            customerText("कॅटेगरी निवडा", "श्रेणी चुनें", "Shop by category"),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            userScrollEnabled = false,
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+            modifier = Modifier.height(174.dp)
         ) {
-            val categoriesWithCounts = listOf(
-                ProduceCategory.ALL to allCount,
-                ProduceCategory.VEGETABLE to vegCount,
-                ProduceCategory.FRUIT to fruitCount
-            )
-            items(categoriesWithCounts) { (category, count) ->
-                val isSelected = selectedCategory == category
-                val categoryLabel = when (category) {
-                    ProduceCategory.ALL -> customerText("सर्व", "सभी", "All")
-                    ProduceCategory.VEGETABLE -> customerText("भाज्या", "सब्ज़ियाँ", "Vegetables")
-                    ProduceCategory.FRUIT -> customerText("फळे", "फल", "Fruits")
+            items(categories.size) { index ->
+                val item = categories[index]
+                val label = when (language) {
+                    "hi" -> item.hi
+                    "en" -> item.en
+                    else -> item.mr
                 }
-                val chipLabel = "$categoryLabel (${MarathiFormatters.toMarathiNumber(count)})"
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onSelectCategory(category) },
-                    label = {
-                        Text(
-                            text = chipLabel,
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                val selected = item.category != null && selectedCategory == item.category &&
+                    (item.category != ProduceCategory.ALL)
+                Surface(
+                    onClick = {
+                        when {
+                            item.request -> onRequestProduct()
+                            item.offers -> onOpenOffers()
+                            else -> item.category?.let(onSelectCategory)
+                        }
                     },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF16843B),
-                        selectedLabelColor = Color.White,
-                        containerColor = Color(0xFFF2F8F1),
-                        labelColor = Color(0xFF315C3A)
+                    color = if (selected) Color(0xFFE1F2E4) else Color(0xFFF3F8F2),
+                    shape = RoundedCornerShape(15.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (selected) Color(0xFF16843B) else Color(0xFFE1ECE1)
                     ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = isSelected,
-                        borderColor = Color(0xFFDCEBDD),
-                        selectedBorderColor = Color(0xFF16843B)
-                    ),
-                    modifier = Modifier
-                        .minimumInteractiveComponentSize()
-                        .testTag("category_chip_${category.name.lowercase()}")
-                )
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp)
+                    ) {
+                        Text(item.emoji, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = customerFontWeight(FontWeight.SemiBold),
+                            maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            color = Color(0xFF315C3A)
+                        )
+                    }
+                }
             }
         }
     }
@@ -655,11 +999,12 @@ private fun ProduceGridCard(
     onDecrease: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE6EEE6)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onCardClick)
@@ -669,20 +1014,23 @@ private fun ProduceGridCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.98f)
-                    .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(topStart = 17.dp, topEnd = 17.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                if (item.imageUrl.isNullOrBlank()) {
-                    Image(
-                        painter = painterResource(id = item.imageRes),
+                val localFallbackRes = item.imageRes.takeIf { it != 0 } ?: R.drawable.img_hero_banner
+                if (!item.imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = item.imageUrl,
                         contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
+                        error = painterResource(localFallbackRes),
+                        placeholder = painterResource(localFallbackRes),
                         modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
                     )
                 } else {
-                    AsyncImage(
-                        model = item.imageUrl,
+                    Image(
+                        painter = painterResource(localFallbackRes),
                         contentDescription = item.displayName(),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize().alpha(if (item.isOutOfStock) 0.32f else 1f)
@@ -696,7 +1044,7 @@ private fun ProduceGridCard(
                         modifier = Modifier.align(Alignment.Center)
                     ) {
                         Text(
-                            text = customerText("माल संपला", "माल खत्म", "Out of Stock"),
+                            text = customerText("संपला आहे", "माल खत्म", "Out of Stock"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -711,7 +1059,7 @@ private fun ProduceGridCard(
                     IconButton(onClick = onToggleFavorite, modifier = Modifier.size(38.dp)) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (isFavorite) "आवडीतून काढा" else "आवडीत जोडा",
+                            contentDescription = if (isFavorite) customerText("आवडीतून काढा", "पसंदीदा से हटाएँ", "Remove from favorites") else customerText("आवडीत जोडा", "पसंदीदा में जोड़ें", "Add to favorites"),
                             tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.primary
                         )
                     }
@@ -731,12 +1079,13 @@ private fun ProduceGridCard(
             }
 
             Column(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp)
             ) {
                 Text(
                     text = item.displayName(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = customerFontWeight(FontWeight.Bold),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -769,11 +1118,11 @@ private fun ProduceGridCard(
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                        modifier = Modifier.fillMaxWidth().height(40.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = customerText("माल संपला", "माल खत्म", "Out of Stock"),
+                                text = customerText("साठा संपला आहे", "स्टॉक खत्म है", "Out of Stock"),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
@@ -835,7 +1184,7 @@ private fun ProduceGridCard(
                             }
 
                             Text(
-                                text = MarathiFormatters.toMarathiNumber(quantityInCart),
+                                text = customerNumber(quantityInCart),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold
@@ -897,7 +1246,7 @@ private fun FloatingCartBanner(
                 Text(
                     text = stringResource(
                         R.string.cart_items_summary_format,
-                        MarathiFormatters.toMarathiNumber(totalItems),
+                        customerNumber(totalItems),
                         MarathiFormatters.formatRupees(totalRupees)
                     ),
                     style = MaterialTheme.typography.titleMedium,
@@ -969,10 +1318,9 @@ private fun EmptyProduceState(onResetFilter: () -> Unit) {
 @Composable
 private fun ProduceDetailSheetContent(
     item: ProduceItem,
-    quantityInCart: Int,
-    onAdd: () -> Unit,
-    onDecrease: () -> Unit,
-    onAskAiRecipe: () -> Unit
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
+    onAdd: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -980,14 +1328,14 @@ private fun ProduceDetailSheetContent(
             .padding(horizontal = 20.dp)
             .padding(bottom = 28.dp)
     ) {
-        if (item.imageUrl.isNullOrBlank()) {
+        if (item.imageUrl.isNullOrBlank() && item.imageRes != 0) {
             Image(
                 painter = painterResource(id = item.imageRes),
                 contentDescription = item.displayName(),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(MaterialTheme.shapes.large)
             )
-        } else {
+        } else if (!item.imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = item.imageUrl,
                 contentDescription = item.displayName(),
@@ -1047,67 +1395,27 @@ private fun ProduceDetailSheetContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedButton(
-                onClick = onAskAiRecipe,
+            Button(
+                onClick = onAdd,
                 shape = MaterialTheme.shapes.small,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp)
-                    .testTag("ask_ai_recipe_button")
+                modifier = Modifier.weight(1f).height(50.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.btn_add_to_cart))
+            }
+            OutlinedButton(
+                onClick = onToggleFavorite,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.weight(1f).height(50.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.AutoAwesome,
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ask_ai_recipe))
-            }
-
-            if (quantityInCart == 0) {
-                Button(
-                    onClick = onAdd,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.btn_add_to_cart))
-                }
-            } else {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        IconButton(onClick = onDecrease) {
-                            Icon(
-                                imageVector = Icons.Default.Remove,
-                                contentDescription = stringResource(R.string.cd_decrease_qty)
-                            )
-                        }
-                        Text(
-                            text = MarathiFormatters.toMarathiNumber(quantityInCart),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        IconButton(onClick = onAdd) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = stringResource(R.string.cd_increase_qty)
-                            )
-                        }
-                    }
-                }
+                Text(if (isFavorite) customerText("आवडत्या यादीत", "पसंदीदा में", "Wishlisted") else customerText("आवडतीत जोडा", "पसंदीदा में जोड़ें", "Add Favourite"))
             }
         }
     }
@@ -1115,7 +1423,7 @@ private fun ProduceDetailSheetContent(
 
 
 @Composable
-private fun CustomerOffersStrip() {
+private fun CustomerOffersStrip(onOfferClick: () -> Unit, onNoOffers: @Composable () -> Unit) {
     val offers = remember { mutableStateListOf<Map<String, Any>>() }
     DisposableEffect(Unit) {
         val registration = FirebaseFirestore.getInstance()
@@ -1125,151 +1433,436 @@ private fun CustomerOffersStrip() {
                 if (error == null && snapshot != null) {
                     offers.clear()
                     offers.addAll(
-                        snapshot.documents
-                            .mapNotNull { document ->
-                                document.data?.let { data -> mapOf("offerId" to document.id) + data }
-                            }
-                            .sortedByDescending { offer ->
-                                (offer["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
-                            }
+                        snapshot.documents.mapNotNull { document ->
+                            document.data?.let { data -> mapOf("offerId" to document.id) + data }
+                        }.sortedByDescending { offer ->
+                            (offer["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
+                        }
                     )
                 }
             }
         onDispose { registration.remove() }
     }
 
-    if (offers.isNotEmpty()) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        customerText("आजच्या खास Offers", "आज के खास ऑफ़र", "Today’s special offers"),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        customerText("तुमच्यासाठी खास बचत आणि ताज्या ऑफर्स", "आपके लिए खास बचत और ताज़ा ऑफ़र", "Special savings and fresh offers for you"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Surface(
-                    color = Color(0xFFE8F5E9),
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Text(
-                        customerText("खास ऑफर्स", "खास ऑफ़र", "SPECIAL OFFERS"),
-                        color = Color(0xFF16843B),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
-                }
-            }
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(
-                    items = offers,
-                    key = { offer ->
-                        offer["offerId"]?.toString()
-                            ?: offer["title"]?.toString().orEmpty()
-                    }
-                ) { offer ->
-                    val imageUrl = offer["imageUrl"]?.toString().orEmpty()
-                    val offerLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
-                    val offerTitle = when (offerLanguage) {
-                        "hi" -> offer["titleHi"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
-                        "en" -> offer["titleEn"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
-                        else -> offer["titleMr"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
-                    }
-                    val offerDescription = when (offerLanguage) {
-                        "hi" -> offer["descriptionHi"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
-                        "en" -> offer["descriptionEn"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
-                        else -> offer["descriptionMr"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .width(284.dp)
-                            .height(170.dp)
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))
-                                )
-                            )
-                    ) {
-                        if (imageUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = imageUrl,
-                                contentDescription = offerTitle,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color(0x99000000),
-                                            Color(0xE6000000)
-                                        )
-                                    )
-                                )
-                        )
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(15.dp),
-                            verticalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Surface(
-                                color = Color(0xFFFFD54F),
-                                shape = RoundedCornerShape(50)
-                            ) {
-                                Text(
-                                    customerText("आजची खास ऑफर", "आज का खास ऑफ़र", "Today’s special offer"),
-                                    color = Color(0xFF3E2723),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                                )
-                            }
-                            Text(
-                                offerTitle,
-                                color = Color.White,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                offerDescription,
-                                color = Color.White.copy(alpha = 0.94f),
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
+    val offerIds = offers.map { it["offerId"]?.toString().orEmpty() }
+    var currentOfferIndex by remember { mutableStateOf(0) }
+    LaunchedEffect(offerIds) {
+        currentOfferIndex = 0
+        if (offerIds.isNotEmpty()) {
+            while (true) {
+                kotlinx.coroutines.delay(4000)
+                if (offers.isNotEmpty()) {
+                    currentOfferIndex = (currentOfferIndex + 1) % offers.size
                 }
             }
         }
     }
-}
 
+    if (offers.isEmpty()) {
+        onNoOffers()
+    } else {
+        val offer = offers[currentOfferIndex.coerceIn(0, offers.lastIndex)]
+        val imageUrl = offer["imageUrl"]?.toString().orEmpty()
+        val offerLanguage = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+        val offerTitle = when (offerLanguage) {
+            "hi" -> offer["titleHi"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+            "en" -> offer["titleEn"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+            else -> offer["titleMr"]?.toString().orEmpty().ifBlank { offer["title"]?.toString().orEmpty() }
+        }
+        val offerDescription = when (offerLanguage) {
+            "hi" -> offer["descriptionHi"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+            "en" -> offer["descriptionEn"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+            else -> offer["descriptionMr"]?.toString().orEmpty().ifBlank { offer["description"]?.toString().orEmpty() }
+        }
+        Box(
+            modifier = Modifier.fillMaxWidth().height(170.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .clickable(onClick = onOfferClick)
+                .background(Brush.linearGradient(colors = listOf(Color(0xFF238B45), Color(0xFF075B2A))))
+        ) {
+            // Show the exact active offer image uploaded from Admin. If no image
+            // was uploaded, use the approved grocery hero artwork as the fallback.
+            if (imageUrl.isNotBlank()) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = offerTitle.ifBlank {
+                        customerText("ताज्या भाज्या आणि फळे", "ताज़ी सब्ज़ियाँ और फल", "Fresh vegetables and fruits")
+                    },
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.img_hero_banner),
+                    contentDescription = customerText("ताज्या भाज्या आणि फळे", "ताज़ी सब्ज़ियाँ और फल", "Fresh vegetables and fruits"),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color(0x99000000), Color(0xE6000000)))))
+            Column(Modifier.align(Alignment.BottomStart).padding(15.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Surface(color = Color(0xFFFFD54F), shape = RoundedCornerShape(50)) {
+                    Text(customerText("आजची खास ऑफर", "आज का खास ऑफ़र", "Today’s special offer"), color = Color(0xFF3E2723), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
+                }
+                Text(offerTitle, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(offerDescription, color = Color.White.copy(alpha = 0.94f), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
 @Composable
 private fun customerText(mr: String, hi: String, en: String): String {
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
     return when (language) { "hi" -> hi; "en" -> en; else -> mr }
+}
+
+@Composable
+private fun customerFontWeight(defaultWeight: FontWeight): FontWeight {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+    return if (language == "en") FontWeight.Bold else defaultWeight
+}
+
+private data class MealCombo(val titleMr: String, val titleHi: String, val titleEn: String, val emoji: String, val ingredients: List<Pair<List<String>, Int>>)
+private val annapurnaMealCombos = listOf(
+    MealCombo("पावभाजी", "पाव भाजी", "Pav Bhaji", "🍲", listOf(listOf("बटाटा", "potato", "आलू") to 100, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कांदा", "onion", "प्याज") to 30, listOf("फुलकोबी", "cauliflower", "फूलगोभी") to 30, listOf("कोबी", "cabbage", "पत्ता गोभी", "patta gobhi", "bandh gobhi", "band gobhi") to 20, listOf("मटार", "मटर", "matar", "peas", "green peas") to 20, listOf("ढोबळी मिरची", "capsicum", "bell pepper", "शिमला मिर्च", "shimla mirch", "simla mirch") to 20, listOf("आले", "ginger", "अदरक") to 3, listOf("लसूण", "garlic", "लहसुन") to 3, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("लिंबू", "lemon", "नींबू") to 15)),
+    MealCombo("मिसळ पाव", "मिसल पाव", "Misal Pav", "🌶️", listOf(listOf("मटकी", "moth beans", "matki") to 60, listOf("कांदा", "onion", "प्याज") to 30, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("लिंबू", "lemon", "नींबू") to 20, listOf("आले", "ginger", "अदरक") to 5, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3)),
+    MealCombo("सांबार मिक्स", "सांभर मिक्स", "Sambar Mix", "🥘", listOf(listOf("शेवगा", "drumstick", "सहजन") to 30, listOf("दुधी भोपळा", "bottle gourd", "लौकी") to 30, listOf("गाजर", "carrot") to 25, listOf("वांगी", "brinjal", "बैंगन") to 25, listOf("टोमॅटो", "tomato", "टमाटर") to 30, listOf("कांदा", "onion", "प्याज") to 20, listOf("कोथिंबीर", "coriander", "धनिया") to 5)),
+    MealCombo("मिक्स व्हेज", "मिक्स वेज", "Mix Veg", "🥦", listOf(listOf("फुलकोबी", "cauliflower", "फूलगोभी") to 35, listOf("गाजर", "carrot") to 30, listOf("मटार", "मटर", "matar", "peas", "green peas") to 25, listOf("बटाटा", "potato", "आलू") to 40, listOf("ढोबळी मिरची", "capsicum", "bell pepper", "शिमला मिर्च", "shimla mirch", "simla mirch") to 20, listOf("बीन्स", "beans", "फली", "फ्रेंच बीन्स", "french beans", "green beans") to 25)),
+    MealCombo("उसळ कॉम्बो", "उसळ कॉम्बो", "Usal Combo", "🫘", listOf(listOf("मटकी", "moth beans", "matki") to 60, listOf("कांदा", "onion", "प्याज") to 30, listOf("टोमॅटो", "tomato", "टमाटर") to 40, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3, listOf("लिंबू", "lemon", "नींबू") to 20)),
+    MealCombo("व्हेज पुलाव कॉम्बो", "वेज पुलाव कॉम्बो", "Veg Pulao Combo", "🍚", listOf(listOf("गाजर", "carrot") to 25, listOf("मटार", "मटर", "matar", "peas", "green peas") to 25, listOf("बीन्स", "beans", "फली", "फ्रेंच बीन्स", "french beans", "green beans") to 25, listOf("कांदा", "onion", "प्याज") to 25, listOf("बटाटा", "potato", "आलू") to 35, listOf("कोथिंबीर", "coriander", "धनिया") to 5)),
+    MealCombo("कांदे पोहे", "कांदा पोहा", "Kanda Poha", "🍋", listOf(listOf("कांदा", "onion", "प्याज") to 35, listOf("बटाटा", "potato", "आलू") to 40, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3, listOf("लिंबू", "lemon", "नींबू") to 15, listOf("कोथिंबीर", "coriander", "धनिया") to 5)),
+    MealCombo("आलू पराठा", "आलू पराठा", "Aloo Paratha", "🥔", listOf(listOf("बटाटा", "potato", "आलू") to 120, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3, listOf("कोथिंबीर", "coriander", "धनिया") to 5, listOf("आले", "ginger", "अदरक") to 3)),
+    MealCombo("व्हेज फ्राईड राईस", "वेज फ्राइड राइस", "Veg Fried Rice", "🍚", listOf(listOf("गाजर", "carrot") to 25, listOf("बीन्स", "beans", "फली", "फ्रेंच बीन्स", "french beans", "green beans") to 25, listOf("कोबी", "cabbage", "पत्ता गोभी", "patta gobhi", "bandh gobhi", "band gobhi") to 25, listOf("ढोबळी मिरची", "capsicum", "bell pepper", "शिमला मिर्च", "shimla mirch", "simla mirch") to 20, listOf("कांदा", "onion", "प्याज") to 25, listOf("हिरवी मिरची", "green chilli", "green chili", "हरी मिर्च", "hari mirch", "green pepper") to 3))
+)
+
+@Composable private fun MealComboEntry(onClick: () -> Unit) {
+    Surface(onClick = onClick, color = Color(0xFFEAF6EC), contentColor = Color(0xFF145C2C), shape = RoundedCornerShape(18.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD5EAD8)), modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("🍲", style = MaterialTheme.typography.headlineMedium)
+            Column(Modifier.weight(1f)) {
+                Text(customerText("रेसिपीनुसार भाजी कॉम्बो", "रेसिपी के अनुसार सब्ज़ी कॉम्बो", "Recipe Vegetable Combos"), fontWeight = FontWeight.Bold)
+                Text(customerText("पावभाजी • मिसळ • सांबार आणि आणखी", "पावभाजी • मिसल • सांभर और भी", "Pav Bhaji • Misal • Sambar & more"), style = MaterialTheme.typography.bodySmall)
+            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        }
+    }
+}
+
+
+private fun comboIngredientFallbackImage(ingredient: MealComboIngredient): Int {
+    val text = listOf(ingredient.nameMr, ingredient.nameHi, ingredient.nameEn)
+        .joinToString(" ").lowercase()
+    return when {
+        listOf("potato", "बटाटा", "आलू").any { text.contains(it) } -> R.drawable.img_prod_potato
+        listOf("tomato", "टोमॅटो", "टमाटर").any { text.contains(it) } -> R.drawable.img_prod_tomato
+        listOf("onion", "कांदा", "प्याज").any { text.contains(it) } -> R.drawable.img_prod_onion
+        listOf("carrot", "गाजर").any { text.contains(it) } -> R.drawable.img_prod_carrot
+        listOf("cauliflower", "फुलकोबी", "फूलगोभी").any { text.contains(it) } -> R.drawable.img_prod_cauliflower
+        listOf("brinjal", "eggplant", "वांगी", "बैंगन").any { text.contains(it) } -> R.drawable.img_prod_brinjal
+        listOf("spinach", "पालक").any { text.contains(it) } -> R.drawable.img_prod_spinach
+        listOf("okra", "भेंडी", "भिंडी").any { text.contains(it) } -> R.drawable.img_prod_okra
+        else -> 0
+    }
+}
+
+@Composable
+private fun MealComboDialog(
+    produceItems: List<ProduceItem>,
+    onDismiss: () -> Unit,
+    onAddCombo: (MealComboPack) -> Unit
+) {
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    var comboAmountText by remember { mutableStateOf("250") }
+    val comboAmountGrams = comboAmountText.toIntOrNull()?.takeIf { it in setOf(250, 500, 1000, 2000) } ?: 0
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+    val catalog = remember(produceItems, ProduceCatalog.items) {
+        (ProduceCatalog.items + produceItems).distinctBy { it.id }
+    }
+    fun normalized(value: String): String = java.text.Normalizer
+        .normalize(value.trim().lowercase(), java.text.Normalizer.Form.NFKC)
+        .filterNot { it.code == 8204 || it.code == 8205 || it == '़' }
+        .replace(Regex("[\\s\\-_.]+"), "")
+    // Match against every Admin catalog identifier/name/keyword, not just display labels.
+    // This supports Marathi/Hindi/English spellings and legacy product IDs without
+    // creating fake "not listed" ingredients when the product is already in Firestore.
+    fun findProduct(names: List<String>): ProduceItem? {
+        val keys = names.filter { it.isNotBlank() }
+            .flatMap { it.split(",", ";", "/", "|") }
+            .map(::normalized)
+            .filter { it.isNotBlank() }
+            .toSet()
+        return catalog.firstOrNull { product ->
+            listOf(product.id, product.marathiName, product.hindiName, product.englishName, product.englishKeywords)
+                .filter { it.isNotBlank() }
+                .flatMap { it.split(",", ";", "/", "|") }
+                .map(::normalized)
+                .any { candidate -> candidate in keys }
+        }
+    }
+    fun comboQuantity(product: ProduceItem?, isMainIngredient: Boolean): Pair<Int, String> {
+        val bunchUnit = product?.unitMarathi.orEmpty().let { it.contains("जुडी") || it.contains("जोडी") || it.contains("गड्डी") || it.contains("bunch", true) }
+        val count = when (comboAmountGrams) { 500 -> 2; 1000 -> 4; 2000 -> 6; else -> 1 }
+        val bunchCount = if (comboAmountGrams == 2000) 2 else 1
+        return when {
+            bunchUnit -> bunchCount to "bunch"
+            product?.isPieceBased == true -> count to "nos"
+            else -> (if (isMainIngredient) comboAmountGrams else comboAmountGrams / 2) to "g"
+        }
+    }
+    fun ingredientPrice(product: ProduceItem?, ingredient: MealComboIngredient): Double {
+        if (product == null) return 0.0
+        return when (ingredient.unit) {
+            "nos", "bunch" -> product.priceRupees * ingredient.quantityGrams
+            else -> product.priceRupees * ingredient.quantityGrams / 1000.0
+        }
+    }
+    fun quantityLabel(ingredient: MealComboIngredient): String = when (ingredient.unit) {
+        "nos" -> "${ingredient.quantityGrams} ${when (language) { "hi" -> "नग"; "en" -> "Nos"; else -> "नग" }}"
+        "bunch" -> "${ingredient.quantityGrams} ${when (language) { "hi" -> "गुच्छा"; "en" -> "bunch"; else -> "जुडी" }}"
+        else -> if (ingredient.quantityGrams >= 1000 && ingredient.quantityGrams % 1000 == 0) "${ingredient.quantityGrams / 1000} kg" else "${ingredient.quantityGrams} g"
+    }
+    val combos = remember(catalog, comboAmountGrams) {
+        annapurnaMealCombos.map { recipe ->
+            val ingredients = recipe.ingredients.mapIndexed { index, (names, _) ->
+                val product = findProduct(names)
+                val (quantity, unit) = comboQuantity(product, index == 0)
+                MealComboIngredient(
+                    productId = product?.id ?: "missing-${normalized(names.firstOrNull().orEmpty())}",
+                    nameMr = product?.marathiName ?: names.firstOrNull().orEmpty(),
+                    nameHi = product?.hindiName?.ifBlank { null } ?: names.getOrNull(2).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
+                    nameEn = product?.englishName?.ifBlank { null } ?: names.getOrNull(1).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
+                    quantityGrams = quantity,
+                    unit = unit
+                )
+            }
+            val price = ingredients.sumOf { ingredient ->
+                val product = catalog.firstOrNull { it.id == ingredient.productId }
+                ingredientPrice(product, ingredient)
+            }
+            val slug = recipe.titleEn.lowercase().replace(" ", "-")
+            MealComboPack(
+                id = "prebuilt-$slug",
+                nameMr = recipe.titleMr,
+                nameHi = recipe.titleHi,
+                nameEn = recipe.titleEn,
+                priceRupees = kotlin.math.ceil(price),
+                ingredients = ingredients,
+                servings = comboAmountGrams,
+                imageUrl = when (recipe.titleEn.lowercase()) {
+                    "pav bhaji" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Pavbhaji.jpg/1280px-Pavbhaji.jpg"
+                    "misal pav" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Misal_Pav.jpg/1280px-Misal_Pav.jpg"
+                    "sambar mix" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Sambar-Popular_south-Indian_food.jpg/960px-Sambar-Popular_south-Indian_food.jpg"
+                    "mix veg" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Mixed_vegetable_curry_1.jpg/960px-Mixed_vegetable_curry_1.jpg"
+                    "usal combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Matki%20sprout%20usal%20chapati%20ambehalad%20pickel%20taak%20salad.jpg?width=960"
+                    "veg pulao combo" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Vegetable%20Pulao.jpg?width=960"
+                    "kanda poha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Kaanda%20Poha.jpg?width=960"
+                    "aloo paratha" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Alu%20Paratha.jpg?width=960"
+                    "veg fried rice" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Fried%20Vegetable%20Rice.jpeg?width=960"
+                    else -> ""
+                }
+            )
+        }
+    }
+    val combo = combos.firstOrNull { it.id == selectedId } ?: combos.firstOrNull()
+    val missingIngredients = combo?.ingredients?.filter { ingredient ->
+        catalog.none { it.id == ingredient.productId }
+    }.orEmpty()
+    // Any positive Admin stock is available for this combo. Ingredient quantity
+    // is the selected combo weight ratio, not a threshold for hiding the ingredient.
+    val outOfStockIngredients = combo?.ingredients?.filter { ingredient ->
+        val product = catalog.firstOrNull { it.id == ingredient.productId }
+        product != null && product.stockQuantity <= 0.0
+    }.orEmpty()
+    val availableCartIngredients = combo?.ingredients?.filter { ingredient ->
+        val product = catalog.firstOrNull { it.id == ingredient.productId }
+        product != null && product.stockQuantity > 0.0
+    }.orEmpty()
+    val comboCatalogPrice = combo?.ingredients.orEmpty().sumOf { ingredient ->
+        val product = catalog.firstOrNull { it.id == ingredient.productId }
+        ingredientPrice(product, ingredient)
+    }
+    val availableCartPrice = availableCartIngredients.sumOf { ingredient ->
+        val product = catalog.firstOrNull { it.id == ingredient.productId }
+        ingredientPrice(product, ingredient)
+    }
+    val cartCombo = combo?.copy(
+        ingredients = availableCartIngredients,
+        priceRupees = kotlin.math.ceil(availableCartPrice)
+    )
+    val canAdd = combo != null && comboAmountGrams > 0 && missingIngredients.isEmpty() && availableCartIngredients.isNotEmpty() && availableCartPrice > 0.0
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.88f), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(22.dp)) {
+            Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(customerText("कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text(customerText("आधीपासून तयार रेसिपी कॉम्बो", "पहले से तैयार रेसिपी कॉम्बो", "Ready-made recipe combos"), style = MaterialTheme.typography.bodySmall)
+                    }
+                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Clear, contentDescription = customerText("बंद करा", "बंद करें", "Close")) }
+                }
+                Text(
+                    customerText("तुमचा आवडता कॉम्बो निवडा", "अपना पसंदीदा कॉम्बो चुनें", "Choose your favourite combo"),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(combos.size) { index ->
+                        val item = combos[index]
+                        val selected = item.id == combo?.id
+                        Surface(
+                            onClick = { selectedId = item.id },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (selected) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surface,
+                            border = androidx.compose.foundation.BorderStroke(
+                                if (selected) 2.dp else 1.dp,
+                                if (selected) Color(0xFF23833B) else MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            modifier = Modifier.width(124.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                AsyncImage(
+                                    model = item.imageUrl,
+                                    contentDescription = item.displayName(language),
+                                     error = null,
+                                     placeholder = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxWidth().height(100.dp)
+                                )
+                                Text(
+                                    item.displayName(language),
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 7.dp, vertical = 3.dp),
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 2,
+                                    minLines = 2,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                }
+                Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(combo?.displayName(language).orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    if (!combo?.imageUrl.isNullOrBlank()) AsyncImage(
+                        model = combo?.imageUrl, contentDescription = combo?.displayName(language),
+                         error = null,
+                         placeholder = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(14.dp))
+                    )
+                    Text(customerText("कॉम्बोचे वजन निवडा", "कॉम्बो का वजन चुनें", "Choose combo weight"), fontWeight = FontWeight.SemiBold)
+                    OutlinedTextField(
+                        value = comboAmountText,
+                        onValueChange = { value -> comboAmountText = value.filter { it.isDigit() }.take(4) },
+                        label = { Text(customerText("250, 500, 1000 किंवा 2000 ग्रॅम", "250, 500, 1000 या 2000 ग्राम", "250, 500, 1000 or 2000 grams")) },
+                        supportingText = { Text(if (comboAmountGrams > 0) customerText("$comboAmountGrams ग्रॅम कॉम्बोसाठी", "$comboAmountGrams ग्राम कॉम्बो", "For ${if (comboAmountGrams >= 1000) "${comboAmountGrams / 1000} kg" else "$comboAmountGrams g"} combo") else customerText("250, 500, 1000 किंवा 2000 पैकी वजन टाका", "250, 500, 1000 या 2000 में से वजन दर्ज करें", "Enter 250, 500, 1000 or 2000")) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(customerText("या कॉम्बोमध्ये मिळणाऱ्या भाज्या आणि प्रमाण", "इस कॉम्बो में शामिल सब्ज़ियाँ और मात्रा", "Vegetables and quantities included"), fontWeight = FontWeight.SemiBold)
+                    combo?.ingredients?.forEach { ingredient ->
+                        val product = catalog.firstOrNull { it.id == ingredient.productId }
+                        val insufficientStock = product != null && product.stockQuantity <= 0.0
+                        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(ingredient.displayName(language), fontWeight = FontWeight.Medium)
+                                Text(
+                                    if (insufficientStock) "${quantityLabel(ingredient)} • " + customerText("संपला आहे", "माल खत्म", "OUT OF STOCK")
+                                    else quantityLabel(ingredient),
+                                    color = if (insufficientStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                // Always retain a visible ingredient image; blur it and overlay the stock status when unavailable.
+                                val photoUnavailable = insufficientStock
+                                val fallbackImageRes = product?.imageRes?.takeIf { it != 0 }
+                                    ?: comboIngredientFallbackImage(ingredient)
+                                Box(
+                                    modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    when {
+                                        product?.imageUrl?.isNotBlank() == true -> AsyncImage(
+                                            model = product.imageUrl,
+                                            contentDescription = ingredient.displayName(language),
+                                            error = if (fallbackImageRes != 0) painterResource(fallbackImageRes) else null,
+                                            placeholder = if (fallbackImageRes != 0) painterResource(fallbackImageRes) else null,
+                                            modifier = Modifier.fillMaxSize().then(if (photoUnavailable) Modifier.blur(7.dp) else Modifier),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        fallbackImageRes != 0 -> Image(
+                                            painter = painterResource(fallbackImageRes),
+                                            contentDescription = ingredient.displayName(language),
+                                            modifier = Modifier.fillMaxSize().then(if (photoUnavailable) Modifier.blur(7.dp) else Modifier),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        else -> Box(
+                                            modifier = Modifier.fillMaxSize().background(Color(0xFFEAF4E9)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("🥬", style = MaterialTheme.typography.headlineMedium)
+                                        }
+                                    }
+                                    if (photoUnavailable) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(Color(0x99000000)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                customerText("संपला आहे", "माल खत्म", "OUT OF STOCK"),
+                                                color = Color.White,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }
+                                Text(
+                                    if (product == null) customerText("दर उपलब्ध नाही", "कीमत उपलब्ध नहीं", "Price unavailable")
+                                    else "₹${kotlin.math.ceil(ingredientPrice(product, ingredient)).toInt()}",
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (product == null) MaterialTheme.colorScheme.error else Color(0xFF23833B)
+                                )
+                            }
+                        }
+                    }
+                     Text("₹${kotlin.math.ceil(availableCartPrice).toInt()}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
+                    if (outOfStockIngredients.isNotEmpty()) {
+                        Text(
+                            customerText(
+                                "ही उपलब्ध भाज्यांची किंमत आहे. संपलेल्या भाज्यांचे पैसे घेतले जाणार नाहीत.",
+                                "यह उपलब्ध सब्ज़ियों की कीमत है। खत्म सब्ज़ियों के पैसे नहीं लिए जाएंगे।",
+                                "This is the price of available vegetables only. Out-of-stock items are not charged."
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(customerText("किंमत सध्याच्या भाजीपाल्याच्या दरानुसार मोजली आहे.", "कीमत मौजूदा सब्ज़ियों के दाम के अनुसार है।", "Price is calculated from current vegetable catalog rates."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (outOfStockIngredients.isNotEmpty() || missingIngredients.isNotEmpty()) {
+                    Text(
+                        customerText(
+                            "संपलेली भाजी उपलब्ध घटकांच्या ऑर्डरमध्ये समाविष्ट होणार नाही; बाकी कॉम्बो ऑर्डर करता येईल.",
+                            "जो सब्ज़ी खत्म है वह ऑर्डर में शामिल नहीं होगी; बाकी कॉम्बो ऑर्डर कर सकते हैं।",
+                            "Out-of-stock ingredients are excluded; the available items in this combo can still be ordered."
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Button(
+                    onClick = { cartCombo?.let(onAddCombo) },
+                    enabled = canAdd,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    Icon(Icons.Default.AddShoppingCart, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("ADD ALL TO CART", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
 }

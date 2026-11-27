@@ -34,46 +34,23 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Create CI signing keys
-        run: |
-          keytool -genkeypair -v \
-            -keystore debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-          keytool -genkeypair -v \
-            -keystore my-upload-key.jks \
-            -storepass annapurna-ci-temporary \
-            -alias upload \
-            -keypass annapurna-ci-temporary \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Annapurna CI,O=Annapurna,C=IN"
-          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/my-upload-key.jks" >> "$GITHUB_ENV"
-          echo "STORE_PASSWORD=annapurna-ci-temporary" >> "$GITHUB_ENV"
-          echo "KEY_PASSWORD=annapurna-ci-temporary" >> "$GITHUB_ENV"
-
       - name: Run unit tests
-        run: gradle --no-daemon testDebugUnitTest --tests 'com.example.data.model.*' --tests 'com.example.util.*'
+        run: gradle --no-daemon testDebugUnitTest
 
-      - name: Build signed release APK
-        run: gradle --no-daemon assembleRelease
+      - name: Create debug signing key
+        run: keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Verify APK signature, package, and print SHA-1
+      - name: Build installable debug APK
+        run: gradle --no-daemon assembleDebug
+
+      - name: Verify debug APK signature and package
         run: |
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk | head -n 5
-          echo "=== RELEASE CERTIFICATE SHA-1 (use with this exact APK only) ==="
-          keytool -list -v -keystore my-upload-key.jks -storepass annapurna-ci-temporary -alias upload | grep -E 'SHA1:|SHA-1:'
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | head -n 5
 
-      - name: Upload release APK
+      - name: Upload internal-test APK
         uses: actions/upload-artifact@v4
         with:
-          name: annapurna-customer-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: annapurna-customer-debug-apk-internal-test
+          path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14

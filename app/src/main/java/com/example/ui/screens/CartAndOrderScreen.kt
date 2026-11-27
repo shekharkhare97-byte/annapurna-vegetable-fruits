@@ -14,6 +14,16 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -67,6 +77,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -75,10 +86,12 @@ import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Animatable
 import com.example.R
 import com.example.data.local.OrderEntity
 import com.example.data.repository.CartLineItem
@@ -108,6 +121,7 @@ fun CartAndOrderScreen(
     trackingStatus: String,
     trackingLocation: String,
     trackingUpdatedAtMillis: Long?,
+    customerDestination: String,
     trackingPartnerAccepted: Boolean,
     trackingPartnerName: String,
     onIncreaseQty: (String) -> Unit,
@@ -128,22 +142,9 @@ fun CartAndOrderScreen(
     BackHandler(onBack = onBackToBazaar)
 
     val context = LocalContext.current
-    var shopMapPosition by remember { mutableStateOf<GeoPoint?>(null) }
-    LaunchedEffect(Unit) {
-        shopMapPosition = withContext(Dispatchers.IO) {
-            runCatching {
-                val snapshot = Tasks.await(
-                    FirebaseFirestore.getInstance().collection("shopSettings").document("main").get()
-                )
-                val latitude = snapshot.getDouble("latitude")
-                val longitude = snapshot.getDouble("longitude")
-                if (latitude != null && longitude != null &&
-                    latitude.isFinite() && longitude.isFinite() &&
-                    latitude in -90.0..90.0 && longitude in -180.0..180.0
-                ) GeoPoint(latitude, longitude) else null
-            }.getOrNull()
-        }
-    }
+    // The shop pin is fixed to the owner's confirmed GPS coordinates.
+    // Do not let stale Firestore shopSettings overwrite this location.
+    val shopMapPosition = remember { GeoPoint(20.053216, 73.799811) }
     var deliveryRating by rememberSaveable { mutableStateOf(5) }
     var deliveryReview by rememberSaveable { mutableStateOf("") }
     var reviewSent by rememberSaveable { mutableStateOf(false) }
@@ -170,27 +171,25 @@ fun CartAndOrderScreen(
         deliveryLatitude = location.latitude; deliveryLongitude = location.longitude
         deliveryCharge = null; deliveryDistanceKm = null; deliveryMessage = context.getString(R.string.delivery_calculating_distance)
         coroutineScope.launch {
-            val shop = withContext(Dispatchers.IO) { runCatching {
-                val snapshot = Tasks.await(
-                    FirebaseFirestore.getInstance().collection("shopSettings").document("main").get()
-                )
-                val latitude = snapshot.getDouble("latitude")
-                val longitude = snapshot.getDouble("longitude")
-                if (latitude != null && longitude != null &&
-                    latitude.isFinite() && longitude.isFinite() &&
-                    latitude in -90.0..90.0 && longitude in -180.0..180.0
-                ) Location("annapurna_shop").apply {
-                    this.latitude = latitude
-                    this.longitude = longitude
-                } else null
-            }.getOrNull() }
+            val shop = Location("annapurna_shop").apply {
+                // Use the same confirmed shop coordinates for delivery-distance calculation.
+                this.latitude = 20.053216
+                this.longitude = 73.799811
+            }
             if (shop == null) { deliveryMessage = context.getString(R.string.delivery_shop_location_missing); return@launch }
-            val meters = FloatArray(1)
-            Location.distanceBetween(shop.latitude, shop.longitude, location.latitude, location.longitude, meters)
-            val km = meters[0] / 1000.0; deliveryDistanceKm = km
-            val chargeableKm = kotlin.math.ceil(km).toInt().coerceAtLeast(1)
-            deliveryCharge = chargeableKm * 10
-            deliveryMessage = context.getString(R.string.delivery_charge_added)
+            try {
+                val fare = com.example.data.model.DeliveryFareCalculator.calculate(
+                    shop.latitude, shop.longitude, location.latitude, location.longitude
+                )
+                deliveryDistanceKm = fare.distanceKm
+                deliveryCharge = fare.chargeRupees
+                val distanceLabel = MarathiFormatters.toMarathiDigits(String.format(Locale.US, "%.1f", fare.distanceKm))
+                deliveryMessage = context.getString(R.string.delivery_charge_added_format, distanceLabel)
+            } catch (error: Exception) {
+                deliveryDistanceKm = null
+                deliveryCharge = null
+                deliveryMessage = error.message ?: context.getString(R.string.delivery_location_failed)
+            }
         }
     }
     fun clearCustomerGps(message: String) {
@@ -216,11 +215,11 @@ fun CartAndOrderScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) fetchGpsForDelivery()
-        else clearCustomerGps("अचूक GPS परवानगी आवश्यक आहे. परवानगी न दिल्यास ऑर्डर देता येणार नाही.")
+        else clearCustomerGps(context.getString(R.string.gps_permission_required))
     }
 
     fun requestDeliveryLocation() {
-        clearCustomerGps("ग्राहकाचे अचूक GPS Location मिळवत आहोत…")
+        clearCustomerGps(context.getString(R.string.gps_fetching_customer_location))
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val enabled = runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
         if (!enabled) { showGpsOffDialog = true; return }
@@ -243,7 +242,10 @@ fun CartAndOrderScreen(
         "CUSTOM" -> customTipText.toIntOrNull()?.coerceAtLeast(0) ?: 0
         else -> 0
     }
-    val grandTotal = itemsTotal + (deliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
+    // Charge ₹10 per road-kilometre for every order, regardless of cart value.
+    // DeliveryFareCalculator rounds any fractional kilometre up to the next rupee.
+    val payableDeliveryCharge = deliveryCharge
+    val grandTotal = itemsTotal + (payableDeliveryCharge ?: 0).toDouble() + deliveryTipAmount.toDouble()
 
     fun startRazorpayPayment() {
         val activity = context as? com.example.MainActivity
@@ -295,7 +297,7 @@ fun CartAndOrderScreen(
                                 // could capture money and then leave no order if the app closes
                                 // before the second request.
                                 onSubmitOrder(
-                                    deliveryLatitude, deliveryLongitude, deliveryCharge!!,
+                                    deliveryLatitude, deliveryLongitude, payableDeliveryCharge!!,
                                     deliveryDistanceKm, paymentMethod, paymentId, deliveryTipAmount, created.orderId, signature
                                 )
                                 paymentInProgress = false
@@ -319,8 +321,8 @@ fun CartAndOrderScreen(
     }
 
     LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
             .fillMaxSize()
             .testTag("cart_screen_list")
@@ -339,7 +341,7 @@ fun CartAndOrderScreen(
                     Surface(
                         shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(56.dp)
                     ) {
                         androidx.compose.foundation.layout.Box(
                             contentAlignment = Alignment.Center,
@@ -396,7 +398,7 @@ fun CartAndOrderScreen(
             }
 
             item {
-                BillSummaryCard(itemsTotal = itemsTotal, deliveryCharge = deliveryCharge, deliveryTip = deliveryTipAmount, grandTotal = grandTotal)
+                BillSummaryCard(itemsTotal = itemsTotal, deliveryCharge = payableDeliveryCharge, deliveryTip = deliveryTipAmount, grandTotal = grandTotal)
             }
         }
 
@@ -414,41 +416,6 @@ fun CartAndOrderScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.use_current_location))
             }
-        }
-
-        // Customer Name, Mobile Number & Place Order Section
-        item {
-            CustomerOrderFormCard(
-                formState = formState,
-                grandTotal = grandTotal,
-                deliveryCharge = deliveryCharge,
-                deliveryMessage = deliveryMessage,
-                isCartEmpty = cartItems.isEmpty(),
-                onCustomerNameChange = onCustomerNameChange,
-                onMobileNumberChange = onMobileNumberChange,
-                onAddressChange = onAddressChange,
-                paymentMethod = paymentMethod,
-                onPaymentMethodChange = { paymentMethod = it },
-                tipOption = deliveryTipOption,
-                onTipOptionChange = { deliveryTipOption = it },
-                customTipText = customTipText,
-                onCustomTipChange = { customTipText = it.filter(Char::isDigit).take(5) },
-                paymentError = paymentError,
-                paymentInProgress = paymentInProgress,
-                onSubmitOrder = {
-                    val preciseGpsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                    if (!preciseGpsGranted) {
-                        clearCustomerGps("अचूक GPS परवानगी द्या. GPS शिवाय ऑर्डर स्वीकारली जाणार नाही.")
-                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    } else if (deliveryLatitude == null || deliveryLongitude == null || deliveryCharge == null || deliveryDistanceKm == null) {
-                        requestDeliveryLocation()
-                    } else if (paymentMethod != "COD") {
-                        startRazorpayPayment()
-                    } else {
-                        onSubmitOrder(deliveryLatitude, deliveryLongitude, deliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
-                    }
-                }
-            )
         }
 
         if (trackingStatus.isNotBlank()) {
@@ -469,7 +436,7 @@ fun CartAndOrderScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth().testTag("live_order_tracking_card")
                 ) {
-                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(42.dp)) {
                                 androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
@@ -506,32 +473,32 @@ fun CartAndOrderScreen(
                             if (shopPosition != null) {
                                 Text(
                                     if (trackingPartnerAccepted)
-                                        "🛵 ${trackingPartnerName.ifBlank { "Delivery Partner" }} दुकानातून Pickup करण्याच्या तयारीत आहे."
+                                        "🛵 ${trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery Partner") }} " + customerText("दुकानातून Pickup करण्याच्या तयारीत आहे.", "दुकान से Pickup करने की तैयारी में है।", "is getting ready to pick up your order.")
                                     else
-                                        "🛵 तुमची ऑर्डर दुकानात तयार होत आहे. गाडी दुकानाजवळ आहे.",
+                                        customerText("🛵 तुमची ऑर्डर दुकानात तयार होत आहे. गाडी दुकानाजवळ आहे.", "🛵 आपका ऑर्डर दुकान में तैयार हो रहा है। वाहन दुकान के पास है।", "🛵 Your order is being prepared at the shop. The vehicle is nearby."),
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 OpenStreetMapView(
                                     latitude = shopPosition.latitude,
                                     longitude = shopPosition.longitude,
-                                    markerTitle = "Annapurna Shop",
-                                    markerSnippet = "Shop location",
+                                    markerTitle = customerText("अन्नपूर्णा दुकान", "अन्नपूर्णा दुकान", "Annapurna Shop"),
+                                    markerSnippet = customerText("दुकानाचे ठिकाण", "दुकान का स्थान", "Shop location"),
                                     modifier = Modifier.fillMaxWidth().height(220.dp)
                                         .clip(RoundedCornerShape(18.dp))
                                         .testTag("customer_live_delivery_map")
                                 )
                                 Text(
                                     if (trackingPartnerAccepted)
-                                        "Pickup झाल्यावर गाडीचे Live Location येथे दिसेल."
+                                        customerText("Pickup झाल्यावर गाडीचे Live Location येथे दिसेल.", "Pickup होने के बाद वाहन की Live Location यहाँ दिखेगी।", "The vehicle's live location will appear here after pickup.")
                                     else
-                                        "Delivery Partner ऑर्डर Pickup करेपर्यंत गाडी दुकानातच दिसेल.",
+                                        customerText("Delivery Partner ऑर्डर Pickup करेपर्यंत गाडी दुकानातच दिसेल.", "Delivery Partner के ऑर्डर Pickup करने तक वाहन दुकान पर ही दिखेगा।", "The vehicle will remain shown at the shop until the delivery partner picks up the order."),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             } else {
                                 Text(
-                                    "दुकानाचे नकाशावरील Location मिळवत आहोत...",
+                                    customerText("दुकानाचे नकाशावरील Location मिळवत आहोत...", "दुकान का नक्शे वाला Location प्राप्त कर रहे हैं...", "Getting the shop's map location..."),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -545,24 +512,61 @@ fun CartAndOrderScreen(
                                 if (driverLatitude != null && driverLongitude != null &&
                                     driverLatitude in -90.0..90.0 && driverLongitude in -180.0..180.0
                                 ) {
-                                    Text(
-                                        text = "${customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner")}: ${trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner") }}",
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
+                                    Surface(
+                                        color = Color(0xFFE8F5E9),
+                                        shape = RoundedCornerShape(18.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Surface(
+                                                color = Color(0xFF075B32),
+                                                shape = RoundedCornerShape(50),
+                                                modifier = Modifier.size(54.dp)
+                                            ) {
+                                                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+                                                    Text("🛵", style = MaterialTheme.typography.headlineMedium)
+                                                }
+                                            }
+                                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                                Text(
+                                                    trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery partner") },
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF075B32),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                                Text(
+                                                    customerText("Annapurna गणवेशात तुमची ऑर्डर घेऊन येत आहेत", "Annapurna यूनिफॉर्म में आपका ऑर्डर ला रहे हैं", "Your order is on the way in Annapurna uniform"),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color(0xFF315B40)
+                                                )
+                                            }
+                                            Surface(color = Color(0xFF159447), shape = RoundedCornerShape(50)) {
+                                                Text("LIVE", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                                            }
+                                        }
+                                    }
                                     Text(
                                         text = stringResource(R.string.tracking_live_location_available),
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.SemiBold
                                     )
+                                    val destinationParts = customerDestination.split(",")
+                                    val customerLat = destinationParts.getOrNull(0)?.toDoubleOrNull()
+                                    val customerLon = destinationParts.getOrNull(1)?.toDoubleOrNull()
                                     OpenStreetMapView(
                                         latitude = driverLatitude,
                                         longitude = driverLongitude,
-                                        markerTitle = trackingPartnerName.ifBlank { "Delivery Partner" },
+                                        markerTitle = trackingPartnerName.ifBlank { customerText("डिलिव्हरी पार्टनर", "डिलीवरी पार्टनर", "Delivery Partner") },
                                         markerSnippet = "Live location",
+                                        destinationLatitude = customerLat,
+                                        destinationLongitude = customerLon,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(300.dp)
+                                            .height(250.dp)
                                             .clip(RoundedCornerShape(18.dp))
                                             .testTag("customer_live_delivery_map")
                                     )
@@ -584,17 +588,17 @@ fun CartAndOrderScreen(
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Text(
-                                        "🛵 Delivery Partner: ${trackingPartnerName.ifBlank { "नाव मिळवत आहोत" }}",
+                                        customerText("🛵 डिलिव्हरी पार्टनर: ${trackingPartnerName.ifBlank { "नाव मिळवत आहोत" }}", "🛵 डिलीवरी पार्टनर: ${trackingPartnerName.ifBlank { "नाम प्राप्त हो रहा है" }}", "🛵 Delivery Partner: ${trackingPartnerName.ifBlank { "Getting name" }}"),
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        "Delivery Partner ने ऑर्डर स्वीकारली आहे",
+                                        customerText("डिलिव्हरी पार्टनरने ऑर्डर स्वीकारली आहे", "डिलीवरी पार्टनर ने ऑर्डर स्वीकार किया है", "The delivery partner has accepted the order"),
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        "Live Location मिळवत आहोत. GPS मिळताच नकाशावर स्कूटर आपोआप दिसेल.",
+                                        customerText("Live Location मिळवत आहोत. GPS मिळताच नकाशावर स्कूटर आपोआप दिसेल.", "Live Location प्राप्त हो रही है। GPS मिलते ही नक्शे पर स्कूटर अपने आप दिखेगी।", "Getting live location. The scooter will appear on the map as soon as GPS is available."),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -677,6 +681,43 @@ fun CartAndOrderScreen(
                 }
             }
         }
+
+        // Customer Name, Mobile Number & Place Order Section
+        item {
+            CustomerOrderFormCard(
+                formState = formState,
+                grandTotal = grandTotal,
+                deliveryCharge = payableDeliveryCharge,
+                deliveryMessage = deliveryMessage,
+                isCartEmpty = cartItems.isEmpty(),
+                onCustomerNameChange = onCustomerNameChange,
+                onMobileNumberChange = onMobileNumberChange,
+                onAddressChange = onAddressChange,
+                paymentMethod = paymentMethod,
+                onPaymentMethodChange = { paymentMethod = it },
+                tipOption = deliveryTipOption,
+                onTipOptionChange = { deliveryTipOption = it },
+                customTipText = customTipText,
+                onCustomTipChange = { customTipText = it.filter(Char::isDigit).take(5) },
+                paymentError = paymentError,
+                paymentInProgress = paymentInProgress,
+                onSubmitOrder = {
+                    val preciseGpsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    if (!preciseGpsGranted) {
+                        clearCustomerGps(context.getString(R.string.gps_permission_required))
+                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    } else if (deliveryLatitude == null || deliveryLongitude == null || deliveryCharge == null || deliveryDistanceKm == null) {
+                        requestDeliveryLocation()
+                    } else if (paymentMethod != "COD") {
+                        startRazorpayPayment()
+                    } else {
+                        onSubmitOrder(deliveryLatitude, deliveryLongitude, payableDeliveryCharge!!, deliveryDistanceKm, paymentMethod, "", deliveryTipAmount, "", "")
+                    }
+                }
+            )
+        }
+
+
 
         if (recentOrders.isNotEmpty()) {
             item {
@@ -826,7 +867,9 @@ private fun CartLineCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (line.produce.isPieceBased)
+                        text = if (line.combo != null)
+                            "₹${MarathiFormatters.formatRupees(line.combo.priceRupees)} / ${customerText("कॉम्बो", "कॉम्बो", "combo")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${customerText("कॉम्बो", "कॉम्बो", "combos")} • ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${line.combo.servings} g"}"
+                        else if (line.produce.isPieceBased)
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / ${line.produce.displayUnit().removePrefix("१ ")} • ${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.displayUnit().removePrefix("१ ")}"
                         else
                             "₹${MarathiFormatters.formatRupees(line.produce.priceRupees)} / किलो • ${WeightPricing.formatWeightMarathi(line.weightGrams)}",
@@ -843,6 +886,34 @@ private fun CartLineCard(
                         contentDescription = stringResource(R.string.cd_remove_item),
                         tint = MaterialTheme.colorScheme.error
                     )
+                }
+            }
+            if (line.combo != null) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = if (java.util.Locale.getDefault().language == "en") "Combo weight: ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${line.combo.servings} g"}" else if (java.util.Locale.getDefault().language == "hi") "कॉम्बो वजन: ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${line.combo.servings} ग्राम"}" else "कॉम्बो वजन: ${if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) "${line.combo.servings / 1000} kg" else "${MarathiFormatters.toMarathiNumber(line.combo.servings)} ग्रॅम"}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = if (java.util.Locale.getDefault().language == "en") "Included vegetables" else if (java.util.Locale.getDefault().language == "hi") "शामिल सब्ज़ियाँ" else "समाविष्ट भाज्या",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    line.combo.ingredients.forEach { ingredient ->
+                        Text(
+                            "• ${ingredient.displayName(java.util.Locale.getDefault().language)} — " + when (ingredient.unit) {
+                                "nos" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} ${if (java.util.Locale.getDefault().language == "en") "Nos" else "नग"}"
+                                "bunch" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} ${if (java.util.Locale.getDefault().language == "en") "bunch" else if (java.util.Locale.getDefault().language == "hi") "गुच्छा" else "जुडी"}"
+                                else -> if (ingredient.quantityGrams >= 1000 && ingredient.quantityGrams % 1000 == 0) "${ingredient.quantityGrams / 1000} kg" else "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} g"
+                            },
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
             Row(
@@ -1025,11 +1096,11 @@ private fun CustomerOrderFormCard(
             .testTag("customer_order_form_card")
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.padding(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(22.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(46.dp)) {
+                Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(52.dp)) {
                     androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                     }
@@ -1369,27 +1440,22 @@ private fun OrderConfirmedDialog(
     onDismiss: () -> Unit,
     onContinueShopping: () -> Unit
 ) {
+    val celebration = rememberInfiniteTransition(label = "order-celebration")
+    val sparkleScale by celebration.animateFloat(
+        initialValue = 0.72f,
+        targetValue = 1.18f,
+        animationSpec = infiniteRepeatable(animation = tween(650), repeatMode = RepeatMode.Reverse),
+        label = "sparkle-scale"
+    )
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = MaterialTheme.shapes.extraLarge,
         icon = {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(68.dp)
-            ) {
-                androidx.compose.foundation.layout.Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(42.dp)
-                    )
-                }
-            }
+            Text(
+                text = "🎉 ✨ 🎊 🌟 🎆",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.graphicsLayer(scaleX = sparkleScale, scaleY = sparkleScale)
+            )
         },
         title = {
             Text(
@@ -1399,11 +1465,22 @@ private fun OrderConfirmedDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ConfettiBurst(modifier = Modifier.fillMaxWidth().height(48.dp))
                 Text(
-                    text = stringResource(R.string.order_success_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = customerText(
+                        "Annapurna Vegetables and Fruits कडून खरेदी केल्याबद्दल धन्यवाद! 🛍️",
+                        "Annapurna Vegetables and Fruits से खरीदारी करने के लिए धन्यवाद! 🛍️",
+                        "Thanks for Shopping with Annapurna Vegetables and Fruits! 🛍️"
+                    ),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -1411,69 +1488,38 @@ private fun OrderConfirmedDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = stringResource(
                                 R.string.order_id_format,
                                 MarathiFormatters.toMarathiNumber(order.orderId.toInt())
                             ),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
-                        Text("${stringResource(R.string.customer_name_prefix)} ${order.customerName}", style = MaterialTheme.typography.bodySmall)
-                        Text("${stringResource(R.string.mobile_prefix)} ${MarathiFormatters.toMarathiDigits(order.mobileNumber)}", style = MaterialTheme.typography.bodySmall)
-                        if (order.deliveryAddress.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = order.deliveryAddress,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = stringResource(R.string.total_bill_label),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
                 }
-                Text(
-                    text = order.itemsSummaryMarathi,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.large,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
-                    ) {
-                        Text(
-                            stringResource(R.string.total_bill_label),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "₹${MarathiFormatters.toMarathiNumber(order.totalAmountRupees)}",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                }
             }
         },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onShareReceipt,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.testTag("share_receipt_button")
-            ) {
-                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.btn_share_receipt))
-            }
-        },
+        dismissButton = null,
         confirmButton = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Button(
@@ -1492,6 +1538,47 @@ private fun OrderConfirmedDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ConfettiBurst(modifier: Modifier = Modifier) {
+    val progress = androidx.compose.runtime.remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 2200)
+        )
+    }
+    val colors = listOf(
+        Color(0xFFE53935), Color(0xFFFFB300), Color(0xFF43A047),
+        Color(0xFF1E88E5), Color(0xFF8E24AA), Color(0xFFFF7043),
+        Color(0xFF00ACC1)
+    )
+    Canvas(modifier = modifier) {
+        val t = progress.value
+        val w = size.width
+        val h = size.height
+        for (i in 0 until 46) {
+            val column = (i * 37 % 101) / 100f
+            val startY = -((i * 19 % 75) / 100f) * h
+            val travel = h * (1.15f + (i % 5) * 0.12f)
+            val x = column * w + kotlin.math.sin((t * 5.5f + i) * 1.4f) * (8f + (i % 4) * 3f)
+            val y = startY + travel * t
+            val alpha = (1f - t * 0.18f).coerceIn(0f, 1f)
+            val color = colors[i % colors.size].copy(alpha = alpha)
+            rotate(degrees = (i * 29f + t * 520f) % 360f, pivot = Offset(x, y)) {
+                if (i % 3 == 0) {
+                    drawCircle(color = color, radius = 3.5.dp.toPx(), center = Offset(x, y))
+                } else {
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(x - 3.dp.toPx(), y - 5.dp.toPx()),
+                        size = androidx.compose.ui.geometry.Size(6.dp.toPx(), 10.dp.toPx())
+                    )
+                }
+            }
+        }
+    }
 }
 
 private fun formatOrderShareReceipt(order: OrderEntity): String {

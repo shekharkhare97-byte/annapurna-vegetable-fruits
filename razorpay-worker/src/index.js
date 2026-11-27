@@ -607,6 +607,96 @@ async function verifyCapturedPayment(env, body) {
   return { ok: true, payment, orderId, paymentId, amount };
 }
 
+async function prepareStockReservationWrites(env, items) {
+  if (!Array.isArray(items) || items.length < 1 || items.length > 100) {
+    return { ok: false, status: 400, error: "Order items are invalid" };
+  }
+  const quantities = new Map();
+  for (const item of items) {
+    const id = item?.productId;
+    const qty = Number(item?.quantity);
+    const grams = Number(item?.weightGrams);
+    if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,150}$/.test(id) ||
+        !Number.isSafeInteger(qty) || qty < 1 ||
+        !Number.isSafeInteger(grams) || grams < 1) {
+      return { ok: false, status: 400, error: "An order item has invalid quantity details" };
+    }
+    const delta = item.isPieceBased === true ? qty : (grams * qty) / 1000;
+    quantities.set(id, (quantities.get(id) || 0) + delta);
+  }
+  const writes = [];
+  for (const [id, needed] of quantities) {
+    const path = "products/" + encodeURIComponent(id);
+    const productDoc = await firestoreGetDocument(env, path);
+    if (!productDoc.exists) return { ok: false, status: 409, error: "A product in this order is no longer available" };
+    const fields = productDoc.data?.fields || {};
+    const stockField = fields.stock;
+    const stock = stockField?.doubleValue !== undefined ? Number(stockField.doubleValue)
+      : stockField?.integerValue !== undefined ? Number(stockField.integerValue) : NaN;
+    const visible = fields.isVisible?.booleanValue === true;
+    if (!visible || !Number.isFinite(stock) || stock < needed) {
+      return { ok: false, status: 409, error: "Insufficient stock for one or more products. Please refresh your cart." };
+    }
+    const remaining = Math.max(0, stock - needed);
+    const now = new Date().toISOString();
+    writes.push({
+      update: {
+        name: "projects/" + productDoc.data.name.split("/")[2] + "/databases/(default)/documents/" + path,
+        fields: firestoreFields({ stock: remaining, updatedAt: { __firestoreTimestamp: now } }),
+      },
+      updateMask: { fieldPaths: ["stock", "updatedAt"] },
+      currentDocument: { updateTime: productDoc.updateTime },
+    });
+  }
+  return { ok: true, writes };
+}
+
+async function saveCodOrder(env, body) {
+  const order = body?.order;
+  const tracking = body?.tracking;
+  if (!order || typeof order !== "object" || !tracking || typeof tracking !== "object" ||
+      typeof order.orderId !== "string" || !/^[A-Za-z0-9_-]{10,80}$/.test(order.orderId) ||
+      typeof order.trackingToken !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(order.trackingToken) ||
+      order.paymentMethod !== "COD" || order.paymentStatus !== "pending" ||
+      typeof order.customerName !== "string" || order.customerName.trim().length < 2 ||
+      typeof order.mobileNumber !== "string" || !/^\d{10}$/.test(order.mobileNumber) ||
+      typeof order.deliveryAddress !== "string" || order.deliveryAddress.trim().length < 8 ||
+      !Array.isArray(order.items) || order.items.length < 1 ||
+      tracking.status !== "new" || tracking.orderId !== order.orderId) {
+    return { ok: false, status: 400, error: "COD order details are invalid" };
+  }
+  const { token, projectId } = await getFirebaseAccessToken(env);
+  const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
+  const orderPath = "/orders/" + encodeURIComponent(order.orderId);
+  const existing = await fetch(base + orderPath, { headers: { Authorization: "Bearer " + token } });
+  if (existing.ok) return { ok: false, status: 409, error: "This order was already submitted" };
+  if (existing.status !== 404) return { ok: false, status: 502, error: "Firebase could not check the order" };
+  const stock = await prepareStockReservationWrites(env, order.items);
+  if (!stock.ok) return stock;
+  const now = new Date().toISOString();
+  const writes = [
+    ...stock.writes,
+    { update: { name: "projects/" + projectId + "/databases/(default)/documents/orders/" + encodeURIComponent(order.orderId),
+      fields: firestoreFields({ ...order, createdAt: { __firestoreTimestamp: now } }) }, currentDocument: { exists: false } },
+    { update: { name: "projects/" + projectId + "/databases/(default)/documents/orderTracking/" + encodeURIComponent(order.trackingToken),
+      fields: firestoreFields(tracking) }, currentDocument: { exists: false } },
+  ];
+  const response = await fetch(base + ":commit", {
+    method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ writes }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (["ABORTED", "FAILED_PRECONDITION", "ALREADY_EXISTS"].includes(result.error?.status)) {
+      return { ok: false, status: 409, error: "Stock changed while placing the order. Please refresh and try again." };
+    }
+    console.error("cod-order-stock-commit-failed", result.error?.status || response.status);
+    return { ok: false, status: 502, error: "Order and stock could not be saved together" };
+  }
+  return { ok: true };
+}
+
 async function savePaidOrder(env, body, verified) {
   const order = body.order;
   const tracking = body.tracking;
@@ -668,11 +758,14 @@ async function savePaidOrder(env, body, verified) {
     console.error("paid-order-existing-check-failed", existingResponse.status);
     return { ok: false, status: 502, error: "Firebase could not check the paid order" };
   }
+  const stock = await prepareStockReservationWrites(env, order.items);
+  if (!stock.ok) return stock;
   const commitResponse = await fetch(base + ":commit", {
     method: "POST",
     headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
     body: JSON.stringify({
       writes: [
+        ...stock.writes,
         { update: { name: "projects/" + projectId + "/databases/(default)/documents/orders/" + orderId, fields: orderDocFields }, currentDocument: { exists: false } },
         { update: { name: "projects/" + projectId + "/databases/(default)/documents/orderTracking/" + token, fields: trackingFields }, currentDocument: { exists: false } },
       ],
@@ -884,6 +977,16 @@ export default {
       } catch (error) {
         console.error("razorpay-create-order-network-error", String(error?.message || error));
         return json({ error: "Could not connect to Razorpay. Please try again.", details: "Razorpay API network request failed." }, 502);
+      }
+    }
+
+    if (url.pathname === "/submit-cod-order") {
+      try {
+        const saved = await saveCodOrder(env, body);
+        return saved.ok ? json({ saved: true }) : json({ saved: false, error: saved.error }, saved.status);
+      } catch (error) {
+        console.error("cod-order-save-failed", error?.message || "unknown");
+        return json({ saved: false, error: "COD order could not be saved safely. Please retry." }, 502);
       }
     }
 

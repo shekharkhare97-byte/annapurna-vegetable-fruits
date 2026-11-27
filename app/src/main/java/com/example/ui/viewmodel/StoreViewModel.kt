@@ -31,6 +31,7 @@ import com.example.data.model.ProduceCategory
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import android.content.SharedPreferences
+import com.example.data.model.MealComboPack
 import com.example.data.model.ProduceItem
 import com.example.data.repository.CartLineItem
 import com.example.data.repository.StoreRepository
@@ -66,6 +67,28 @@ private val produceSearchAliasGroups = listOf(
     listOf("संत्रे", "संत्री", "santra", "orange", "oranges"),
     listOf("डाळिंब", "dalimb", "anar", "pomegranate")
 )
+
+
+private fun resolveProduceImageRes(name: String, hindiName: String, englishName: String, keywords: String, category: ProduceCategory): Int {
+    val text = normalizeProduceSearchText(listOf(name, hindiName, englishName, keywords).joinToString(" "))
+    val mappings = listOf(
+        listOf("onion", "कांदा", "प्याज", "kanda") to R.drawable.img_prod_onion,
+        listOf("potato", "बटाटा", "आलू", "batata") to R.drawable.img_prod_potato,
+        listOf("tomato", "टोमॅटो", "टमाटर") to R.drawable.img_prod_tomato,
+        listOf("carrot", "गाजर") to R.drawable.img_prod_carrot,
+        listOf("cauliflower", "फुलकोबी", "फूलगोभी", "फ्लॉवर") to R.drawable.img_prod_cauliflower,
+        listOf("brinjal", "eggplant", "वांगी", "बैंगन") to R.drawable.img_prod_brinjal,
+        listOf("spinach", "पालक") to R.drawable.img_prod_spinach,
+        listOf("okra", "lady finger", "भेंडी", "भिंडी") to R.drawable.img_prod_okra,
+        listOf("apple", "सफरचंद", "सेब") to R.drawable.img_prod_apple,
+        listOf("banana", "केळी", "केला") to R.drawable.img_prod_banana,
+        listOf("mango", "आंबा", "आम") to R.drawable.img_prod_mango,
+        listOf("pomegranate", "डाळिंब", "अनार") to R.drawable.img_prod_pomegranate
+    )
+    return mappings.firstOrNull { (aliases, _) ->
+        aliases.any { alias -> text.contains(normalizeProduceSearchText(alias)) }
+    }?.second ?: 0
+}
 
 private fun normalizeProduceSearchText(value: String): String =
     java.text.Normalizer.normalize(value.lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD)
@@ -162,6 +185,8 @@ class StoreViewModel(
     val trackingLocation: StateFlow<String> = _trackingLocation.asStateFlow()
     private val _trackingUpdatedAtMillis = MutableStateFlow<Long?>(null)
     val trackingUpdatedAtMillis: StateFlow<Long?> = _trackingUpdatedAtMillis.asStateFlow()
+    private val _customerDestination = MutableStateFlow("")
+    val customerDestination: StateFlow<String> = _customerDestination.asStateFlow()
     private val _trackingPartnerAccepted = MutableStateFlow(false)
     val trackingPartnerAccepted: StateFlow<Boolean> = _trackingPartnerAccepted.asStateFlow()
     private val _trackingPartnerName = MutableStateFlow("")
@@ -175,6 +200,7 @@ class StoreViewModel(
     val selectedProduceDetail: StateFlow<ProduceItem?> = _selectedProduceDetail.asStateFlow()
 
     private val _adminProducts = MutableStateFlow<List<ProduceItem>>(emptyList())
+    val allProducts: StateFlow<List<ProduceItem>> = _adminProducts.asStateFlow()
 
     val filteredProduce: StateFlow<List<ProduceItem>> = combine(
         _selectedCategory,
@@ -185,8 +211,18 @@ class StoreViewModel(
         products.filter { item ->
             // A search spans vegetables and fruits even if the customer previously
             // selected only one category. Category chips still apply when search is empty.
-            val matchesCategory = query.isNotEmpty() ||
-                category == ProduceCategory.ALL || item.category == category
+            val matchesCategory = query.isNotEmpty() || when (category) {
+                ProduceCategory.ALL -> true
+                ProduceCategory.VEGETABLE -> item.category == ProduceCategory.VEGETABLE &&
+                    item.catalogSection !in setOf("leafy_greens", "organic", "daily_needs", "combo_packs")
+                ProduceCategory.FRUIT -> item.category == ProduceCategory.FRUIT
+                ProduceCategory.LEAFY_GREENS -> item.catalogSection == "leafy_greens" ||
+                    listOf("पालक", "मेथी", "कोथिंबीर", "शेपू", "चाकवत", "spinach", "fenugreek", "coriander", "dill")
+                        .any { item.englishKeywords.contains(it.lowercase()) }
+                ProduceCategory.ORGANIC -> item.catalogSection == "organic"
+                ProduceCategory.DAILY_NEEDS -> item.catalogSection == "daily_needs"
+                ProduceCategory.COMBO_PACKS -> item.catalogSection == "combo_packs"
+            }
             matchesCategory && matchesProduceSearch(item, query)
         }
     }.flowOn(Dispatchers.Default).stateIn(
@@ -228,7 +264,23 @@ class StoreViewModel(
                 val products = snapshot.documents.mapNotNull { doc ->
                     val imageUrl = doc.getString("imageUrl")?.takeIf { it.isNotBlank() }
                     if (doc.getBoolean("isVisible") != true) return@mapNotNull null
-                    val stock = doc.getDouble("stock") ?: (doc.getLong("stock")?.toDouble() ?: 0.0)
+                    // Admin versions have used numeric and text stock values.
+                    // Read the canonical stock field first, then compatible legacy aliases.
+                    fun readStock(field: String): Double? = when (val value = doc.get(field)) {
+                        is Number -> value.toDouble()
+                        is String -> {
+                            val cleaned = value.trim().replace(",", "")
+                            cleaned.toDoubleOrNull()
+                                ?: Regex("[-+]?(?:\\d+\\.?\\d*|\\.\\d+)")
+                                    .find(cleaned)?.value?.toDoubleOrNull()
+                        }
+                        else -> null
+                    }
+                    val stock = sequenceOf("stock", "stockQuantity", "availableStock", "quantity", "currentStock")
+                        .mapNotNull(::readStock)
+                        .firstOrNull()
+                        ?.coerceAtLeast(0.0)
+                        ?: 0.0
                     val unitText = sequenceOf("unit", "stockUnit", "sellUnit", "unitMarathi", "measurementUnit")
                         .mapNotNull { doc.getString(it) }
                         .firstOrNull { it.isNotBlank() }
@@ -259,10 +311,12 @@ class StoreViewModel(
                     val descriptionHi = doc.getString("descriptionHi")?.takeIf { it.isNotBlank() }.orEmpty()
                     val descriptionEn = doc.getString("descriptionEn")?.takeIf { it.isNotBlank() }.orEmpty()
                     val category = if (doc.getString("category") == "fruit") ProduceCategory.FRUIT else ProduceCategory.VEGETABLE
+                    val catalogSection = doc.getString("catalogSection")?.takeIf { it.isNotBlank() }
+                        ?: if (category == ProduceCategory.FRUIT) "fruits" else "vegetables"
                     ProduceItem(
                         id = doc.id,
                         marathiName = name,
-                        englishKeywords = listOf(name, hindiName, englishName).joinToString(" ").lowercase(),
+                        englishKeywords = listOf(name, hindiName, englishName).filter { it.isNotBlank() }.joinToString(",").lowercase(),
                         category = category,
                         priceRupees = rate,
                         unitMarathi = when {
@@ -272,14 +326,15 @@ class StoreViewModel(
                         },
                         badgeMarathi = "ताजा माल",
                         descriptionMarathi = descriptionMr,
-                        imageRes = if (category == ProduceCategory.FRUIT) R.drawable.img_prod_mango else R.drawable.img_prod_tomato,
+                        imageRes = resolveProduceImageRes(name, hindiName, englishName, listOf(name, hindiName, englishName).joinToString(" "), category),
                         imageUrl = imageUrl,
                         isPieceBased = isPieceBased,
                         hindiName = hindiName,
                         englishName = englishName,
                         hindiDescription = descriptionHi,
                         englishDescription = descriptionEn,
-                        stockQuantity = stock
+                        stockQuantity = stock,
+                        catalogSection = catalogSection
                     )
                 }
                 ProduceCatalog.replaceFromAdmin(products)
@@ -328,6 +383,13 @@ class StoreViewModel(
     fun addToCart(produceId: String, weightGrams: Int = 1000) {
         viewModelScope.launch {
             repository.incrementItem(produceId, weightGrams)
+            _formState.update { it.copy(cartErrorMarathi = null) }
+        }
+    }
+
+    fun addComboToCart(combo: MealComboPack) {
+        viewModelScope.launch {
+            repository.incrementCombo(combo)
             _formState.update { it.copy(cartErrorMarathi = null) }
         }
     }
@@ -402,6 +464,21 @@ class StoreViewModel(
     }
 
     fun submitOrder(latitude: Double? = null, longitude: Double? = null, deliveryChargeRupees: Int = 0, deliveryDistanceKm: Double? = null, paymentMethod: String = "COD", transactionId: String = "", paymentOrderId: String = "", paymentSignature: String = "", deliveryTipRupees: Int = 0) {
+        val hasPreciseLocationPermission = ContextCompat.checkSelfPermission(
+            appContext, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasPreciseLocationPermission) {
+            _formState.update { it.copy(cartErrorMarathi = appContext.getString(R.string.gps_permission_required)) }
+            return
+        }
+        val hasValidCustomerCoordinates = latitude != null && longitude != null &&
+            latitude.isFinite() && longitude.isFinite() &&
+            latitude in -90.0..90.0 && longitude in -180.0..180.0
+        if (!hasValidCustomerCoordinates) {
+            _formState.update { it.copy(cartErrorMarathi = appContext.getString(R.string.delivery_location_failed)) }
+            return
+        }
+
         val currentCart = cartItems.value
         val currentForm = _formState.value
 
@@ -506,6 +583,11 @@ class StoreViewModel(
                     _trackingLocation.value = if (snapshot.getBoolean("deliveryLocationSharing") == true && latitude != null && longitude != null) "$latitude,$longitude" else ""
                     _trackingUpdatedAtMillis.value = (snapshot.getTimestamp("deliveryLocationUpdatedAt")
                         ?: snapshot.getTimestamp("updatedAt"))?.toDate()?.time
+                    val customerLatitude = snapshot.getDouble("customerLatitude")
+                    val customerLongitude = snapshot.getDouble("customerLongitude")
+                    _customerDestination.value = if (customerLatitude != null && customerLongitude != null &&
+                        customerLatitude in -90.0..90.0 && customerLongitude in -180.0..180.0
+                    ) "$customerLatitude,$customerLongitude" else ""
                 }
             }
     }

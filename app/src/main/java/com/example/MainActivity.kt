@@ -14,6 +14,7 @@ import com.google.firebase.initialize
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -22,21 +23,33 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Badge
@@ -67,9 +80,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,10 +93,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.ProduceCategory
 import com.example.ui.screens.BazaarHomeScreen
-import com.example.ui.screens.CustomerWelcomeFlow
 import com.example.ui.screens.CartAndOrderScreen
 import com.example.ui.screens.MarathiChatScreen
 import com.example.ui.screens.CustomerProfileScreen
+import com.example.ui.screens.CustomerOrdersScreen
+import com.example.ui.screens.LiveOffersScreen
+import com.example.ui.screens.CustomerOffersSplashOverlay
+import com.example.ui.screens.NewArrivalsScreen
 import com.example.ui.theme.AnnapurnaTheme
 import com.example.ui.viewmodel.AiFeaturesViewModel
 import com.example.ui.viewmodel.StoreViewModel
@@ -103,11 +121,35 @@ enum class AnnapurnaTab(
         unselectedIcon = Icons.Outlined.Storefront,
         tag = "nav_tab_bazaar"
     ),
+    NEW_ARRIVALS(
+        labelRes = R.string.nav_new_arrivals,
+        selectedIcon = Icons.Filled.NewReleases,
+        unselectedIcon = Icons.Outlined.NewReleases,
+        tag = "nav_tab_new_arrivals"
+    ),
+    OFFERS(
+        labelRes = R.string.nav_offers,
+        selectedIcon = Icons.Filled.LocalOffer,
+        unselectedIcon = Icons.Outlined.LocalOffer,
+        tag = "nav_tab_offers"
+    ),
+    CATEGORIES(
+        labelRes = R.string.nav_categories,
+        selectedIcon = Icons.Filled.Category,
+        unselectedIcon = Icons.Outlined.Category,
+        tag = "nav_tab_categories"
+    ),
     CART(
         labelRes = R.string.nav_cart,
         selectedIcon = Icons.Filled.ShoppingBag,
         unselectedIcon = Icons.Outlined.ShoppingBag,
         tag = "nav_tab_cart"
+    ),
+    ORDERS(
+        labelRes = R.string.nav_orders,
+        selectedIcon = Icons.Filled.ReceiptLong,
+        unselectedIcon = Icons.Outlined.ReceiptLong,
+        tag = "nav_tab_orders"
     ),
     ASSISTANT(
         labelRes = R.string.nav_assistant,
@@ -183,9 +225,7 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         setContent {
             AnnapurnaTheme {
                 CustomerStartupPermissions {
-                    CustomerWelcomeFlow {
-                        AnnapurnaRootApp()
-                    }
+                    AnnapurnaRootApp()
                 }
             }
         }
@@ -203,7 +243,7 @@ private fun CustomerStartupPermissions(content: @Composable () -> Unit) {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
-        // Do not block shopping if a customer declines an optional permission.
+        // GPS is requested at startup; order submission independently requires precise GPS permission.
         preferences.edit().putBoolean("requested_once", true).apply()
     }
 
@@ -243,15 +283,13 @@ fun AnnapurnaRootApp() {
     LaunchedEffect(Unit) {
         val entryPrefs = context.getSharedPreferences("annapurna_customer_entry", android.content.Context.MODE_PRIVATE)
         entryPrefs.getString("customer_mobile", null)?.let(storeViewModel::updateMobileNumber)
-        when (entryPrefs.getString("selected_category", "")) {
-            "vegetables" -> storeViewModel.selectCategory(ProduceCategory.VEGETABLE)
-            "fruits" -> storeViewModel.selectCategory(ProduceCategory.FRUIT)
-        }
     }
 
     var currentTab by rememberSaveable { mutableStateOf(AnnapurnaTab.BAZAAR) }
+    var assistantStartAction by rememberSaveable { mutableStateOf<String?>(null) }
 
     val produceItems by storeViewModel.filteredProduce.collectAsStateWithLifecycle()
+    val allProducts by storeViewModel.allProducts.collectAsStateWithLifecycle()
     val selectedCategory by storeViewModel.selectedCategory.collectAsStateWithLifecycle()
     val searchQuery by storeViewModel.searchQuery.collectAsStateWithLifecycle()
     val cartItems by storeViewModel.cartItems.collectAsStateWithLifecycle()
@@ -262,6 +300,7 @@ fun AnnapurnaRootApp() {
     val trackingStatus by storeViewModel.trackingStatus.collectAsStateWithLifecycle()
     val trackingLocation by storeViewModel.trackingLocation.collectAsStateWithLifecycle()
     val trackingUpdatedAtMillis by storeViewModel.trackingUpdatedAtMillis.collectAsStateWithLifecycle()
+    val customerDestination by storeViewModel.customerDestination.collectAsStateWithLifecycle()
     val trackingPartnerAccepted by storeViewModel.trackingPartnerAccepted.collectAsStateWithLifecycle()
     val trackingPartnerName by storeViewModel.trackingPartnerName.collectAsStateWithLifecycle()
 
@@ -269,6 +308,12 @@ fun AnnapurnaRootApp() {
 
     val totalCartItems = remember(cartItems) { cartItems.sumOf { it.quantity } }
     var languageMenuExpanded by remember { mutableStateOf(false) }
+    var showMoreRequestDialog by rememberSaveable { mutableStateOf(false) }
+    var moreRequestName by rememberSaveable { mutableStateOf("") }
+    var moreRequestQuantity by rememberSaveable { mutableStateOf("") }
+    var moreRequestNote by rememberSaveable { mutableStateOf("") }
+    var moreRequestSending by remember { mutableStateOf(false) }
+    var moreRequestFeedback by remember { mutableStateOf<String?>(null) }
     val currentLanguage = context.resources.configuration.locales[0].language
     val languageLabel = when (currentLanguage) { "hi" -> "हिन्दी"; "en" -> "English"; else -> "मराठी" }
 
@@ -278,20 +323,21 @@ fun AnnapurnaRootApp() {
         Scaffold(
             contentWindowInsets = WindowInsets.safeDrawing,
             topBar = {
-                TopAppBar(
+                if (currentTab != AnnapurnaTab.BAZAAR) {
+                    TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 color = MaterialTheme.colorScheme.primaryContainer,
                                 shape = MaterialTheme.shapes.small
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Eco,
-                                    contentDescription = null,
-                                    tint = Color.White,
+                                Image(
+                                    painter = painterResource(R.drawable.img_launcher_logo),
+                                    contentDescription = stringResource(R.string.brand_name),
+                                    contentScale = ContentScale.Fit,
                                     modifier = Modifier
-                                        .padding(7.dp)
-                                        .size(22.dp)
+                                        .padding(2.dp)
+                                        .size(32.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(10.dp))
@@ -367,7 +413,8 @@ fun AnnapurnaRootApp() {
                         titleContentColor = Color.White,
                         actionIconContentColor = Color.White
                     )
-                )
+                    )
+                }
             },
             bottomBar = {
                 if (!isWideScreen) {
@@ -375,7 +422,7 @@ fun AnnapurnaRootApp() {
                         containerColor = Color.White,
                         tonalElevation = 8.dp
                     ) {
-                        AnnapurnaTab.entries.forEach { tab ->
+                        AnnapurnaTab.entries.filter { it != AnnapurnaTab.ASSISTANT && it != AnnapurnaTab.OFFERS && it != AnnapurnaTab.NEW_ARRIVALS }.forEach { tab ->
                             val selected = currentTab == tab
                             NavigationBarItem(
                                 selected = selected,
@@ -419,7 +466,7 @@ fun AnnapurnaRootApp() {
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         modifier = Modifier.fillMaxHeight()
                     ) {
-                        AnnapurnaTab.entries.forEach { tab ->
+                        AnnapurnaTab.entries.filter { it != AnnapurnaTab.ASSISTANT }.forEach { tab ->
                             val selected = currentTab == tab
                             NavigationRailItem(
                                 selected = selected,
@@ -447,6 +494,198 @@ fun AnnapurnaRootApp() {
                         .fillMaxSize()
 
                     when (currentTab) {
+                        AnnapurnaTab.NEW_ARRIVALS -> {
+                            NewArrivalsScreen(products = allProducts, onAddToCart = { id, grams -> storeViewModel.addToCart(id, grams) }, onBack = { currentTab = AnnapurnaTab.BAZAAR }, modifier = contentModifier)
+                        }
+                        AnnapurnaTab.OFFERS -> {
+                            LiveOffersScreen(onBack = { currentTab = AnnapurnaTab.BAZAAR }, modifier = contentModifier)
+                        }
+                        AnnapurnaTab.CATEGORIES -> {
+                            data class CategoryTile(
+                                val emoji: String,
+                                val mr: String,
+                                val hi: String,
+                                val en: String,
+                                val category: ProduceCategory?
+                            )
+                            val categoryTiles = listOf(
+                                CategoryTile("🥬", "भाज्या", "सब्ज़ियाँ", "Vegetables", ProduceCategory.VEGETABLE),
+                                CategoryTile("🍎", "फळे", "फल", "Fruits", ProduceCategory.FRUIT),
+                                CategoryTile("🌿", "पालेभाज्या", "हरी पत्तेदार", "Leafy Greens", ProduceCategory.LEAFY_GREENS),
+                                CategoryTile("🎁", "ऑफर्स", "ऑफ़र", "Offers", ProduceCategory.ALL),
+                                CategoryTile("🌱", "सेंद्रिय", "ऑर्गेनिक", "Organic", ProduceCategory.ORGANIC),
+                                CategoryTile("🧺", "दैनंदिन गरजा", "दैनिक ज़रूरतें", "Daily Needs", ProduceCategory.DAILY_NEEDS),
+                                CategoryTile("📦", "कॉम्बो पॅक्स", "कॉम्बो पैक", "Combo Packs", ProduceCategory.COMBO_PACKS),
+                                CategoryTile("＋", "अधिक", "और", "More", null)
+                            )
+                            Column(
+                                modifier = contentModifier.padding(16.dp),
+                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+                            ) {
+                                Surface(
+                                    color = Color(0xFFE8F5E9),
+                                    shape = RoundedCornerShape(20.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(18.dp)) {
+                                        Text(
+                                            when (currentLanguage) { "hi" -> "ताज़ा और चुनिंदा"; "en" -> "Fresh & Handpicked"; else -> "ताजे आणि निवडक" },
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF12652F)
+                                        )
+                                        Text(
+                                            when (currentLanguage) { "hi" -> "अपनी पसंद की श्रेणी चुनें"; "en" -> "Choose a category you love"; else -> "तुमच्या आवडीची श्रेणी निवडा" },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color(0xFF52745B)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    when (currentLanguage) { "hi" -> "सभी श्रेणियाँ"; "en" -> "All Categories"; else -> "सर्व कॅटेगरी" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                                    columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(4),
+                                    userScrollEnabled = false,
+                                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(9.dp),
+                                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(9.dp),
+                                    modifier = Modifier.height(190.dp)
+                                ) {
+                                    items(categoryTiles.size) { index ->
+                                        val tile = categoryTiles[index]
+                                        val label = when (currentLanguage) {
+                                            "hi" -> tile.hi
+                                            "en" -> tile.en
+                                            else -> tile.mr
+                                        }
+                                        Surface(
+                                            onClick = {
+                                                when {
+                                                    tile.en == "Offers" -> currentTab = AnnapurnaTab.OFFERS
+                                                    tile.category == null -> showMoreRequestDialog = true
+                                                    else -> {
+                                                        storeViewModel.selectCategory(tile.category)
+                                                        currentTab = AnnapurnaTab.BAZAAR
+                                                    }
+                                                }
+                                            },
+                                            color = Color(0xFFF3F8F2),
+                                            shape = RoundedCornerShape(15.dp),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE1ECE1)),
+                                            modifier = Modifier.fillMaxWidth().height(88.dp)
+                                        ) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                                                modifier = Modifier.padding(horizontal = 2.dp, vertical = 6.dp)
+                                            ) {
+                                                Text(tile.emoji, style = MaterialTheme.typography.titleLarge)
+                                                Text(
+                                                    label,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF12652F),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    maxLines = 2,
+                                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                FilledTonalButton(
+                                    onClick = {
+                                        storeViewModel.selectCategory(ProduceCategory.ALL)
+                                        currentTab = AnnapurnaTab.BAZAAR
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(when (currentLanguage) { "hi" -> "🛍️  सभी उत्पाद देखें"; "en" -> "🛍️  Browse all products"; else -> "🛍️  सर्व उत्पादने पहा" })
+                                }
+                            }
+                            if (showMoreRequestDialog) {
+                                androidx.compose.material3.AlertDialog(
+                                    onDismissRequest = { if (!moreRequestSending) showMoreRequestDialog = false },
+                                    title = { Text(when (currentLanguage) { "hi" -> "नया उत्पाद मँगवाएँ"; "en" -> "Request an item"; else -> "नवीन वस्तू मागवा" }) },
+                                    text = {
+                                        Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)) {
+                                            androidx.compose.material3.OutlinedTextField(
+                                                value = moreRequestName,
+                                                onValueChange = { moreRequestName = it },
+                                                label = { Text(when (currentLanguage) { "hi" -> "उत्पाद का नाम"; "en" -> "Item name"; else -> "वस्तूचे नाव" }) },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            androidx.compose.material3.OutlinedTextField(
+                                                value = moreRequestQuantity,
+                                                onValueChange = { moreRequestQuantity = it },
+                                                label = { Text(when (currentLanguage) { "hi" -> "मात्रा"; "en" -> "Quantity"; else -> "प्रमाण" }) },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            androidx.compose.material3.OutlinedTextField(
+                                                value = moreRequestNote,
+                                                onValueChange = { moreRequestNote = it },
+                                                label = { Text(when (currentLanguage) { "hi" -> "अतिरिक्त जानकारी (वैकल्पिक)"; "en" -> "Extra details (optional)"; else -> "अधिक माहिती (ऐच्छिक)" }) },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            moreRequestFeedback?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                                        }
+                                    },
+                                    confirmButton = {
+                                        FilledTonalButton(
+                                            enabled = moreRequestName.isNotBlank() && !moreRequestSending,
+                                            onClick = {
+                                                moreRequestSending = true
+                                                val payload = hashMapOf<String, Any>(
+                                                    "productName" to moreRequestName.trim(),
+                                                    "quantity" to moreRequestQuantity.trim(),
+                                                    "note" to moreRequestNote.trim(),
+                                                    "status" to "pending",
+                                                    "source" to "customer_app_categories",
+                                                    "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                                                    "createdAtMillis" to System.currentTimeMillis()
+                                                )
+                                                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                                    .collection("productRequests").add(payload)
+                                                    .addOnSuccessListener {
+                                                        moreRequestSending = false
+                                                        showMoreRequestDialog = false
+                                                        moreRequestName = ""
+                                                        moreRequestQuantity = ""
+                                                        moreRequestNote = ""
+                                                        moreRequestFeedback = null
+                                                    }
+                                                    .addOnFailureListener {
+                                                        moreRequestSending = false
+                                                        moreRequestFeedback = when (currentLanguage) {
+                                                            "hi" -> "अनुरोध नहीं भेजा गया। फिर कोशिश करें।"
+                                                            "en" -> "Request failed. Please try again."
+                                                            else -> "विनंती पाठवता आली नाही. पुन्हा प्रयत्न करा."
+                                                        }
+                                                    }
+                                            }
+                                        ) {
+                                            Text(if (moreRequestSending) "…" else when (currentLanguage) { "hi" -> "अनुरोध भेजें"; "en" -> "Send request"; else -> "विनंती पाठवा" })
+                                        }
+                                    },
+                                    dismissButton = {
+                                        androidx.compose.material3.TextButton(
+                                            onClick = { if (!moreRequestSending) showMoreRequestDialog = false }
+                                        ) {
+                                            Text(when (currentLanguage) { "hi" -> "रद्द करें"; "en" -> "Cancel"; else -> "रद्द करा" })
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                        AnnapurnaTab.ORDERS -> {
+                            CustomerOrdersScreen(
+                                orders = recentOrders,
+                                modifier = contentModifier
+                            )
+                        }
                         AnnapurnaTab.BAZAAR -> {
                             BazaarHomeScreen(
                                 produceItems = produceItems,
@@ -457,9 +696,24 @@ fun AnnapurnaRootApp() {
                                 onSelectCategory = storeViewModel::selectCategory,
                                 onSearchQueryChange = storeViewModel::updateSearchQuery,
                                 onAddToCart = { id, grams -> storeViewModel.addToCart(id, grams) },
+                                onAddComboToCart = storeViewModel::addComboToCart,
                                 onDecreaseQty = storeViewModel::decreaseProductQuantity,
                                 onOpenDetail = storeViewModel::openProduceDetail,
                                 onGoToCart = { currentTab = AnnapurnaTab.CART },
+                                onOpenAssistant = { assistantStartAction = null; currentTab = AnnapurnaTab.ASSISTANT },
+                                onOpenVoiceSearch = { assistantStartAction = "voice"; currentTab = AnnapurnaTab.ASSISTANT },
+                                onOpenPhotoSearch = { assistantStartAction = "photo"; currentTab = AnnapurnaTab.ASSISTANT },
+                                onOpenOffers = { currentTab = AnnapurnaTab.OFFERS },
+                                onOpenNewArrivals = { currentTab = AnnapurnaTab.NEW_ARRIVALS },
+                                onOpenLanguageSettings = { languageMenuExpanded = true },
+                                onOpenOrders = { currentTab = AnnapurnaTab.ORDERS },
+                                onShareApp = {
+                                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(android.content.Intent.EXTRA_TEXT, "Annapurna Vegetables and Fruits — ताज्या भाज्या आणि फळे सहज मागवा!")
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Annapurna share"))
+                                },
                                 onAskRecipeInChat = { produce ->
                                     currentTab = AnnapurnaTab.ASSISTANT
                                     val recipePrompt = when (currentLanguage) {
@@ -485,6 +739,7 @@ fun AnnapurnaRootApp() {
                                 trackingStatus = trackingStatus,
                                 trackingLocation = trackingLocation,
                                 trackingUpdatedAtMillis = trackingUpdatedAtMillis,
+                                customerDestination = customerDestination,
                                 trackingPartnerAccepted = trackingPartnerAccepted,
                                 trackingPartnerName = trackingPartnerName,
                                 onIncreaseQty = storeViewModel::increaseQuantity,
@@ -512,6 +767,8 @@ fun AnnapurnaRootApp() {
                         AnnapurnaTab.ASSISTANT -> {
                             MarathiChatScreen(
                                 chatState = chatState,
+                                startAction = assistantStartAction,
+                                onStartActionConsumed = { assistantStartAction = null },
                                 onSelectModelTier = aiViewModel::selectModelTier,
                                 onInputChange = aiViewModel::updateChatInput,
                                 onSendMessage = { overridePrompt, imageBase64, mimeType ->

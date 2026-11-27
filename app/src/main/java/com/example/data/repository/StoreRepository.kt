@@ -4,6 +4,7 @@ import com.example.data.local.CartItemEntity
 import com.example.data.local.CustomerProfileEntity
 import com.example.data.local.OrderEntity
 import com.example.data.local.StoreDao
+import com.example.data.model.MealComboPack
 import com.example.data.model.ProduceCatalog
 import com.example.data.model.ProduceItem
 import com.example.data.model.WeightPricing
@@ -11,6 +12,8 @@ import com.example.data.payment.RazorpayPaymentGateway
 import com.example.util.MarathiFormatters
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import android.util.Base64
+import com.example.R
 import java.util.UUID
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
@@ -23,10 +26,12 @@ import kotlin.coroutines.resumeWithException
 data class CartLineItem(
     val produce: ProduceItem,
     val quantity: Int,
-    val weightGrams: Int
+    val weightGrams: Int,
+    val combo: MealComboPack? = null,
+    val storedCartLineId: String? = null
 ) {
-    val cartLineId: String get() = "${produce.id}-${weightGrams}"
-    val lineTotalRupees: Double get() = if (produce.isPieceBased) produce.priceRupees * quantity else (WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity) / 100.0
+    val cartLineId: String get() = storedCartLineId ?: "${produce.id}-${weightGrams}"
+    val lineTotalRupees: Double get() = combo?.priceRupees?.times(quantity) ?: if (produce.isPieceBased) produce.priceRupees * quantity else (WeightPricing.priceInPaiseForGrams(produce.priceRupees, weightGrams) * quantity) / 100.0
 }
 
 class StoreRepository(private val storeDao: StoreDao) {
@@ -41,11 +46,30 @@ class StoreRepository(private val storeDao: StoreDao) {
         ProduceCatalog.itemsFlow
     ) { entities, products ->
         entities.mapNotNull { entity ->
-            val produce = products.firstOrNull { it.id == entity.produceId }
-            if (produce != null && entity.quantity > 0 && !produce.isOutOfStock) {
-                CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = entity.weightGrams)
+            val combo = entity.comboDataJson?.let { MealComboPack.fromJson(it) }
+            if (combo != null && entity.quantity > 0) {
+                val produce = ProduceItem(
+                    id = entity.produceId,
+                    marathiName = combo.nameMr,
+                    englishKeywords = combo.nameEn,
+                    category = com.example.data.model.ProduceCategory.COMBO_PACKS,
+                    priceRupees = combo.priceRupees,
+                    unitMarathi = "१ कॉम्बो",
+                    badgeMarathi = "कॉम्बो",
+                    descriptionMarathi = "रेसिपीनुसार भाज्यांचा कॉम्बो",
+                    imageRes = R.drawable.img_prod_potato,
+                    imageUrl = combo.imageUrl.takeIf { it.isNotBlank() },
+                    isPieceBased = true,
+                    hindiName = combo.nameHi,
+                    englishName = combo.nameEn,
+                    stockQuantity = 999.0
+                )
+                CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = 0, combo = combo, storedCartLineId = entity.cartLineId)
             } else {
-                null
+                val produce = products.firstOrNull { it.id == entity.produceId }
+                if (produce != null && entity.quantity > 0 && !produce.isOutOfStock) {
+                    CartLineItem(produce = produce, quantity = entity.quantity, weightGrams = entity.weightGrams)
+                } else null
             }
         }
     }
@@ -65,6 +89,23 @@ class StoreRepository(private val storeDao: StoreDao) {
                 quantity = nextQty,
                 weightGrams = weightGrams,
                 addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun incrementCombo(combo: MealComboPack) {
+        val id = "combo-${combo.id}"
+        val cartLineId = "$id-${combo.servings}"
+        val current = storeDao.getCartItem(cartLineId)
+        storeDao.upsertCartItem(
+            CartItemEntity(
+                cartLineId = cartLineId,
+                produceId = id,
+                quantity = (current?.quantity ?: 0) + 1,
+                weightGrams = 0,
+                addedAtMillis = current?.addedAtMillis ?: System.currentTimeMillis(),
+                comboDataJson = combo.toJson(),
+                comboPriceRupees = combo.priceRupees
             )
         )
     }
@@ -131,14 +172,40 @@ class StoreRepository(private val storeDao: StoreDao) {
             "ग्राहकाचे अचूक GPS Location आवश्यक आहे. GPS शिवाय ऑर्डर नोंदवता येणार नाही."
         }
         val summaryLines = items.joinToString(separator = "\n") { line ->
-            val quantityLabel = if (line.produce.isPieceBased) {
+            val quantityLabel = if (line.combo != null) {
+                val comboWeight = if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) {
+                    "${line.combo.servings / 1000} किलो"
+                } else {
+                    "${MarathiFormatters.toMarathiNumber(line.combo.servings)} ग्रॅम"
+                }
+                "${MarathiFormatters.toMarathiNumber(line.quantity)} कॉम्बो • ${comboWeight}"
+            } else if (line.produce.isPieceBased) {
                 "${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
             } else {
                 WeightPricing.formatWeightMarathi(line.weightGrams)
             }
-            "• ${line.produce.marathiName} ($quantityLabel) = ₹${MarathiFormatters.formatRupees(line.lineTotalRupees)}"
+            val comboComponents = line.combo?.ingredients?.joinToString(separator = "\n") { ingredient ->
+                val componentQuantity = when (ingredient.unit) {
+                    "nos" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} नग"
+                    "bunch" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} जुडी"
+                    else -> if (ingredient.quantityGrams >= 1000 && ingredient.quantityGrams % 1000 == 0) {
+                        "${ingredient.quantityGrams / 1000} किलो"
+                    } else {
+                        "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} ग्रॅम"
+                    }
+                }
+                "  • ${ingredient.nameMr}: ${componentQuantity}"
+            }.orEmpty()
+            "• ${line.produce.marathiName} ($quantityLabel) = ₹${MarathiFormatters.formatRupees(line.lineTotalRupees)}" +
+                if (comboComponents.isNotBlank()) "\n$comboComponents" else ""
         }
-        val serialized = items.joinToString(separator = ",") { "${it.produce.id}:${it.quantity}:${it.weightGrams}" }
+        val serialized = items.joinToString(separator = ",") { line ->
+            val combo = line.combo
+            if (combo != null) {
+                val encoded = Base64.encodeToString(combo.toJson().toByteArray(Charsets.UTF_8), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+                "combo~$encoded:${line.quantity}:1"
+            } else "${line.produce.id}:${line.quantity}:${line.weightGrams}"
+        }
         val totalQty = items.sumOf { it.quantity }
         val itemsTotal = items.sumOf { it.lineTotalRupees }
         val grandTotal = itemsTotal + deliveryChargeRupees + deliveryTipRupees
@@ -163,7 +230,7 @@ class StoreRepository(private val storeDao: StoreDao) {
         val trackingToken = UUID.randomUUID().toString()
         latestTrackingToken = trackingToken
         val remoteItems = items.map { line ->
-            mapOf(
+            mutableMapOf<String, Any>(
                 "productId" to line.produce.id,
                 "name" to line.produce.displayName(),
                 "nameMr" to line.produce.marathiName,
@@ -175,7 +242,24 @@ class StoreRepository(private val storeDao: StoreDao) {
                 "unit" to line.produce.unitMarathi,
                 "isPieceBased" to line.produce.isPieceBased,
                 "lineTotalRupees" to line.lineTotalRupees
-            )
+            ).apply {
+                line.combo?.let { combo ->
+                    put("itemType", "combo")
+                    put("comboId", combo.id)
+                    put("comboPriceRupees", combo.priceRupees)
+                    put("comboServings", combo.servings)
+                    put("comboIngredients", combo.ingredients.map { ingredient ->
+                        mapOf(
+                            "productId" to ingredient.productId,
+                            "nameMr" to ingredient.nameMr,
+                            "nameHi" to ingredient.nameHi,
+                            "nameEn" to ingredient.nameEn,
+                            "quantityGrams" to ingredient.quantityGrams,
+                            "unit" to ingredient.unit
+                        )
+                    })
+                }
+            }
         }
         val remoteOrderData = mutableMapOf<String, Any>(
                 "orderId" to remoteOrder.id,
@@ -208,16 +292,20 @@ class StoreRepository(private val storeDao: StoreDao) {
             remoteOrderData["customerLongitude"] = longitude
             remoteOrderData["locationSource"] = "customer_location"
         }
-        val trackingData = mapOf(
+        val trackingData = mutableMapOf<String, Any>(
             "status" to "new",
             "createdAtMillis" to now,
             "orderId" to remoteOrder.id
         )
+        // Keep orderTracking's public-create payload limited to the fields
+        // permitted by Firestore Rules. Customer GPS is already stored on orders.
         if (paymentMethod == "COD") {
+            // Preserve the previously working COD flow: commit the order and tracking
+            // record together through the existing Firebase client path. This avoids
+            // depending on a Worker route that may not yet exist in production.
             val batch = firestore.batch()
             batch.set(remoteOrder, remoteOrderData)
             batch.set(firestore.collection("orderTracking").document(trackingToken), trackingData)
-            // COD remains a customer-created pending order.
             suspendCancellableCoroutine<Unit> { continuation ->
                 batch.commit()
                     .addOnSuccessListener { if (continuation.isActive) continuation.resume(Unit) }
@@ -255,7 +343,14 @@ class StoreRepository(private val storeDao: StoreDao) {
                 val id = parts[0]
                 val qty = parts[1].toIntOrNull() ?: 0
                 val grams = parts.getOrNull(2)?.toIntOrNull() ?: 1000
-                if (ProduceCatalog.findById(id) != null && qty > 0) {
+                if (qty <= 0) continue
+                if (id.startsWith("combo~")) {
+                    val combo = runCatching {
+                        val decoded = Base64.decode(id.removePrefix("combo~"), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+                        MealComboPack.fromJson(String(decoded, Charsets.UTF_8))
+                    }.getOrNull()
+                    if (combo != null) repeat(qty) { incrementCombo(combo) }
+                } else if (ProduceCatalog.findById(id) != null) {
                     val cartLineId = "$id-$grams"
                     val existing = storeDao.getCartItem(cartLineId)
                     storeDao.upsertCartItem(

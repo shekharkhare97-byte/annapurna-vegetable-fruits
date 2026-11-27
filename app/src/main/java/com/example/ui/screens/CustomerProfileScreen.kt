@@ -264,9 +264,71 @@ fun CustomerProfileScreen(
                 ) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("${tr("ऑर्डर #", "ऑर्डर #", "Order #")}${order.orderId}", fontWeight = FontWeight.Bold)
-                        Text(order.itemsSummaryMarathi, maxLines = 3, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(localizedOrderItemsSummary(order, java.util.Locale.getDefault().language), maxLines = 3, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("₹${order.totalAmountRupeesDecimal}  •  ${java.text.DateFormat.getDateInstance().format(java.util.Date(order.createdAtMillis))}", fontWeight = FontWeight.SemiBold)
                     }
+                }
+            }
+        }
+        item {
+            val referralCode = remember(formState.mobileNumber) {
+                val seed = formState.mobileNumber.filter { it.isDigit() }.ifBlank { "ANNAPURNA" }
+                "ANN" + Integer.toUnsignedString(seed.hashCode(), 36).uppercase(java.util.Locale.ROOT).take(7)
+            }
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF6EA))
+            ) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.CardGiftcard, tint = MaterialTheme.colorScheme.primary, contentDescription = null)
+                        Text("  " + tr("मित्रांना आमंत्रित करा आणि मोफत डिलिव्हरी मिळवा", "दोस्तों को आमंत्रित करें और मुफ्त डिलीवरी पाएँ", "Refer friends and earn free delivery"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                    Text(tr("तुमचा रेफरल कोड", "आपका रेफरल कोड", "Your referral code"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Surface(color = Color.White, shape = RoundedCornerShape(12.dp)) {
+                        Text(referralCode, modifier = Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = Color(0xFF176B3A))
+                    }
+                    val shareMessage = tr(
+                        "Annapurna Vegetables and Fruits ॲप वापरा! माझा रेफरल कोड $referralCode वापरा.",
+                        "Annapurna Vegetables and Fruits ऐप इस्तेमाल करें! मेरा रेफरल कोड $referralCode इस्तेमाल करें।",
+                        "Try Annapurna Vegetables and Fruits! Use my referral code $referralCode."
+                    )
+                    val shareChooserTitle = tr("मित्रांना शेअर करा", "दोस्तों के साथ शेयर करें", "Share with friends")
+                    Button(
+                        onClick = {
+                            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, shareMessage)
+                            }, shareChooserTitle))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(tr("रेफरल कोड शेअर करा", "रेफरल कोड शेयर करें", "Share referral code"))
+                    }
+                    HorizontalDivider()
+                    Text(tr("रेफरल बक्षिसे", "रेफरल इनाम", "Referral rewards"), fontWeight = FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(tr("1 यशस्वी मित्र", "1 सफल मित्र", "1 successful friend"))
+                        Text(tr("1 डिलिव्हरी मोफत", "1 डिलीवरी मुफ्त", "1 free delivery"), fontWeight = FontWeight.SemiBold)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(tr("3 यशस्वी मित्र", "3 सफल मित्र", "3 successful friends"))
+                        Text(tr("5 डिलिव्हरी मोफत", "5 डिलीवरी मुफ्त", "5 free deliveries"), fontWeight = FontWeight.SemiBold)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(tr("10 यशस्वी मित्र", "10 सफल मित्र", "10 successful friends"))
+                        Text(tr("7 दिवस डिलिव्हरी मोफत", "7 दिन डिलीवरी मुफ्त", "7 days free delivery"), fontWeight = FontWeight.SemiBold)
+                    }
+                    Text(
+                        tr(
+                            "मित्राने तुमचा कोड वापरून ॲप इन्स्टॉल व नोंदणी करावी आणि किमान 30 दिवस ॲप वापरावे. बनावट किंवा डुप्लिकेट खाते ग्राह्य धरले जाणार नाही. अटींची सर्व्हरवर पडताळणी झाल्यावरच रेफरल व बक्षीस मंजूर होईल.",
+                            "मित्र को आपका कोड इस्तेमाल करके ऐप इंस्टॉल और रजिस्टर करना होगा तथा कम से कम 30 दिन ऐप इस्तेमाल करना होगा। नकली या डुप्लिकेट खाते मान्य नहीं होंगे। सर्वर सत्यापन के बाद ही रेफरल और इनाम मंजूर होगा।",
+                            "Your friend must install the app, register with your code, and use it for at least 30 days. Fake or duplicate accounts do not qualify. Referrals and rewards are granted only after server-side verification."
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

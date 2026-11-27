@@ -6,6 +6,10 @@
 <string name="hero_headline">किसान के खेत से सीधे आपकी रसोई तक!</string>
 <string name="hero_subtext">हर सुबह चुनिंदा ताज़ी सब्ज़ियाँ और रसीले फल घर मँगाएँ।</string>
 <string name="nav_bazaar">ताज़ा बाज़ार</string><string name="nav_cart">मेरी टोकरी</string><string name="nav_assistant">अन्नपूर्णा AI</string><string name="nav_studio">फोटो स्टूडियो</string>
+        <string name="nav_categories">श्रेणियाँ</string>
+    <string name="nav_new_arrivals">नए उत्पाद</string>
+    <string name="nav_offers">ऑफ़र</string>
+        <string name="nav_orders">मेरे ऑर्डर</string>
 <string name="search_placeholder">सब्ज़ी या फल खोजें (जैसे टमाटर, आम)...</string><string name="search_clear_desc">खोज हटाएँ</string><string name="cat_all">सभी</string><string name="cat_vegetables">ताज़ी सब्ज़ियाँ</string><string name="cat_fruits">रसीले फल</string><string name="empty_search_title">कोई सामान नहीं मिला</string><string name="empty_search_subtitle">दूसरा नाम लिखें या सभी श्रेणियाँ चुनें।</string>
 <string name="btn_add_to_cart">टोकरी में डालें</string><string name="cd_decrease_qty">मात्रा घटाएँ</string><string name="cd_increase_qty">मात्रा बढ़ाएँ</string><string name="cd_remove_item">सामान हटाएँ</string><string name="floating_cart_cta">ऑर्डर करें</string><string name="cart_items_summary_format">टोकरी में %1$s सामान • ₹%2$s</string>
 <string name="cart_header_title">मेरी खरीदारी की टोकरी</string><string name="cart_clear_all">टोकरी खाली करें</string><string name="cart_empty_title">आपकी टोकरी अभी खाली है</string><string name="cart_empty_subtitle">ताज़ी सब्ज़ियाँ और फल चुनने के लिए ताज़ा बाज़ार टैब पर जाएँ।</string><string name="btn_browse_bazaar">ताज़ा बाज़ार देखें</string><string name="bill_summary_title">बिल का विवरण</string><string name="bill_items_total">सामान की कुल राशि</string><string name="bill_delivery_label">होम डिलीवरी शुल्क</string><string name="bill_delivery_free">मुफ़्त (₹०)</string><string name="bill_grand_total">कुल देय राशि</string>
@@ -68,6 +72,7 @@
     <string name="delivery_calculating_distance">डिलीवरी की दूरी मापी जा रही है...</string>
     <string name="delivery_shop_location_missing">दुकान की लोकेशन नहीं मिली। इंटरनेट चालू करके फिर कोशिश करें।</string>
     <string name="delivery_charge_added">डिलीवरी शुल्क बिल में जोड़ दिया गया है।</string>
+    <string name="delivery_charge_added_format">दुकान से आपके घर तक सड़क की दूरी: %1$s किमी (₹10 प्रति किमी)</string>
     <string name="delivery_location_missing">लोकेशन नहीं मिली। GPS चालू करके फिर कोशिश करें।</string>
     <string name="delivery_location_failed">आपकी लोकेशन नहीं मिल सकी। फिर कोशिश करें।</string>
     <string name="delivery_address_checking">पता जाँचकर डिलीवरी शुल्क निकाला जा रहा है...</string>
@@ -117,4 +122,6 @@
     <string name="studio_prompt_hint">ऊपर से कोई आइडिया चुनें या अपना विवरण लिखें और तस्वीर बनाएँ।</string>
     <string name="payment_cod_hint">ऑर्डर मिलने पर नकद भुगतान करें।</string>
     <string name="nav_profile">प्रोफ़ाइल</string>
+    <string name="gps_permission_required">सटीक GPS अनुमति ज़रूरी है। इसके बिना आप ऑर्डर नहीं दे सकते।</string>
+    <string name="gps_fetching_customer_location">आपकी सटीक GPS लोकेशन प्राप्त की जा रही है…</string>
 </resources>

@@ -9,7 +9,9 @@ data class CartItemEntity(
     val produceId: String,
     val quantity: Int,
     val weightGrams: Int = 1000,
-    val addedAtMillis: Long = System.currentTimeMillis()
+    val addedAtMillis: Long = System.currentTimeMillis(),
+    val comboDataJson: String? = null,
+    val comboPriceRupees: Double? = null
 )
 
 @Entity(tableName = "customer_profile")

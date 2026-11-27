@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CustomerProfileEntity::class,
         OrderEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AnnapurnaDatabase : RoomDatabase() {
@@ -40,6 +40,13 @@ abstract class AnnapurnaDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE cart_items ADD COLUMN comboDataJson TEXT")
+                database.execSQL("ALTER TABLE cart_items ADD COLUMN comboPriceRupees REAL")
+            }
+        }
+
         @Volatile
         private var INSTANCE: AnnapurnaDatabase? = null
 
@@ -50,7 +57,7 @@ abstract class AnnapurnaDatabase : RoomDatabase() {
                     AnnapurnaDatabase::class.java,
                     "annapurna_veg_fruits.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                     .also { INSTANCE = it }
             }
