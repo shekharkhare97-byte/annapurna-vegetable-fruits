@@ -427,7 +427,7 @@ fun BazaarHomeScreen(
                                         } else if (!other.imageUrl.isNullOrBlank()) {
                                             AsyncImage(model = other.imageUrl, contentDescription = other.displayName(), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(12.dp)))
                                         }
-                                        Text(other.displayName(), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(other.displayName(), fontWeight = customerFontWeight(FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text("₹${MarathiFormatters.formatRupees(other.priceRupees)}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                     }
                                 }
@@ -1498,6 +1498,12 @@ private fun customerText(mr: String, hi: String, en: String): String {
     return when (language) { "hi" -> hi; "en" -> en; else -> mr }
 }
 
+@Composable
+private fun customerFontWeight(defaultWeight: FontWeight): FontWeight {
+    val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
+    return if (language == "en") FontWeight.Bold else defaultWeight
+}
+
 private data class MealCombo(val titleMr: String, val titleHi: String, val titleEn: String, val emoji: String, val ingredients: List<List<String>>)
 private val annapurnaMealCombos = listOf(
     MealCombo("पावभाजी", "पाव भाजी", "Pav Bhaji", "🍲", listOf(listOf("बटाटा", "potato", "आलू"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कांदा", "onion", "प्याज"), listOf("फुलकोबी", "cauliflower", "फूलगोभी"), listOf("कोबी", "cabbage", "पत्ता गोभी"), listOf("मटार", "peas", "green peas"), listOf("ढोबळी मिरची", "capsicum", "bell pepper"), listOf("आले", "ginger", "अदरक"), listOf("लसूण", "garlic", "लहसुन"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("लिंबू", "lemon", "नींबू"))),
@@ -1701,7 +1707,7 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                                     Text("₹${MarathiFormatters.formatRupees(item!!.priceRupees / 2.0)}", fontWeight = FontWeight.SemiBold)
                                 }
                                 isMatched -> Text(customerText("संपला आहे", "माल खत्म", "OUT OF STOCK"), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
-                                else -> Text(customerText("यादीत नाही", "सूची में नहीं", "NOT LISTED"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.labelSmall)
+                                else -> Text(customerText("यादीत नाही", "सूची में नहीं", "NOT LISTED"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = customerFontWeight(FontWeight.Medium), style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
