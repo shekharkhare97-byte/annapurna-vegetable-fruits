@@ -173,13 +173,31 @@ class StoreRepository(private val storeDao: StoreDao) {
         }
         val summaryLines = items.joinToString(separator = "\n") { line ->
             val quantityLabel = if (line.combo != null) {
-                "${MarathiFormatters.toMarathiNumber(line.quantity)} कॉम्बो • ${MarathiFormatters.toMarathiNumber(line.combo.servings)} व्यक्ती प्रति कॉम्बो"
+                val comboWeight = if (line.combo.servings >= 1000 && line.combo.servings % 1000 == 0) {
+                    "${line.combo.servings / 1000} किलो"
+                } else {
+                    "${MarathiFormatters.toMarathiNumber(line.combo.servings)} ग्रॅम"
+                }
+                "${MarathiFormatters.toMarathiNumber(line.quantity)} कॉम्बो • ${comboWeight}"
             } else if (line.produce.isPieceBased) {
                 "${MarathiFormatters.toMarathiNumber(line.quantity)} ${line.produce.unitMarathi.removePrefix("१ ")}"
             } else {
                 WeightPricing.formatWeightMarathi(line.weightGrams)
             }
-            "• ${line.produce.marathiName} ($quantityLabel) = ₹${MarathiFormatters.formatRupees(line.lineTotalRupees)}"
+            val comboComponents = line.combo?.ingredients?.joinToString(separator = "\n") { ingredient ->
+                val componentQuantity = when (ingredient.unit) {
+                    "nos" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} नग"
+                    "bunch" -> "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} जुडी"
+                    else -> if (ingredient.quantityGrams >= 1000 && ingredient.quantityGrams % 1000 == 0) {
+                        "${ingredient.quantityGrams / 1000} किलो"
+                    } else {
+                        "${MarathiFormatters.toMarathiNumber(ingredient.quantityGrams)} ग्रॅम"
+                    }
+                }
+                "  • ${ingredient.nameMr}: ${componentQuantity}"
+            }.orEmpty()
+            "• ${line.produce.marathiName} ($quantityLabel) = ₹${MarathiFormatters.formatRupees(line.lineTotalRupees)}" +
+                if (comboComponents.isNotBlank()) "\n$comboComponents" else ""
         }
         val serialized = items.joinToString(separator = ",") { line ->
             val combo = line.combo
