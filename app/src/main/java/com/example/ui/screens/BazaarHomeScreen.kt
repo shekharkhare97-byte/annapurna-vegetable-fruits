@@ -1656,8 +1656,15 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                         val localPhoto = fallbackImage(aliases)
                         val onlinePhoto = fallbackPhotoUrl(aliases)
                         when {
-                            // Ingredient-specific photos take priority in combo rows so a
-                            // wrongly assigned Admin product photo cannot label one vegetable as another.
+                            // Use the exact Admin product photo when a real catalog item
+                            // matched. Ingredient-specific real-photo fallbacks are only
+                            // used when the matched item has no uploaded image.
+                            item != null && !item.imageUrl.isNullOrBlank() -> AsyncImage(
+                                model = item.imageUrl,
+                                contentDescription = label,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
+                            )
                             localPhoto != null -> Image(
                                 painter = painterResource(id = localPhoto),
                                 contentDescription = label,
@@ -1666,12 +1673,6 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
                             )
                             onlinePhoto != null -> AsyncImage(
                                 model = onlinePhoto,
-                                contentDescription = label,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
-                            )
-                            item != null && !item.imageUrl.isNullOrBlank() -> AsyncImage(
-                                model = item.imageUrl,
                                 contentDescription = label,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp))
