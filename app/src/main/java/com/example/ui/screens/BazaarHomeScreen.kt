@@ -1527,17 +1527,17 @@ private fun customerFontWeight(defaultWeight: FontWeight): FontWeight {
     return if (language == "en") FontWeight.Bold else defaultWeight
 }
 
-private data class MealCombo(val titleMr: String, val titleHi: String, val titleEn: String, val emoji: String, val ingredients: List<List<String>>)
+private data class MealCombo(val titleMr: String, val titleHi: String, val titleEn: String, val emoji: String, val ingredients: List<Pair<List<String>, Int>>)
 private val annapurnaMealCombos = listOf(
-    MealCombo("पावभाजी", "पाव भाजी", "Pav Bhaji", "🍲", listOf(listOf("बटाटा", "potato", "आलू"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कांदा", "onion", "प्याज"), listOf("फुलकोबी", "cauliflower", "फूलगोभी"), listOf("कोबी", "cabbage", "पत्ता गोभी"), listOf("मटार", "peas", "green peas"), listOf("ढोबळी मिरची", "capsicum", "bell pepper"), listOf("आले", "ginger", "अदरक"), listOf("लसूण", "garlic", "लहसुन"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("लिंबू", "lemon", "नींबू"))),
-    MealCombo("मिसळ पाव", "मिसल पाव", "Misal Pav", "🌶️", listOf(listOf("मटकी", "moth beans", "matki"), listOf("कांदा", "onion", "प्याज"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("लिंबू", "lemon", "नींबू"), listOf("आले", "ginger", "अदरक"), listOf("हिरवी मिरची", "green chilli", "हरी मिर्च"))),
-    MealCombo("सांबार मिक्स", "सांभर मिक्स", "Sambar Mix", "🥘", listOf(listOf("शेवगा", "drumstick", "सहजन"), listOf("दुधी भोपळा", "bottle gourd", "लौकी"), listOf("गाजर", "carrot"), listOf("वांगी", "brinjal", "बैंगन"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कांदा", "onion", "प्याज"), listOf("कोथिंबीर", "coriander", "धनिया"))),
-    MealCombo("मिक्स व्हेज", "मिक्स वेज", "Mix Veg", "🥦", listOf(listOf("फुलकोबी", "cauliflower", "फूलगोभी"), listOf("गाजर", "carrot"), listOf("मटार", "peas", "green peas"), listOf("बटाटा", "potato", "आलू"), listOf("ढोबळी मिरची", "capsicum", "bell pepper"), listOf("बीन्स", "beans", "फली"))),
-    MealCombo("उसळ कॉम्बो", "उसळ कॉम्बो", "Usal Combo", "🫘", listOf(listOf("मटकी", "moth beans", "matki"), listOf("कांदा", "onion", "प्याज"), listOf("टोमॅटो", "tomato", "टमाटर"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("हिरवी मिरची", "green chilli", "हरी मिर्च"), listOf("लिंबू", "lemon", "नींबू"))),
-    MealCombo("व्हेज पुलाव कॉम्बो", "वेज पुलाव कॉम्बो", "Veg Pulao Combo", "🍚", listOf(listOf("गाजर", "carrot"), listOf("मटार", "peas", "green peas"), listOf("बीन्स", "beans", "फली"), listOf("कांदा", "onion", "प्याज"), listOf("बटाटा", "potato", "आलू"), listOf("कोथिंबीर", "coriander", "धनिया"))),
-    MealCombo("कांदे पोहे", "कांदा पोहा", "Kanda Poha", "🍋", listOf(listOf("कांदा", "onion", "प्याज"), listOf("बटाटा", "potato", "आलू"), listOf("हिरवी मिरची", "green chilli", "हरी मिर्च"), listOf("लिंबू", "lemon", "नींबू"), listOf("कोथिंबीर", "coriander", "धनिया"))),
-    MealCombo("आलू पराठा", "आलू पराठा", "Aloo Paratha", "🥔", listOf(listOf("बटाटा", "potato", "आलू"), listOf("हिरवी मिरची", "green chilli", "हरी मिर्च"), listOf("कोथिंबीर", "coriander", "धनिया"), listOf("आले", "ginger", "अदरक"))),
-    MealCombo("व्हेज फ्राईड राईस", "वेज फ्राइड राइस", "Veg Fried Rice", "🍚", listOf(listOf("गाजर", "carrot"), listOf("बीन्स", "beans", "फली"), listOf("कोबी", "cabbage", "पत्ता गोभी"), listOf("ढोबळी मिरची", "capsicum", "bell pepper"), listOf("कांदा", "onion", "प्याज"), listOf("हिरवी मिरची", "green chilli", "हरी मिर्च")))
+    MealCombo("पावभाजी", "पाव भाजी", "Pav Bhaji", "🍲", listOf((["बटाटा","potato","आलू"], 100), (["टोमॅटो","tomato","टमाटर"], 40), (["कांदा","onion","प्याज"], 30), (["फुलकोबी","cauliflower","फूलगोभी"], 30), (["कोबी","cabbage","पत्ता गोभी"], 20), (["मटार","peas","green peas"], 20), (["ढोबळी मिरची","capsicum","bell pepper"], 20), (["आले","ginger","अदरक"], 3), (["लसूण","garlic","लहसुन"], 3), (["कोथिंबीर","coriander","धनिया"], 5), (["लिंबू","lemon","नींबू"], 15))),
+    MealCombo("मिसळ पाव", "मिसल पाव", "Misal Pav", "🌶️", listOf((["मटकी","moth beans","matki"], 60), (["कांदा","onion","प्याज"], 30), (["टोमॅटो","tomato","टमाटर"], 40), (["कोथिंबीर","coriander","धनिया"], 5), (["लिंबू","lemon","नींबू"], 20), (["आले","ginger","अदरक"], 5), (["हिरवी मिरची","green chilli","हरी मिर्च"], 3))),
+    MealCombo("सांबार मिक्स", "सांभर मिक्स", "Sambar Mix", "🥘", listOf((["शेवगा","drumstick","सहजन"], 30), (["दुधी भोपळा","bottle gourd","लौकी"], 30), (["गाजर","carrot"], 25), (["वांगी","brinjal","बैंगन"], 25), (["टोमॅटो","tomato","टमाटर"], 30), (["कांदा","onion","प्याज"], 20), (["कोथिंबीर","coriander","धनिया"], 5))),
+    MealCombo("मिक्स व्हेज", "मिक्स वेज", "Mix Veg", "🥦", listOf((["फुलकोबी","cauliflower","फूलगोभी"], 35), (["गाजर","carrot"], 30), (["मटार","peas","green peas"], 25), (["बटाटा","potato","आलू"], 40), (["ढोबळी मिरची","capsicum","bell pepper"], 20), (["बीन्स","beans","फली"], 25))),
+    MealCombo("उसळ कॉम्बो", "उसळ कॉम्बो", "Usal Combo", "🫘", listOf((["मटकी","moth beans","matki"], 60), (["कांदा","onion","प्याज"], 30), (["टोमॅटो","tomato","टमाटर"], 40), (["कोथिंबीर","coriander","धनिया"], 5), (["हिरवी मिरची","green chilli","हरी मिर्च"], 3), (["लिंबू","lemon","नींबू"], 20))),
+    MealCombo("व्हेज पुलाव कॉम्बो", "वेज पुलाव कॉम्बो", "Veg Pulao Combo", "🍚", listOf((["गाजर","carrot"], 25), (["मटार","peas","green peas"], 25), (["बीन्स","beans","फली"], 25), (["कांदा","onion","प्याज"], 25), (["बटाटा","potato","आलू"], 35), (["कोथिंबीर","coriander","धनिया"], 5))),
+    MealCombo("कांदे पोहे", "कांदा पोहा", "Kanda Poha", "🍋", listOf((["कांदा","onion","प्याज"], 35), (["बटाटा","potato","आलू"], 40), (["हिरवी मिरची","green chilli","हरी मिर्च"], 3), (["लिंबू","lemon","नींबू"], 15), (["कोथिंबीर","coriander","धनिया"], 5))),
+    MealCombo("आलू पराठा", "आलू पराठा", "Aloo Paratha", "🥔", listOf((["बटाटा","potato","आलू"], 120), (["हिरवी मिरची","green chilli","हरी मिर्च"], 3), (["कोथिंबीर","coriander","धनिया"], 5), (["आले","ginger","अदरक"], 3))),
+    MealCombo("व्हेज फ्राईड राईस", "वेज फ्राइड राइस", "Veg Fried Rice", "🍚", listOf((["गाजर","carrot"], 25), (["बीन्स","beans","फली"], 25), (["कोबी","cabbage","पत्ता गोभी"], 25), (["ढोबळी मिरची","capsicum","bell pepper"], 20), (["कांदा","onion","प्याज"], 25), (["हिरवी मिरची","green chilli","हरी मिर्च"], 3)))
 )
 
 @Composable private fun MealComboEntry(onClick: () -> Unit) {
@@ -1560,6 +1560,8 @@ private fun MealComboDialog(
     onAddCombo: (MealComboPack) -> Unit
 ) {
     var selectedId by remember { mutableStateOf<String?>(null) }
+    var servingsText by remember { mutableStateOf("1") }
+    val servings = servingsText.toIntOrNull()?.takeIf { it > 0 } ?: 0
     val language = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.language ?: "mr"
     val catalog = remember(produceItems, ProduceCatalog.items) {
         (ProduceCatalog.items + produceItems).distinctBy { it.id }
@@ -1576,16 +1578,16 @@ private fun MealComboDialog(
                 .any { it in keys }
         }
     }
-    val combos = remember(catalog) {
+    val combos = remember(catalog, servings) {
         annapurnaMealCombos.map { recipe ->
-            val ingredients = recipe.ingredients.map { names ->
+            val ingredients = recipe.ingredients.map { (names, gramsPerPerson) ->
                 val product = findProduct(names)
                 MealComboIngredient(
                     productId = product?.id ?: "missing-${normalized(names.firstOrNull().orEmpty())}",
                     nameMr = product?.marathiName ?: names.firstOrNull().orEmpty(),
                     nameHi = product?.hindiName?.ifBlank { null } ?: names.getOrNull(2).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
                     nameEn = product?.englishName?.ifBlank { null } ?: names.getOrNull(1).orEmpty().ifBlank { names.firstOrNull().orEmpty() },
-                    quantityGrams = 250,
+                    quantityGrams = gramsPerPerson * servings,
                     unit = "g"
                 )
             }
@@ -1601,6 +1603,7 @@ private fun MealComboDialog(
                 nameEn = recipe.titleEn,
                 priceRupees = kotlin.math.ceil(price),
                 ingredients = ingredients,
+                servings = servings,
                 imageUrl = when (recipe.titleEn.lowercase()) {
                     "pav bhaji" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Pavbhaji.jpg?width=960"
                     "misal pav" -> "https://commons.wikimedia.org/wiki/Special:FilePath/Misal%20-Pav.jpg?width=960"
@@ -1624,7 +1627,7 @@ private fun MealComboDialog(
         val product = catalog.firstOrNull { it.id == ingredient.productId }
         product != null && product.stockQuantity * 1000.0 < ingredient.quantityGrams.toDouble()
     }.orEmpty()
-    val canAdd = combo != null && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty() && combo.priceRupees > 0.0
+    val canAdd = combo != null && servings > 0 && missingIngredients.isEmpty() && outOfStockIngredients.isEmpty() && combo.priceRupees > 0.0
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(0.dp)) {
             Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1680,6 +1683,15 @@ private fun MealComboDialog(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(16.dp))
                     )
+                    Text(customerText("हा कॉम्बो किती व्यक्तींसाठी हवा आहे?", "यह कॉम्बो कितने लोगों के लिए चाहिए?", "How many people is this combo for?"), fontWeight = FontWeight.SemiBold)
+                    OutlinedTextField(
+                        value = servingsText,
+                        onValueChange = { value -> servingsText = value.filter { it.isDigit() }.take(7) },
+                        label = { Text(customerText("व्यक्तींची संख्या टाका", "लोगों की संख्या दर्ज करें", "Enter number of people")) },
+                        supportingText = { Text(if (servings > 0) customerText("$servings व्यक्तींसाठी", "$servings लोगों के लिए", "For $servings people") else customerText("किमान 1 व्यक्ती निवडा", "कम से कम 1 व्यक्ति दर्ज करें", "Enter at least 1 person")) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Text(customerText("या कॉम्बोमध्ये मिळणाऱ्या भाज्या आणि प्रमाण", "इस कॉम्बो में शामिल सब्ज़ियाँ और मात्रा", "Vegetables and quantities included"), fontWeight = FontWeight.SemiBold)
                     combo?.ingredients?.forEach { ingredient ->
                         val product = catalog.firstOrNull { it.id == ingredient.productId }
@@ -1697,7 +1709,7 @@ private fun MealComboDialog(
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
-                            if (product?.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {\n                                Text("₹${kotlin.math.ceil((product?.priceRupees ?: 0.0) * ingredient.quantityGrams / 1000.0).toInt()}", fontWeight = FontWeight.SemiBold, color = Color(0xFF23833B))\n                                if (product?.imageUrl?.isNotBlank() == true) AsyncImage(model = product.imageUrl, contentDescription = ingredient.displayName(language), modifier = Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)\n                            }
                         }
                     }
                     Text("₹${combo?.priceRupees ?: 0.0}", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF23833B), fontWeight = FontWeight.Bold)
@@ -1712,7 +1724,7 @@ private fun MealComboDialog(
                 ) {
                     Icon(Icons.Default.AddShoppingCart, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (canAdd) customerText("एक कॉम्बो Cart मध्ये जोडा", "एक कॉम्बो कार्ट में जोड़ें", "Add Combo to Cart") else customerText("सध्या उपलब्ध नाही", "अभी उपलब्ध नहीं", "Currently unavailable"), fontWeight = FontWeight.Bold)
+                    Text(if (canAdd) customerText("पूर्ण कॉम्बो Cart मध्ये जोडा", "पूरा कॉम्बो कार्ट में जोड़ें", "Add Complete Combo to Cart") else customerText("सध्या उपलब्ध नाही", "अभी उपलब्ध नहीं", "Currently unavailable"), fontWeight = FontWeight.Bold)
                 }
             }
         }
