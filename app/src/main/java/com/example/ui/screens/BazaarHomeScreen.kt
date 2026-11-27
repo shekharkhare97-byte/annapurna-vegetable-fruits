@@ -1625,11 +1625,11 @@ private fun MealComboDialog(produceItems: List<ProduceItem>, onDismiss: () -> Un
     // Prefer the current Firestore-backed screen products when an ID is present.
     // The screen list can be category-filtered, so append the complete Admin catalog
     // as a fallback for ingredients outside the currently selected category.
-    // distinctBy keeps the first (newest live) representation of each product ID.
+    // Prefer the latest full Admin catalog value first, so a filtered/stale screen item cannot override current stock.
     // Observe the complete Admin catalog so a combo opened before Firestore
     // finishes loading refreshes automatically when products arrive.
     val adminCatalog by ProduceCatalog.itemsFlow.collectAsState()
-    val comboCatalog = (produceItems + adminCatalog).distinctBy { it.id }
+    val comboCatalog = (adminCatalog + produceItems).distinctBy { it.id }
     val rows = combo.ingredients.map { aliases ->
         aliases to comboCatalog
             .filter { matchScore(aliases, it) > 0 }
