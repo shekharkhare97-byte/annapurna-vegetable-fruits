@@ -1723,8 +1723,8 @@ private fun MealComboDialog(
                                 AsyncImage(
                                     model = item.imageUrl,
                                     contentDescription = item.displayName(language),
-                                     error = null,
-                                     placeholder = null,
+                                     error = painterResource(R.drawable.img_hero_banner),
+                                     placeholder = painterResource(R.drawable.img_hero_banner),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxWidth().height(100.dp)
                                 )
@@ -1744,8 +1744,8 @@ private fun MealComboDialog(
                     Text(combo?.displayName(language).orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     if (!combo?.imageUrl.isNullOrBlank()) AsyncImage(
                         model = combo?.imageUrl, contentDescription = combo?.displayName(language),
-                         error = null,
-                         placeholder = null,
+                         error = painterResource(R.drawable.img_hero_banner),
+                         placeholder = painterResource(R.drawable.img_hero_banner),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(14.dp))
                     )
